@@ -1,11 +1,8 @@
-import '@nomiclabs/hardhat-waffle';
-import '@nomiclabs/hardhat-ethers';
-import '@nomiclabs/hardhat-etherscan';
-import '@nomiclabs/hardhat-web3';
+import "@nomicfoundation/hardhat-toolbox";
 
 import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
-// import 'hardhat-gas-reporter';
+import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
 import 'dotenv/config';
@@ -31,7 +28,7 @@ const config: HardhatUserConfig = {
         hardhat: {
             forking: {
                 url: `${process.env.ETH_NODE_API_KEY}`,
-                blockNumber: 18319790,
+                blockNumber: 18334216,
             },
             accounts: [
                 // 5 accounts with 10^14 ETH each

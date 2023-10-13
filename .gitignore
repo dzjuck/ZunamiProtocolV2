@@ -19,6 +19,7 @@ yarn.lock
 bun.lockb
 .DS_Store
 gas_report
+typechain-types
 
 contracts_rnd
 
