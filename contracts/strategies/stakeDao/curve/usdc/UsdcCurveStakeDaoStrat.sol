@@ -26,8 +26,9 @@ contract UsdcCurveStakeDaoStrat is CurveStakeDaoStratBase {
     constructor(
         address vaultAddr,
         address poolAddr,
-        address poolLpAddr
-    ) CurveStakeDaoStratBase(vaultAddr, poolAddr, poolLpAddr) {}
+        address poolLpAddr,
+        address oracleAddr
+    ) CurveStakeDaoStratBase(vaultAddr, poolAddr, poolLpAddr, oracleAddr) {}
 
     function setStableConverter(address stableConverterAddr) external onlyOwner {
         stableConverter = IStableConverter(stableConverterAddr);

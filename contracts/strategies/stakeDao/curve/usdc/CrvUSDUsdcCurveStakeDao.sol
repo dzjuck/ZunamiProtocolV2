@@ -5,11 +5,12 @@ import "../../../../Constants.sol";
 import './UsdcCurveStakeDaoStrat.sol';
 
 contract CrvUSDUsdcCurveStakeDao is UsdcCurveStakeDaoStrat {
-    constructor()
+    constructor(address oracleAddr)
     UsdcCurveStakeDaoStrat(
             Constants.SDT_CRVUSD_USDC_VAULT_ADDRESS,
             Constants.CRV_CRVUSD_USDC_ADDRESS,
-            Constants.CRV_CRVUSD_USDC_LP_ADDRESS
+            Constants.CRV_CRVUSD_USDC_LP_ADDRESS,
+            oracleAddr
         )
     {}
 }

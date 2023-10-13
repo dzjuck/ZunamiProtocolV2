@@ -6,20 +6,24 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import "../../../interfaces/ICurvePool2.sol";
 import "../StakeDaoStratBase.sol";
+import {IOracle} from "../../../lib/ConicOracle/interfaces/IOracle.sol";
 
 abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
     using SafeERC20 for IERC20Metadata;
 
     ICurvePool2 public immutable pool;
     IERC20Metadata public immutable poolToken;
+    IOracle public immutable oracle;
 
     constructor(
         address vaultAddr,
         address poolAddr,
-        address poolTokenAddr
+        address poolTokenAddr,
+        address oracleAddr
     ) StakeDaoStratBase(vaultAddr) {
         pool = ICurvePool2(poolAddr);
         poolToken = IERC20Metadata(poolTokenAddr);
+        oracle = IOracle(oracleAddr);
     }
 
     function convertLiquidityTokenAmount(uint256[5] memory amounts) internal view virtual returns(uint256[2] memory);
@@ -56,7 +60,7 @@ abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
     ) internal virtual returns(uint256[2] memory amounts2);
 
     function getLiquidityTokenPrice() internal view override returns (uint256) {
-        return pool.get_virtual_price(); //TODO: Replace with Conic oracle
+        return oracle.getUSDPrice(address(poolToken));
     }
 
     function calcTokenAmount(uint256[5] memory tokenAmounts, bool isDeposit)
