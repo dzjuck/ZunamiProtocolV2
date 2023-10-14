@@ -27,5 +27,12 @@ library Constants {
     address internal constant SDT_CRVUSD_USDC_VAULT_ADDRESS = 0xb618EA40cb1F5b08839Ba228C8dd58AC3DCA12F3;
     address internal constant CRV_CRVUSD_USDC_LP_ADDRESS = 0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E;
     address internal constant CRV_CRVUSD_USDC_ADDRESS = 0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E;
+
+    address internal constant CRV_BOOSTER_ADDRESS = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
+
+    address internal constant CRV_ETH_stETH_ADDRESS = 0x21E27a5E5513D6e65C4f830167390997aA84843a;
+    address internal constant CRV_ETH_stETH_LP_ADDRESS = 0x21E27a5E5513D6e65C4f830167390997aA84843a;
+    address internal constant CVX_ETH_stETH_REWARDS_ADDRESS = 0x6B27D7BC63F1999D14fF9bA900069ee516669ee8;
+    uint256 internal constant CVX_ETH_stETH_PID = 177;
 }
 

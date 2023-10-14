@@ -89,12 +89,12 @@ abstract contract ZunamiStratBase is IStrategy, Ownable2Step {
             return 0;
         }
 
-        return calcLiquidityValue(depositLiquidity(amounts));
+        return calcLiquidityValue(depositLiquidityPool(amounts));
     }
 
     function checkDepositSuccessful(uint256[5] memory amounts) internal view virtual returns (bool);
 
-    function depositLiquidity(uint256[5] memory amounts) internal virtual returns (uint256);
+    function depositLiquidityPool(uint256[5] memory amounts) internal virtual returns (uint256);
 
 
     function withdraw(

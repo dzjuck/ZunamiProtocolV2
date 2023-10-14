@@ -1,16 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../../../Constants.sol";
-import './UsdcCurveStakeDaoStrat.sol';
+import "../../../../../Constants.sol";
+import '../CrvUsdStakeDaoCurveStratBase.sol';
 
-contract CrvUSDUsdcCurveStakeDao is UsdcCurveStakeDaoStrat {
+contract UsdcCrvUsdStakeDaoCurve is CrvUsdStakeDaoCurveStratBase {
     constructor(address oracleAddr)
-    UsdcCurveStakeDaoStrat(
+    CrvUsdStakeDaoCurveStratBase(
             Constants.SDT_CRVUSD_USDC_VAULT_ADDRESS,
             Constants.CRV_CRVUSD_USDC_ADDRESS,
             Constants.CRV_CRVUSD_USDC_LP_ADDRESS,
-            oracleAddr
+            oracleAddr,
+            ZUNAMI_USDC_TOKEN_ID
         )
     {}
 }

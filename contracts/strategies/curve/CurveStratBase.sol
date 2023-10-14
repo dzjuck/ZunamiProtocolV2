@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import "../../../interfaces/ICurvePool2.sol";
-import "../StakeDaoStratBase.sol";
-import {IOracle} from "../../../lib/ConicOracle/interfaces/IOracle.sol";
+import "../../interfaces/ICurvePool2.sol";
+import "../ZunamiStratBase.sol";
+import {IOracle} from "../../lib/ConicOracle/interfaces/IOracle.sol";
 
-abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
+abstract contract CurveStratBase is ZunamiStratBase {
     using SafeERC20 for IERC20Metadata;
 
     ICurvePool2 public immutable pool;
@@ -16,11 +16,10 @@ abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
     IOracle public immutable oracle;
 
     constructor(
-        address vaultAddr,
         address poolAddr,
         address poolTokenAddr,
         address oracleAddr
-    ) StakeDaoStratBase(vaultAddr) {
+    ) ZunamiStratBase() {
         pool = ICurvePool2(poolAddr);
         poolToken = IERC20Metadata(poolTokenAddr);
         oracle = IOracle(oracleAddr);
@@ -45,14 +44,14 @@ abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
         return (depositedLp * getLiquidityTokenPrice()) / PRICE_DENOMINATOR >= amountsMin;
     }
 
-    function depositLiquidity(uint256[5] memory amounts) internal override returns (uint256 poolTokenAmount) {
+    function depositLiquidityPool(uint256[5] memory amounts) internal override returns (uint256 poolTokenAmount) {
         uint256[2] memory amounts2 = convertAndApproveTokens(address(pool), amounts);
         poolTokenAmount = pool.add_liquidity(amounts2, 0);
 
-        poolToken.safeIncreaseAllowance(address(vault), poolTokenAmount);
-
         depositLiquidity(poolTokenAmount);
     }
+
+    function depositLiquidity(uint256 amount) internal virtual;
 
     function convertAndApproveTokens(
         address pool,
@@ -92,8 +91,7 @@ abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
 
     function removeLiquidity(
         uint256 amount, uint256[5] memory minTokenAmounts
-    ) internal override {
-        super.removeLiquidity(amount, minTokenAmounts);
+    ) internal virtual override {
         int128 curveTokenIndex = getCurveRemovingTokenIndex();
         pool.remove_liquidity_one_coin(
             amount,
@@ -102,8 +100,7 @@ abstract contract CurveStakeDaoStratBase is StakeDaoStratBase {
         );
     }
 
-    function removeAllLiquidity() internal override {
-        super.removeAllLiquidity();
+    function removeAllLiquidity() internal override virtual {
         int128 curveTokenIndex = getCurveRemovingTokenIndex();
         pool.remove_liquidity_one_coin(poolToken.balanceOf(address(this)), curveTokenIndex, 0);
     }
