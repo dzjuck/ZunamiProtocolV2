@@ -1,7 +1,7 @@
+import { network } from 'hardhat';
 import { BigNumber as BN } from 'ethers';
-import { waffle } from 'hardhat';
 
-const provider = waffle.provider;
+const provider = network.provider;
 
 export async function advanceBlock() {
     await provider.send('evm_mine', []);
