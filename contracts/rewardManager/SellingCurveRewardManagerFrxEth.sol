@@ -11,8 +11,6 @@ import "./interfaces/ICurveExchangePool.sol";
 import "../interfaces/IRewardManager.sol";
 import "../interfaces/INativeConverter.sol";
 
-import "hardhat/console.sol";
-
 contract SellingCurveRewardManagerFrxEth is IRewardManager {
     using SafeERC20 for IERC20Metadata;
 

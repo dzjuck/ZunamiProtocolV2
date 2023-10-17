@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/security/Pausable.sol';
-import "@openzeppelin/contracts/access/AccessControlDefaultAdminRules.sol";
+import '@openzeppelin/contracts/utils/Pausable.sol';
+import "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
@@ -30,23 +30,8 @@ abstract contract ZunamiPoolController is Pausable, AccessControlDefaultAdminRul
     event SetDefaultWithdrawPid(uint256 pid);
     event SetRewardTokens(IERC20Metadata[] rewardTokens);
 
-    event Deposited(
-        address indexed receiver,
-        uint256 depositedValue,
-        uint256 shares,
-        uint256 pid
-    );
-
-    event Withdrawn(
-        address indexed withdrawer,
-        uint256 withdrawn,
-        uint256 pid
-    );
-
-    constructor(address pool_) {
+    constructor(address pool_) AccessControlDefaultAdminRules(24 hours, msg.sender) {
         require(pool_ != address(0), "Zero pool");
-
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         rewardCollector = msg.sender;
 
@@ -103,6 +88,7 @@ abstract contract ZunamiPoolController is Pausable, AccessControlDefaultAdminRul
     whenNotPaused
     returns (uint256 shares)
     {
+
         if(receiver == address(0)) {
             receiver = _msgSender();
         }
@@ -127,12 +113,5 @@ abstract contract ZunamiPoolController is Pausable, AccessControlDefaultAdminRul
     ) external whenNotPaused {
         IERC20Metadata(address(pool)).safeTransferFrom(msg.sender, address(this), shares);
         pool.withdraw(defaultWithdrawPid, shares, minTokenAmounts, receiver);
-    }
-
-    function withdrawStuckToken(IERC20Metadata _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 tokenBalance = _token.balanceOf(address(this));
-        if (tokenBalance > 0) {
-            _token.safeTransfer(_msgSender(), tokenBalance);
-        }
     }
 }

@@ -5,15 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/security/Pausable.sol';
-import "@openzeppelin/contracts/access/AccessControlDefaultAdminRules.sol";
+import '@openzeppelin/contracts/utils/Pausable.sol';
+import "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
 import "./interfaces/IRewardManager.sol";
 
 import "./Constants.sol";
-
 
 abstract contract ZunamiPoolCompoundedController is ERC20, ERC20Permit, Pausable, AccessControlDefaultAdminRules {
     using SafeERC20 for IERC20Metadata;
@@ -64,10 +63,9 @@ abstract contract ZunamiPoolCompoundedController is ERC20, ERC20Permit, Pausable
     constructor(address pool_, string memory name_, string memory symbol_)
         ERC20(name_, symbol_)
         ERC20Permit(name_)
+        AccessControlDefaultAdminRules(24 hours, msg.sender)
     {
         require(pool_ != address(0), "Zero pool");
-
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         feeDistributor = msg.sender;
 

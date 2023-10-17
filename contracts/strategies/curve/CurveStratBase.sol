@@ -33,10 +33,13 @@ abstract contract CurveStratBase is ZunamiStratBase {
         override
         returns (bool)
     {
+        uint256[5] memory tokenDecimals = zunamiPool.tokenDecimalsMultipliers();
+
         uint256 amountsTotal;
         for (uint256 i = 0; i < 5; i++) {
-            amountsTotal += amounts[i] * zunami.tokenDecimalsMultipliers()[i];
+            amountsTotal += amounts[i] * tokenDecimals[i];
         }
+
         uint256 amountsMin = (amountsTotal * minDepositAmount) / DEPOSIT_DENOMINATOR;
 
         uint256 depositedLp = pool.calc_token_amount(convertLiquidityTokenAmount(amounts), true);

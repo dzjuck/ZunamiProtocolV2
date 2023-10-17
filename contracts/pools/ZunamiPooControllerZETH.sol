@@ -5,5 +5,5 @@ import "../ZunamiPoolController.sol";
 
 contract ZunamiPooControllerZETH is ZunamiPoolController {
 
-    constructor(address pool) ZunamiPoolController(pool) AccessControlDefaultAdminRules(24 hours, msg.sender) {}
+    constructor(address pool) ZunamiPoolController(pool) {}
 }

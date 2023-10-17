@@ -10,10 +10,10 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
     IStakeDaoVault public immutable vault;
 
     constructor(
+        address _vaultAddr,
         address _poolAddr,
         address _poolTokenAddr,
-        address _oracleAddr,
-        address _vaultAddr
+        address _oracleAddr
     ) CurveStratBase(_poolAddr, _poolTokenAddr, _oracleAddr) {
         vault = IStakeDaoVault(_vaultAddr);
     }

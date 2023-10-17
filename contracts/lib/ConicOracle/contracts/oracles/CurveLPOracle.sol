@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 import "../../libraries/Types.sol";
 import "../../libraries/ScaledMath.sol";
@@ -15,7 +15,7 @@ import "../../interfaces/vendor/ICurvePoolV1.sol";
 import "../../interfaces/vendor/ICurveMetaRegistry.sol";
 import "../../interfaces/ICurveRegistryCache.sol";
 
-contract CurveLPOracle is IOracle, Ownable {
+contract CurveLPOracle is IOracle, Ownable2Step {
     using ScaledMath for uint256;
 
     event ImbalanceThresholdUpdated(address indexed token, uint256 threshold);
@@ -27,7 +27,7 @@ contract CurveLPOracle is IOracle, Ownable {
     IOracle private immutable _genericOracle;
     ICurveRegistryCache private immutable curveRegistryCache;
 
-    constructor(address genericOracle, address curveRegistryCache_) {
+    constructor(address genericOracle, address curveRegistryCache_) Ownable(msg.sender) {
         _genericOracle = IOracle(genericOracle);
         curveRegistryCache = ICurveRegistryCache(curveRegistryCache_);
     }

@@ -53,7 +53,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     function valuateStable(uint256 fromZunamiIndex, uint256 toZunamiIndex, uint256 amount) internal view returns (uint256) {
         if(fromZunamiIndex == toZunamiIndex) return 0;
 
-        IERC20Metadata[5] memory zunamiTokens = zunami.tokens();
+        IERC20Metadata[5] memory zunamiTokens = zunamiPool.tokens();
 
         return stableConverter.valuate(
             address(zunamiTokens[fromZunamiIndex]),
@@ -66,7 +66,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         address pool,
         uint256[5] memory amounts
     ) internal override returns(uint256[2] memory amounts2) {
-        IERC20Metadata token = zunami.tokens()[zunamiTokenIndex];
+        IERC20Metadata token = zunamiPool.tokens()[zunamiTokenIndex];
 
         convertStable(ZUNAMI_DAI_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_DAI_TOKEN_ID]);
         convertStable(ZUNAMI_USDC_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_USDC_TOKEN_ID]);
@@ -83,12 +83,12 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     function convertStable(uint256 fromZunamiIndex, uint256 toZunamiIndex, uint256 fromAmount) internal {
         if(fromZunamiIndex == toZunamiIndex) return;
 
-        IERC20Metadata fromToken = zunami.tokens()[fromZunamiIndex];
+        IERC20Metadata fromToken = zunamiPool.tokens()[fromZunamiIndex];
         fromToken.safeTransfer(address(stableConverter), fromAmount);
 
         stableConverter.handle(
             address(fromToken),
-            address(zunami.tokens()[toZunamiIndex]),
+            address(zunamiPool.tokens()[toZunamiIndex]),
             fromAmount,
             0
         );

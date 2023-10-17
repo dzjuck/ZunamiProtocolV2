@@ -10,8 +10,6 @@ import './interfaces/AggregatorV2V3Interface.sol';
 import "../interfaces/IRewardManager.sol";
 import "../interfaces/IStableConverter.sol";
 
-//import "hardhat/console.sol";
-
 contract SellingCurveRewardManager is IRewardManager {
     using SafeERC20 for IERC20Metadata;
 

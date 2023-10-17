@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/security/Pausable.sol';
-import '@openzeppelin/contracts/access/AccessControlDefaultAdminRules.sol';
+import '@openzeppelin/contracts/utils/Pausable.sol';
+import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
 
@@ -49,9 +49,7 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
     constructor(string memory name_, string memory symbol_)
         ERC20(name_, symbol_)
         AccessControlDefaultAdminRules(24 hours, msg.sender)
-    {
-        _setupRole(CONTROLLER_ROLE, msg.sender);
-    }
+    {}
 
     function poolInfo(uint256 pid) external view returns (PoolInfo memory) {
         return _poolInfo[pid];
@@ -65,15 +63,19 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
         return _decimalsMultipliers;
     }
 
-    function addTokens(address[] memory tokens_, uint256[] memory _tokenDecimalMultipliers)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function _addTokens(address[] memory tokens_, uint256[] memory _tokenDecimalMultipliers) internal {
         for (uint256 i = 0; i < tokens_.length; i++) {
             _tokens[i] = IERC20Metadata(tokens_[i]);
             emit UpdatedToken(i, tokens_[i], _tokenDecimalMultipliers[i], address(0));
             _decimalsMultipliers[i] = _tokenDecimalMultipliers[i];
         }
+    }
+
+    function addTokens(address[] memory tokens_, uint256[] memory _tokenDecimalMultipliers)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _addTokens(tokens_, _tokenDecimalMultipliers);
     }
 
     function replaceToken(
@@ -128,7 +130,8 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
         onlyRole(CONTROLLER_ROLE)
         returns (uint256)
     {
-        if(receiver != address(0)) {
+
+        if(receiver == address(0)) {
             receiver = _msgSender();
         }
 
@@ -145,6 +148,7 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
             }
         }
         uint256 depositedValue = strategy.deposit(amounts);
+
         require(depositedValue > 0, 'low deposit');
 
         return
@@ -166,6 +170,9 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
 
         _mint(receiver, minted);
         _poolInfo[pid].deposited += minted;
+
+        totalDeposited += depositedValue;
+
         emit Deposited(
             receiver,
             depositedValue,
@@ -173,7 +180,6 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
             minted,
             pid
         );
-        totalDeposited += depositedValue;
     }
 
     function withdraw(
@@ -281,10 +287,10 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
         }
 
         uint256 pid;
-        uint256 zunamiLp;
+        uint256 zunamiStables;
         for (uint256 i = 0; i < _strategies.length; i++) {
             pid = _strategies[i];
-            zunamiLp += _moveFunds(pid, withdrawalsPercents[i]);
+            zunamiStables += _moveFunds(pid, withdrawalsPercents[i]);
         }
 
         uint256[POOL_ASSETS] memory tokensRemainder;
@@ -300,7 +306,7 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
             }
         }
 
-        _poolInfo[_receiverStrategy].deposited += zunamiLp;
+        _poolInfo[_receiverStrategy].deposited += zunamiStables;
 
         require(_poolInfo[_receiverStrategy].strategy.deposit(tokensRemainder) > 0, 'low amount');
     }
@@ -320,21 +326,10 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
                 calcRatioSafe(stableAmount, _poolInfo[pid].deposited),
                 minAmounts
             );
-            _poolInfo[pid].deposited = _poolInfo[pid].deposited - stableAmount;
+            _poolInfo[pid].deposited -= stableAmount;
         }
 
         return stableAmount;
-    }
-
-    /**
-     * @dev governance can withdraw all stuck funds in emergency case
-     * @param _token - IERC20Metadata token that should be fully withdraw from Zunami
-     */
-    function withdrawStuckToken(IERC20Metadata _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 tokenBalance = _token.balanceOf(address(this));
-        if (tokenBalance > 0) {
-            _token.safeTransfer(_msgSender(), tokenBalance);
-        }
     }
 
     function togglePoolStatus(uint256 _pid) external onlyRole(DEFAULT_ADMIN_ROLE) {
