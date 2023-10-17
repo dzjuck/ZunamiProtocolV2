@@ -267,13 +267,6 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
         require(_strategies.length == withdrawalsPercents.length, 'incorrect arguments');
         require(_receiverStrategy < _poolInfo.length, 'incorrect receiver strat');
 
-        uint256[POOL_ASSETS] memory tokenBalance;
-        for (uint256 y = 0; y < POOL_ASSETS; y++) {
-            IERC20Metadata token = _tokens[y];
-            if (address(token) == address(0)) break;
-            tokenBalance[y] = token.balanceOf(address(this));
-        }
-
         uint256 pid;
         uint256 zunamiStables;
         for (uint256 i = 0; i < _strategies.length; i++) {
@@ -285,7 +278,7 @@ abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdmi
         for (uint256 y = 0; y < POOL_ASSETS; y++) {
             IERC20Metadata token = _tokens[y];
             if (address(token) == address(0)) break;
-            tokensRemainder[y] = token.balanceOf(address(this)) - tokenBalance[y];
+            tokensRemainder[y] = token.balanceOf(address(this));
             if (tokensRemainder[y] > 0) {
                 token.safeTransfer(
                     address(_poolInfo[_receiverStrategy].strategy),

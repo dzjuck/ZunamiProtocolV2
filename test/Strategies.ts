@@ -317,7 +317,7 @@ describe('Single strategy tests', () => {
 
         const poolSrc = 0;
         const poolDst = 1;
-        const percentage = 10_000;
+        const percentage = ethers.utils.parseUnits('1', 'ether'); // 1e18
 
         for (let poolId = 0; poolId < 2; poolId++) {
             await zunamiPool.addPool(strategies[poolId].address);
