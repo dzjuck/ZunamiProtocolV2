@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "lint:check": "solhint 'contracts/**/*.sol' && prettier --check './**'",
-    "lint:fix": " prettier --write './**' && solhint --fix 'contracts/**/*.sol'",
+    "lint:fix": "prettier --write './**' && solhint --fix 'contracts/**/*.sol'",
     "compile": "hardhat clean && hardhat compile",
     "contract:size": "hardhat size-contracts;",
     "fork": "hardhat node",

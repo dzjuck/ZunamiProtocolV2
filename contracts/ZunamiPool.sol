@@ -14,7 +14,7 @@ import './interfaces/IPool.sol';
  * @title Zunami Protocol v2
  *
  */
-abstract contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
+contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
     using SafeERC20 for IERC20Metadata;
 
     uint8 public constant POOL_ASSETS = 5;

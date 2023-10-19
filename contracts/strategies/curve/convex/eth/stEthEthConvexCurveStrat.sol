@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '../../../../Constants.sol';
+import '../../../../utils/Constants.sol';
 import './EthConvexCurveStratBase.sol';
 
 contract stEthEthConvexCurveStrat is EthConvexCurveStratBase {
