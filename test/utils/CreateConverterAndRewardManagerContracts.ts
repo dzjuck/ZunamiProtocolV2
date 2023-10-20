@@ -1,15 +1,16 @@
 import { ethers } from 'hardhat';
-import { SellingCurveRewardManager, StableConverter } from '../../typechain-types';
+import { IRewardManager, IStableConverter } from '../../typechain-types';
 
-export async function createConverterAndRewardManagerContracts() {
-    const StableConverterFactory = await ethers.getContractFactory('StableConverter');
-    const stableConverter = (await StableConverterFactory.deploy()) as StableConverter;
+export async function createConverterAndRewardManagerContracts(
+    stableConvertorName: string,
+    rewardManagerName: string
+) {
+    const StableConverterFactory = await ethers.getContractFactory(stableConvertorName);
+    const stableConverter = (await StableConverterFactory.deploy()) as IStableConverter;
 
-    const SellingCurveRewardManagerFactory = await ethers.getContractFactory(
-        'SellingCurveRewardManager'
-    );
+    const SellingCurveRewardManagerFactory = await ethers.getContractFactory(rewardManagerName);
     const rewardManager = (await SellingCurveRewardManagerFactory.deploy(
         stableConverter.address
-    )) as SellingCurveRewardManager;
+    )) as IRewardManager;
     return { stableConverter, rewardManager };
 }

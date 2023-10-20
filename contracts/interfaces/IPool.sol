@@ -6,6 +6,19 @@ import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/I
 import { IStrategy } from './IStrategy.sol';
 
 interface IPool is IERC20 {
+    error WrongDeposit(uint256 pid, uint256[5] amounts);
+    error NoPools();
+    error NotStartedPool(uint256 pid);
+    error NotEnabledPool(uint256 pid);
+    error WrongAmount();
+    error WrongWithdrawParams();
+    error WrongRatio();
+    error ZeroAddress();
+    error DuplicatedPool();
+    error IncorrectArguments();
+    error WrongReceiver();
+    error IncorrectPid();
+
     struct PoolInfo {
         IStrategy strategy;
         uint256 startTime;

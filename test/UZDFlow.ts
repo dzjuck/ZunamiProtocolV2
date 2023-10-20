@@ -1,24 +1,24 @@
-import {ethers} from 'hardhat';
-import {loadFixture} from '@nomicfoundation/hardhat-network-helpers';
-import {BigNumber} from 'ethers';
-import {parseUnits} from 'ethers/lib/utils';
-import {expect} from 'chai';
+import { ethers } from 'hardhat';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { BigNumber } from 'ethers';
+import { parseUnits } from 'ethers/lib/utils';
+import { expect } from 'chai';
 
-import {abi as erc20ABI} from '../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
+import { abi as erc20ABI } from '../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 
-import {increaseChainTime} from './utils/IncreaseChainTime';
-import {mintStables} from './utils/MintStables';
-import {createAndInitConicOracles} from './utils/CreateAndInitConicOracles';
-import {createConverterAndRewardManagerContracts} from './utils/CreateConverterAndRewardManagerContracts';
-import {createStablecoins} from './utils/CreateStablecoins';
-import {createStrategies} from './utils/CreateStrategies';
-import {createPoolAndControllerUZD} from "./utils/CreatePoolAndControllerUZD";
-import {getMinAmountUZD} from "./utils/GetMinAmountUZD";
+import { increaseChainTime } from './utils/IncreaseChainTime';
+import { mintStables } from './utils/MintStables';
+import { createAndInitConicOracles } from './utils/CreateAndInitConicOracles';
+import { createConverterAndRewardManagerContracts } from './utils/CreateConverterAndRewardManagerContracts';
+import { createStablecoins } from './utils/CreateStablecoins';
+import { createStrategies } from './utils/CreateStrategies';
+import { createPoolAndControllerUZD } from './utils/CreatePoolAndControllerUZD';
+import { getMinAmountUZD } from './utils/GetMinAmountUZD';
 
 const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
 const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
-describe('Single strategy tests', () => {
+describe('UZD flow tests', () => {
     const strategyNames = ['UsdcCrvUsdStakeDaoCurve', 'UsdtCrvUsdStakeDaoCurve', 'VaultStrat'];
 
     async function deployFixture() {
@@ -34,7 +34,10 @@ describe('Single strategy tests', () => {
 
         const { zunamiPool, zunamiPoolController } = await createPoolAndControllerUZD();
 
-        const { stableConverter, rewardManager } = await createConverterAndRewardManagerContracts();
+        const { stableConverter, rewardManager } = await createConverterAndRewardManagerContracts(
+            'StableConverter',
+            'SellingCurveRewardManager'
+        );
 
         const strategies = await createStrategies(
             strategyNames,
@@ -57,7 +60,7 @@ describe('Single strategy tests', () => {
                 .approve(zunamiPoolController.address, parseUnits(tokenApprovedAmount, 'mwei'));
         }
 
-      const tokenAmount = '10000';
+        const tokenAmount = '10000';
 
         for (const user of [alice, bob]) {
             await dai.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'ether'));
@@ -98,18 +101,18 @@ describe('Single strategy tests', () => {
                 const daiBefore = await dai.balanceOf(user.getAddress());
                 const usdcBefore = await usdc.balanceOf(user.getAddress());
                 const usdtBefore = await usdt.balanceOf(user.getAddress());
-                const zlpBefore = await zunamiPool.balanceOf(user.getAddress());
+                const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
 
                 await expect(
                     zunamiPoolController
                         .connect(user)
-                        .deposit(getMinAmountUZD(), await user.getAddress())
+                        .deposit(getMinAmountUZD('1000'), await user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 expect(await dai.balanceOf(user.getAddress())).to.lt(daiBefore);
                 expect(await usdc.balanceOf(user.getAddress())).to.lt(usdcBefore);
                 expect(await usdt.balanceOf(user.getAddress())).to.lt(usdtBefore);
-                expect(await zunamiPool.balanceOf(user.getAddress())).to.gt(zlpBefore);
+                expect(await zunamiPool.balanceOf(user.getAddress())).to.gt(zStableBefore);
             }
         }
     });
@@ -126,7 +129,9 @@ describe('Single strategy tests', () => {
 
             for (const user of [alice, bob]) {
                 await expect(
-                    zunamiPoolController.connect(user).deposit(getMinAmountUZD(), user.getAddress())
+                    zunamiPoolController
+                        .connect(user)
+                        .deposit(getMinAmountUZD('1000'), user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 let stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
@@ -158,7 +163,9 @@ describe('Single strategy tests', () => {
             await zunamiPoolController.setDefaultWithdrawPid(i);
 
             await expect(
-                zunamiPoolController.connect(alice).deposit(getMinAmountUZD(), admin.getAddress())
+                zunamiPoolController
+                    .connect(alice)
+                    .deposit(getMinAmountUZD('1000'), admin.getAddress())
             ).to.emit(zunamiPool, 'Deposited');
         }
 
@@ -208,7 +215,7 @@ describe('Single strategy tests', () => {
 
         await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.eq(0);
         await expect(
-            zunamiPoolController.connect(alice).deposit(getMinAmountUZD(), admin.getAddress())
+            zunamiPoolController.connect(alice).deposit(getMinAmountUZD('1000'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
         await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.gt(0);
 

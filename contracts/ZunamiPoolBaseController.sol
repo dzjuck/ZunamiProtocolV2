@@ -14,6 +14,9 @@ import './utils/Constants.sol';
 contract ZunamiPoolBaseController is Pausable, AccessControlDefaultAdminRules {
     using SafeERC20 for IERC20Metadata;
 
+    error ZeroAddress();
+    error WrongPid();
+
     uint8 public constant POOL_ASSETS = 5;
 
     uint256 public defaultDepositPid;
@@ -30,7 +33,7 @@ contract ZunamiPoolBaseController is Pausable, AccessControlDefaultAdminRules {
     event SetRewardTokens(IERC20Metadata[] rewardTokens);
 
     constructor(address pool_) AccessControlDefaultAdminRules(24 hours, msg.sender) {
-        require(pool_ != address(0), 'Zero pool');
+        if (pool_ == address(0)) revert ZeroAddress();
 
         rewardCollector = msg.sender;
 
@@ -46,14 +49,14 @@ contract ZunamiPoolBaseController is Pausable, AccessControlDefaultAdminRules {
     }
 
     function setDefaultDepositPid(uint256 _newPoolId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_newPoolId < pool.poolCount(), 'wrong pid');
+        if (_newPoolId >= pool.poolCount()) revert WrongPid();
 
         defaultDepositPid = _newPoolId;
         emit SetDefaultDepositPid(_newPoolId);
     }
 
     function setDefaultWithdrawPid(uint256 _newPoolId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_newPoolId < pool.poolCount(), 'wrong pid');
+        if (_newPoolId >= pool.poolCount()) revert WrongPid();
 
         defaultWithdrawPid = _newPoolId;
         emit SetDefaultWithdrawPid(_newPoolId);

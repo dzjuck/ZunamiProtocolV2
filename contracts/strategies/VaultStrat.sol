@@ -78,12 +78,14 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
 
     function transferPortionTokensTo(address withdrawer, uint256 userDepositRatio) internal {
         uint256 transferAmountOut;
+        IERC20Metadata[5] memory tokens = zunamiPool.tokens();
+        IERC20Metadata token_;
         for (uint256 i = 0; i < 5; i++) {
-            transferAmountOut =
-                (zunamiPool.tokens()[i].balanceOf(address(this)) * userDepositRatio) /
-                1e18;
+            token_ = tokens[i];
+            if (address(token_) == address(0)) break;
+            transferAmountOut = (token_.balanceOf(address(this)) * userDepositRatio) / 1e18;
             if (transferAmountOut > 0) {
-                zunamiPool.tokens()[i].safeTransfer(withdrawer, transferAmountOut);
+                token_.safeTransfer(withdrawer, transferAmountOut);
             }
         }
     }

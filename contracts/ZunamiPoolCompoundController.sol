@@ -22,6 +22,11 @@ contract ZunamiPoolCompoundController is
 {
     using SafeERC20 for IERC20Metadata;
 
+    error ZeroAddress();
+    error WrongPid();
+    error WrongFee();
+    error FeeMustBeWithdrawn();
+
     uint256 public constant FEE_DENOMINATOR = 1000;
     uint256 public constant MAX_FEE = 300; // 30%
 
@@ -65,7 +70,7 @@ contract ZunamiPoolCompoundController is
         ERC20Permit(name_)
         AccessControlDefaultAdminRules(24 hours, msg.sender)
     {
-        require(pool_ != address(0), 'Zero pool');
+        if (pool_ == address(0)) revert ZeroAddress();
 
         feeDistributor = msg.sender;
 
@@ -86,27 +91,27 @@ contract ZunamiPoolCompoundController is
     }
 
     function setManagementFee(uint256 newManagementFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newManagementFee <= MAX_FEE, 'wrong fee');
+        if (newManagementFee > MAX_FEE) revert WrongFee();
         emit ManagementFeeSet(managementFee, newManagementFee);
         managementFee = newManagementFee;
     }
 
     function setDefaultDepositPid(uint256 _newPoolId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_newPoolId < pool.poolCount(), 'wrong pid');
+        if (_newPoolId >= pool.poolCount()) revert WrongPid();
 
         defaultDepositPid = _newPoolId;
         emit SetDefaultDepositPid(_newPoolId);
     }
 
     function setDefaultWithdrawPid(uint256 _newPoolId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_newPoolId < pool.poolCount(), 'wrong pid');
+        if (_newPoolId >= pool.poolCount()) revert WrongPid();
 
         defaultWithdrawPid = _newPoolId;
         emit SetDefaultWithdrawPid(_newPoolId);
     }
 
     function setFeeTokenId(uint256 _tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(managementFees == 0, 'Withdraw fee');
+        if (managementFees != 0) revert FeeMustBeWithdrawn();
 
         feeTokenId = _tokenId;
         emit SetFeeTokenId(_tokenId);
@@ -125,7 +130,7 @@ contract ZunamiPoolCompoundController is
     }
 
     function claimManagementFee() external {
-        IERC20Metadata feeToken_ = IERC20Metadata(Constants.USDC_ADDRESS);
+        IERC20Metadata feeToken_ = IERC20Metadata(pool.tokens()[feeTokenId]);
         uint256 managementFees_ = managementFees;
         uint256 feeTokenBalance = feeToken_.balanceOf(address(this));
         uint256 transferBalance = managementFees_ > feeTokenBalance
@@ -136,7 +141,7 @@ contract ZunamiPoolCompoundController is
         }
         managementFees = 0;
 
-        emit ClaimedManagementFee(Constants.USDC_ADDRESS, transferBalance);
+        emit ClaimedManagementFee(address(feeToken_), transferBalance);
     }
 
     function autoCompoundAll() external {
@@ -144,8 +149,11 @@ contract ZunamiPoolCompoundController is
 
         sellRewards();
 
+        IERC20Metadata feeToken = pool.tokens()[feeTokenId];
         uint256[POOL_ASSETS] memory amounts;
-        amounts[feeTokenId] = pool.tokens()[feeTokenId].balanceOf(address(this)) - managementFees;
+        amounts[feeTokenId] = feeToken.balanceOf(address(this)) - managementFees;
+        feeToken.safeTransfer(address(pool), amounts[feeTokenId]);
+
         uint256 depositedValue = pool.deposit(defaultDepositPid, amounts, address(this));
 
         emit AutoCompoundedAll(depositedValue);
