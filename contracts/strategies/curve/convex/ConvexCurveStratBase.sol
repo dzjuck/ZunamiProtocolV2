@@ -8,6 +8,8 @@ import './interfaces/IConvexBooster.sol';
 abstract contract ConvexCurveStratBase is CurveStratBase {
     using SafeERC20 for IERC20Metadata;
 
+    error WrongBoosterDepositAll();
+
     uint256 public immutable cvxPID;
     IConvexBooster public immutable cvxBooster;
     IConvexRewards public immutable cvxRewards;
@@ -27,7 +29,7 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
 
     function depositLiquidity(uint256 amount) internal override {
         poolToken.safeIncreaseAllowance(address(cvxBooster), amount);
-        cvxBooster.depositAll(cvxPID, true);
+        if (!cvxBooster.depositAll(cvxPID, true)) revert WrongBoosterDepositAll();
     }
 
     function removeLiquidity(

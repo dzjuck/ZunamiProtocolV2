@@ -39,11 +39,15 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     function totalHoldings() public view virtual returns (uint256) {
         uint256 poolHoldings = calcLiquidityValue(getLiquidityBalance());
 
-        uint256 tokensHoldings = 0;
-        for (uint256 i = 0; i < 3; i++) {
-            tokensHoldings +=
-                zunamiPool.tokens()[i].balanceOf(address(this)) *
-                zunamiPool.tokenDecimalsMultipliers()[i];
+        IERC20Metadata[5] memory tokens = zunamiPool.tokens();
+        uint256[5] memory tokenDecimalsMultipliers = zunamiPool.tokenDecimalsMultipliers();
+
+        IERC20Metadata token_;
+        uint256 tokensHoldings;
+        for (uint256 i = 0; i < 5; i++) {
+            token_ = tokens[i];
+            if (address(token_) == address(0)) break;
+            tokensHoldings += token_.balanceOf(address(this)) * tokenDecimalsMultipliers[i];
         }
 
         return tokensHoldings + poolHoldings;
@@ -65,12 +69,12 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
     function withdraw(
         address receiver,
-        uint256 poolTokenRation, // multiplied by 1e18
+        uint256 poolTokenRatio, // multiplied by 1e18
         uint256[5] memory tokenAmounts
     ) external virtual onlyZunamiPool returns (bool) {
-        require(poolTokenRation > 0 && poolTokenRation <= 1e18, 'Wrong PoolToken Ratio');
+        require(poolTokenRatio > 0 && poolTokenRatio <= 1e18, 'Wrong PoolToken Ratio');
         (bool success, uint256 poolTokenAmount) = calcLiquidityTokenAmount(
-            poolTokenRation,
+            poolTokenRatio,
             tokenAmounts
         );
 
@@ -93,7 +97,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     }
 
     function calcLiquidityTokenAmount(
-        uint256 poolTokenRation, // multiplied by 1e18
+        uint256 poolTokenRatio, // multiplied by 1e18
         uint256[5] memory tokenAmounts
     ) internal virtual returns (bool success, uint256 removingCrvLps);
 

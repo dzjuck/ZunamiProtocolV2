@@ -12,8 +12,8 @@ library Constants {
     address internal constant CRV_ADDRESS = 0xD533a949740bb3306d119CC777fa900bA034cd52;
     address internal constant FXS_ADDRESS = 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
     address internal constant SPELL_ADDRESS = 0x090185f2135308BaD17527004364eBcC2D37e5F6;
-    address internal constant UZD_ADDRESS = address(0);
-    address internal constant ZETH_ADDRESS = address(0);
+    address internal constant UZD_ADDRESS = address(0); // Be added after deployment of UZD v2 pool
+    address internal constant ZETH_ADDRESS = address(0); // Be added after deployment of ZETH v2 pool
 
     address internal constant CRV_3POOL_ADDRESS = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
     address internal constant CRV_3POOL_LP_ADDRESS = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;

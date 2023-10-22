@@ -7,33 +7,20 @@ import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
-import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
 import './interfaces/IRewardManager.sol';
+import './ZunamiPoolControllerBase.sol';
 
-import './utils/Constants.sol';
-
-contract ZunamiPoolCompoundController is
-    ERC20,
-    ERC20Permit,
-    Pausable,
-    AccessControlDefaultAdminRules
-{
+contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControllerBase {
     using SafeERC20 for IERC20Metadata;
 
-    error ZeroAddress();
-    error WrongPid();
     error WrongFee();
     error FeeMustBeWithdrawn();
 
     uint256 public constant FEE_DENOMINATOR = 1000;
     uint256 public constant MAX_FEE = 300; // 30%
-
-    uint8 public constant POOL_ASSETS = 5;
-
-    uint256 public defaultDepositPid;
-    uint256 public defaultWithdrawPid;
 
     uint256 public managementFee = 100; // 10%
 
@@ -44,48 +31,26 @@ contract ZunamiPoolCompoundController is
 
     IRewardManager public rewardManager;
 
-    IPool public pool;
-    IERC20Metadata[] public rewardTokens;
-
     event ManagementFeeSet(uint256 oldManagementFee, uint256 newManagementFee);
     event FeeDistributorChanged(address oldFeeDistributor, address newFeeDistributor);
-    event SetDefaultDepositPid(uint256 pid);
-    event SetDefaultWithdrawPid(uint256 pid);
     event SetFeeTokenId(uint256 tid);
     event SetRewardManager(address rewardManager);
     event ClaimedManagementFee(address feeToken, uint256 feeValue);
     event AutoCompoundedAll(uint256 compoundedValue);
-    event SetRewardTokens(IERC20Metadata[] rewardTokens);
-
-    event Deposited(address indexed receiver, uint256 depositedValue, uint256 shares, uint256 pid);
-
-    event Withdrawn(address indexed withdrawer, uint256 withdrawn, uint256 pid);
+    event Deposited(address indexed receiver, uint256 assets, uint256 shares, uint256 sid);
+    event Withdrawn(address indexed withdrawer, uint256 shares, uint256 assets, uint256 sid);
 
     constructor(
         address pool_,
         string memory name_,
         string memory symbol_
-    )
-        ERC20(name_, symbol_)
-        ERC20Permit(name_)
-        AccessControlDefaultAdminRules(24 hours, msg.sender)
-    {
-        if (pool_ == address(0)) revert ZeroAddress();
-
+    ) ERC20(name_, symbol_) ERC20Permit(name_) ZunamiPoolControllerBase(pool_) {
         feeDistributor = msg.sender;
-
-        pool = IPool(pool_);
-    }
-
-    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _pause();
-    }
-
-    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _unpause();
     }
 
     function setRewardManager(address rewardManagerAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (rewardManagerAddr == address(0)) revert ZeroAddress();
+
         rewardManager = IRewardManager(rewardManagerAddr);
         emit SetRewardManager(rewardManagerAddr);
     }
@@ -96,32 +61,11 @@ contract ZunamiPoolCompoundController is
         managementFee = newManagementFee;
     }
 
-    function setDefaultDepositPid(uint256 _newPoolId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_newPoolId >= pool.poolCount()) revert WrongPid();
-
-        defaultDepositPid = _newPoolId;
-        emit SetDefaultDepositPid(_newPoolId);
-    }
-
-    function setDefaultWithdrawPid(uint256 _newPoolId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_newPoolId >= pool.poolCount()) revert WrongPid();
-
-        defaultWithdrawPid = _newPoolId;
-        emit SetDefaultWithdrawPid(_newPoolId);
-    }
-
     function setFeeTokenId(uint256 _tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (managementFees != 0) revert FeeMustBeWithdrawn();
 
         feeTokenId = _tokenId;
         emit SetFeeTokenId(_tokenId);
-    }
-
-    function setRewardTokens(
-        IERC20Metadata[] memory rewardTokens_
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        rewardTokens = rewardTokens_;
-        emit SetRewardTokens(rewardTokens);
     }
 
     function changeFeeDistributor(address _feeDistributor) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -145,7 +89,7 @@ contract ZunamiPoolCompoundController is
     }
 
     function autoCompoundAll() external {
-        pool.claimRewards(address(this), rewardTokens);
+        claimPoolRewards(address(this));
 
         sellRewards();
 
@@ -154,7 +98,7 @@ contract ZunamiPoolCompoundController is
         amounts[feeTokenId] = feeToken.balanceOf(address(this)) - managementFees;
         feeToken.safeTransfer(address(pool), amounts[feeTokenId]);
 
-        uint256 depositedValue = pool.deposit(defaultDepositPid, amounts, address(this));
+        uint256 depositedValue = pool.deposit(defaultDepositSid, amounts, address(this));
 
         emit AutoCompoundedAll(depositedValue);
     }
@@ -182,7 +126,7 @@ contract ZunamiPoolCompoundController is
         for (uint256 i = 0; i < rewardsLength_; i++) {
             if (rewardBalances[i] == 0) continue;
             rewardToken_ = rewardTokens[i];
-            rewardToken_.transfer(address(rewardManager_), rewardBalances[i]);
+            rewardToken_.safeTransfer(address(rewardManager_), rewardBalances[i]);
             rewardManager_.handle(address(rewardToken_), rewardBalances[i], address(feeToken_));
         }
 
@@ -203,52 +147,33 @@ contract ZunamiPoolCompoundController is
         return (_holdings * 1e18) / _tokens;
     }
 
-    function deposit(
+    function depositPool(
         uint256[POOL_ASSETS] memory amounts,
         address receiver
-    ) external whenNotPaused returns (uint256 shares) {
-        if (receiver == address(0)) {
-            receiver = _msgSender();
-        }
-
+    ) internal override returns (uint256 shares) {
         uint256 stableBefore = pool.balanceOf(address(this));
 
-        for (uint256 i = 0; i < amounts.length; i++) {
-            if (amounts[i] > 0) {
-                IERC20Metadata(pool.tokens()[i]).safeTransferFrom(
-                    _msgSender(),
-                    address(pool),
-                    amounts[i]
-                );
-            }
-        }
-
-        uint256 depositedValue = pool.deposit(defaultDepositPid, amounts, address(this));
+        uint256 assets = super.depositPool(amounts, address(this));
 
         if (totalSupply() == 0) {
-            shares = depositedValue;
+            shares = assets;
         } else {
-            shares = (totalSupply() * depositedValue) / stableBefore;
+            shares = (totalSupply() * assets) / stableBefore;
         }
 
-        emit Deposited(receiver, depositedValue, shares, defaultDepositPid);
         _mint(receiver, shares);
+        emit Deposited(receiver, assets, shares, defaultDepositSid);
     }
 
-    function withdraw(
+    function withdrawPool(
+        address user,
         uint256 shares,
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
-    ) external whenNotPaused {
-        uint256 withdrawAmount = (pool.balanceOf(address(this)) * shares) / totalSupply();
-        IERC20Metadata(address(pool)).safeIncreaseAllowance(address(pool), withdrawAmount);
-        pool.withdraw(defaultWithdrawPid, withdrawAmount, minTokenAmounts, receiver);
-    }
-
-    function withdrawStuckToken(IERC20Metadata _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 tokenBalance = _token.balanceOf(address(this));
-        if (tokenBalance > 0) {
-            _token.safeTransfer(_msgSender(), tokenBalance);
-        }
+    ) internal override {
+        uint256 assets = (pool.balanceOf(address(this)) * shares) / totalSupply();
+        super.withdrawPool(user, assets, minTokenAmounts, receiver);
+        _burn(user, shares);
+        emit Withdrawn(user, shares, assets, defaultWithdrawSid);
     }
 }

@@ -64,10 +64,6 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
         ] = 0x8c110B94C5f1d347fAcF5E1E938AB2db60E3c9a8; // https://data.chain.link/ethereum/mainnet/crypto-usd/spell-usd
     }
 
-    receive() external payable {
-        // receive ETH on conversion
-    }
-
     function handle(address reward, uint256 amount, address) external {
         if (amount == 0) return;
 
@@ -78,11 +74,11 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
         (uint256 i, uint256 j) = getExchangeIndexes(reward);
         rewardEthPool.exchange(i, j, amount, 0);
 
-        uint256 wethAmount = IERC20Metadata(Constants.WETH_ADDRESS).balanceOf(address(this));
+        IERC20Metadata wethErc = IERC20Metadata(Constants.WETH_ADDRESS);
+        uint256 wethAmount = wethErc.balanceOf(address(this));
 
-        unwrapWETH(wethAmount);
-
-        uint256 frxEthAmount = frxEthConverter.handle{ value: wethAmount }(true, wethAmount, 0);
+        wethErc.safeTransfer(address(frxEthConverter), wethAmount);
+        uint256 frxEthAmount = frxEthConverter.handle(true, wethAmount, 0);
 
         checkSlippage(reward, amount, frxEthAmount);
 
@@ -118,7 +114,7 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 answer, , uint256 updatedAt, ) = oracle.latestRoundData();
             require(block.timestamp - updatedAt <= STALE_DELAY, 'Oracle stale');
 
-            wethAmountByOracle = (uint256(answer) * amount) / 1e18;
+            wethAmountByOracle = (uint256(answer) * amount);
         } else {
             AggregatorV2V3Interface rewardOracle = AggregatorV2V3Interface(
                 rewardUsdChainlinkOracles[reward]
@@ -131,15 +127,11 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 ethAnswer, , uint256 ethUpdatedAt, ) = ethOracle.latestRoundData();
             require(block.timestamp - ethUpdatedAt <= STALE_DELAY, 'Oracle eth stale');
 
-            wethAmountByOracle = (uint256(rewardAnswer) * amount) / uint256(ethAnswer);
+            wethAmountByOracle = (uint256(rewardAnswer) * amount * 1e18) / uint256(ethAnswer);
         }
 
         uint256 wethAmountByOracleWithSlippage = (wethAmountByOracle *
             (SLIPPAGE_DENOMINATOR - defaultSlippage)) / SLIPPAGE_DENOMINATOR;
-        require(wethAmount >= wethAmountByOracleWithSlippage, 'Wrong slippage');
-    }
-
-    function unwrapWETH(uint256 amount) internal {
-        weth.withdraw(amount);
+        require(wethAmount >= wethAmountByOracleWithSlippage / 1e18, 'Wrong slippage');
     }
 }

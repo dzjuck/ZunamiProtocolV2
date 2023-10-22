@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 interface ICurveMetaRegistry {
     event CommitNewAdmin(uint256 indexed deadline, address indexed admin);

@@ -70,10 +70,10 @@ abstract contract CurveStratBase is ZunamiStratBase {
     }
 
     function calcLiquidityTokenAmount(
-        uint256 poolTokenRation, // multiplied by 1e18
+        uint256 poolTokenRatio, // multiplied by 1e18
         uint256[5] memory minTokenAmounts
     ) internal view override returns (bool success, uint256 poolTokenAmount) {
-        poolTokenAmount = (getLiquidityBalance() * poolTokenRation) / 1e18;
+        poolTokenAmount = (getLiquidityBalance() * poolTokenRatio) / 1e18;
         success = poolTokenAmount >= this.calcTokenAmount(minTokenAmounts, false);
     }
 

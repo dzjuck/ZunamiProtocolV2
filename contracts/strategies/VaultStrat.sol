@@ -10,11 +10,11 @@ import './ZunamiPoolOwnable.sol';
 contract VaultStrat is IStrategy, ZunamiPoolOwnable {
     using SafeERC20 for IERC20Metadata;
 
-    error WrongRation(uint256 userDepositRatio);
+    error WrongRatio(uint256 userDepositRatio);
 
     function deposit(uint256[5] memory amounts) external returns (uint256) {
         uint256 depositedAmount;
-        for (uint256 i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             if (amounts[i] > 0) {
                 depositedAmount += amounts[i] * zunamiPool.tokenDecimalsMultipliers()[i];
             }
@@ -26,10 +26,10 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
     function withdraw(
         address receiver,
         uint256 userDepositRatio, // multiplied by 1e18
-        uint256[5] memory minTokenAmounts
+        uint256[5] memory
     ) external onlyZunamiPool returns (bool) {
         if (userDepositRatio == 0 || userDepositRatio > PRICE_DENOMINATOR)
-            revert WrongRation(userDepositRatio);
+            revert WrongRatio(userDepositRatio);
 
         transferPortionTokensTo(receiver, userDepositRatio);
 
@@ -57,10 +57,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         IERC20Metadata[] memory rewardTokens
     ) external onlyZunamiPool {}
 
-    function calcTokenAmount(
-        uint256[5] memory tokenAmounts,
-        bool isDeposit
-    ) external view returns (uint256 sharesAmount) {
+    function calcTokenAmount(uint256[5] memory, bool) external view returns (uint256) {
         return 0;
     }
 

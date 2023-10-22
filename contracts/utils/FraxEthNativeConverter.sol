@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './Constants.sol';
 import '../interfaces/ICurvePool2Native.sol';
 import '../interfaces/INativeConverter.sol';
+import '../interfaces/IWETH.sol';
 
 contract FraxEthNativeConverter is INativeConverter {
     using SafeERC20 for IERC20Metadata;
@@ -21,6 +22,8 @@ contract FraxEthNativeConverter is INativeConverter {
 
     uint256 public constant defaultSlippage = 30; // 0.3%
 
+    IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
+
     constructor() {
         fraxEthPool = ICurvePool2Native(Constants.ETH_frxETH_ADDRESS);
     }
@@ -33,10 +36,11 @@ contract FraxEthNativeConverter is INativeConverter {
         bool buyToken,
         uint256 amount,
         uint256 slippage
-    ) public payable returns (uint256 tokenAmount) {
+    ) public returns (uint256 tokenAmount) {
         if (amount == 0) return 0;
 
         if (buyToken) {
+            unwrapWETH(tokenAmount);
             tokenAmount = fraxEthPool.exchange{ value: amount }(
                 ETH_frxETH_POOL_ETH_ID,
                 ETH_frxETH_POOL_frxETH_ID,
@@ -55,8 +59,8 @@ contract FraxEthNativeConverter is INativeConverter {
                 applySlippage(amount, slippage)
             );
 
-            (bool sent, ) = address(msg.sender).call{ value: tokenAmount }('');
-            require(sent, 'Failed to send Ether');
+            wrapETH(tokenAmount);
+            IERC20Metadata(Constants.WETH_ADDRESS).safeTransfer(address(msg.sender), tokenAmount);
         }
     }
 
@@ -72,5 +76,13 @@ contract FraxEthNativeConverter is INativeConverter {
         if (slippage == 0) slippage = defaultSlippage;
         uint256 value = (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
         return value;
+    }
+
+    function unwrapWETH(uint256 amount) internal {
+        weth.withdraw(amount);
+    }
+
+    function wrapETH(uint256 amount) internal {
+        weth.deposit{ value: amount }();
     }
 }

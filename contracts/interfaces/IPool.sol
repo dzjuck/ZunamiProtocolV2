@@ -6,20 +6,21 @@ import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/I
 import { IStrategy } from './IStrategy.sol';
 
 interface IPool is IERC20 {
-    error WrongDeposit(uint256 pid, uint256[5] amounts);
-    error NoPools();
-    error NotStartedPool(uint256 pid);
-    error NotEnabledPool(uint256 pid);
+    error WrongDeposit(uint256 sid, uint256[5] amounts);
+    error NoStrategies();
+    error NotStartedStrategy(uint256 sid);
+    error NotEnabledStrategy(uint256 sid);
     error WrongAmount();
-    error WrongWithdrawParams();
+    error WrongWithdrawParams(uint256 sid);
     error WrongRatio();
     error ZeroAddress();
-    error DuplicatedPool();
+    error DuplicatedStrategy();
     error IncorrectArguments();
     error WrongReceiver();
-    error IncorrectPid();
+    error IncorrectSid();
+    error WrongLength();
 
-    struct PoolInfo {
+    struct StrategyInfo {
         IStrategy strategy;
         uint256 startTime;
         uint256 deposited;
@@ -31,19 +32,19 @@ interface IPool is IERC20 {
         uint256 depositedValue,
         uint256[5] amounts,
         uint256 deposited,
-        uint256 pid
+        uint256 indexed sid
     );
 
-    event Withdrawn(address indexed withdrawer, uint256 withdrawn, uint256 pid);
+    event Withdrawn(address indexed withdrawer, uint256 withdrawn, uint256 indexed sid);
 
     event FailedWithdrawal(address indexed withdrawer, uint256[5] amounts, uint256 withdrawn);
 
-    event AddedPool(uint256 pid, address strategyAddr, uint256 startTime);
-    event ClaimedRewards(address receiver, IERC20Metadata[] rewardTokens);
-    event ToggledEnabledPoolStatus(address pool, bool newStatus);
+    event AddedStrategy(uint256 indexed sid, address indexed strategyAddr, uint256 startTime);
+    event ClaimedRewards(address indexed receiver, IERC20Metadata[] rewardTokens);
+    event ToggledEnabledStrategyStatus(address indexed pool, bool newStatus);
     event UpdatedToken(
-        uint256 tid,
-        address token,
+        uint256 indexed tid,
+        address indexed token,
         uint256 tokenDecimalMultiplier,
         address tokenOld
     );
@@ -52,22 +53,22 @@ interface IPool is IERC20 {
 
     function tokenDecimalsMultipliers() external view returns (uint256[5] memory);
 
-    function poolInfo(uint256 pid) external view returns (PoolInfo memory);
+    function strategyInfo(uint256 sid) external view returns (StrategyInfo memory);
 
     function claimRewards(address receiver, IERC20Metadata[] memory rewardTokens) external;
 
     function totalHoldings() external view returns (uint256);
 
-    function poolCount() external view returns (uint256);
+    function strategyCount() external view returns (uint256);
 
     function deposit(
-        uint256 pid,
+        uint256 sid,
         uint256[5] memory amounts,
         address receiver
     ) external returns (uint256);
 
     function withdraw(
-        uint256 pid,
+        uint256 sid,
         uint256 stableAmount,
         uint256[5] memory minTokenAmounts,
         address receiver

@@ -179,10 +179,10 @@ describe('UZD flow aps tests', () => {
 
         for (let i = 0; i < strategies.length; i++) {
             const strategy = strategies[i];
-            await zunamiPool.addPool(strategy.address);
+            await zunamiPool.addStrategy(strategy.address);
 
-            await zunamiPoolController.setDefaultDepositPid(i);
-            await zunamiPoolController.setDefaultWithdrawPid(i);
+            await zunamiPoolController.setDefaultDepositSid(i);
+            await zunamiPoolController.setDefaultWithdrawSid(i);
 
             await expect(
                 zunamiPoolController
@@ -193,10 +193,10 @@ describe('UZD flow aps tests', () => {
 
         for (let i = 0; i < strategiesAps.length; i++) {
             const strategy = strategiesAps[i];
-            await zunamiPoolAps.addPool(strategy.address);
+            await zunamiPoolAps.addStrategy(strategy.address);
 
-            await zunamiPoolControllerAps.setDefaultDepositPid(i);
-            await zunamiPoolControllerAps.setDefaultWithdrawPid(i);
+            await zunamiPoolControllerAps.setDefaultDepositSid(i);
+            await zunamiPoolControllerAps.setDefaultWithdrawSid(i);
 
             const zStableBalance = parseUnits('10000', 'ether');
 
@@ -259,6 +259,27 @@ describe('UZD flow aps tests', () => {
                 balance = await token.balanceOf(strategy.address);
                 expect(balance).to.eq(0);
             }
+        }
+
+        for (let i = 0; i < strategiesAps.length; i++) {
+            let sharesAmount = BigNumber.from(
+                await zunamiPoolControllerAps.balanceOf(admin.getAddress())
+            );
+            expect(sharesAmount).to.gt(0);
+
+            let assetsBefore = BigNumber.from(await zunamiPool.balanceOf(admin.getAddress()));
+
+            await expect(
+                zunamiPoolControllerAps.withdraw(sharesAmount, [0, 0, 0, 0, 0], admin.getAddress())
+            ).to.emit(zunamiPoolAps, 'Withdrawn');
+            sharesAmount = BigNumber.from(
+                await zunamiPoolControllerAps.balanceOf(admin.getAddress())
+            );
+            expect(sharesAmount).to.eq(0);
+
+            expect(
+                BigNumber.from(await zunamiPool.balanceOf(admin.getAddress())).sub(assetsBefore)
+            ).to.gt(0);
         }
     });
 });

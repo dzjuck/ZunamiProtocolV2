@@ -93,9 +93,9 @@ describe('UZD flow tests', () => {
             await loadFixture(deployFixture);
 
         for (let poolId = 0; poolId < strategies.length; poolId++) {
-            await zunamiPool.addPool(strategies[poolId].address);
-            await zunamiPoolController.setDefaultDepositPid(poolId);
-            await zunamiPoolController.setDefaultWithdrawPid(poolId);
+            await zunamiPool.addStrategy(strategies[poolId].address);
+            await zunamiPoolController.setDefaultDepositSid(poolId);
+            await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
             for (const user of [admin, alice, bob]) {
                 const daiBefore = await dai.balanceOf(user.getAddress());
@@ -123,9 +123,9 @@ describe('UZD flow tests', () => {
         );
 
         for (let poolId = 0; poolId < strategies.length; poolId++) {
-            await zunamiPool.addPool(strategies[poolId].address);
-            await zunamiPoolController.setDefaultDepositPid(poolId);
-            await zunamiPoolController.setDefaultWithdrawPid(poolId);
+            await zunamiPool.addStrategy(strategies[poolId].address);
+            await zunamiPoolController.setDefaultDepositSid(poolId);
+            await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
             for (const user of [alice, bob]) {
                 await expect(
@@ -157,10 +157,10 @@ describe('UZD flow tests', () => {
 
         for (let i = 0; i < strategies.length; i++) {
             const strategy = strategies[i];
-            await zunamiPool.addPool(strategy.address);
+            await zunamiPool.addStrategy(strategy.address);
 
-            await zunamiPoolController.setDefaultDepositPid(i);
-            await zunamiPoolController.setDefaultWithdrawPid(i);
+            await zunamiPoolController.setDefaultDepositSid(i);
+            await zunamiPoolController.setDefaultWithdrawSid(i);
 
             await expect(
                 zunamiPoolController
@@ -207,52 +207,52 @@ describe('UZD flow tests', () => {
         const percentage = ethers.utils.parseUnits('1', 'ether'); // 1e18
 
         for (let poolId = 0; poolId < 2; poolId++) {
-            await zunamiPool.addPool(strategies[poolId].address);
+            await zunamiPool.addStrategy(strategies[poolId].address);
         }
 
-        await zunamiPoolController.setDefaultDepositPid(poolSrc);
-        await zunamiPoolController.setDefaultWithdrawPid(poolSrc);
+        await zunamiPoolController.setDefaultDepositSid(poolSrc);
+        await zunamiPoolController.setDefaultWithdrawSid(poolSrc);
 
-        await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.eq(0);
+        await expect((await zunamiPool.strategyInfo(poolSrc)).deposited).to.be.eq(0);
         await expect(
             zunamiPoolController.connect(alice).deposit(getMinAmountUZD('1000'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
-        await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.gt(0);
+        await expect((await zunamiPool.strategyInfo(poolSrc)).deposited).to.be.gt(0);
 
         console.log(
-            '(await zunamiPool.poolInfo(poolSrc)).deposited',
-            (await zunamiPool.poolInfo(poolSrc)).deposited
+            '(await zunamiPool.strategyInfo(poolSrc)).deposited',
+            (await zunamiPool.strategyInfo(poolSrc)).deposited
         );
         console.log(
-            '(await zunamiPool.poolInfo(poolDst)).deposited',
-            (await zunamiPool.poolInfo(poolDst)).deposited
+            '(await zunamiPool.strategyInfo(poolDst)).deposited',
+            (await zunamiPool.strategyInfo(poolDst)).deposited
         );
-        await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.gt(0);
-        await expect((await zunamiPool.poolInfo(poolDst)).deposited).to.be.eq(0);
+        await expect((await zunamiPool.strategyInfo(poolSrc)).deposited).to.be.gt(0);
+        await expect((await zunamiPool.strategyInfo(poolDst)).deposited).to.be.eq(0);
         await expect(zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst));
-        await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.eq(0);
-        await expect((await zunamiPool.poolInfo(poolDst)).deposited).to.be.gt(0);
+        await expect((await zunamiPool.strategyInfo(poolSrc)).deposited).to.be.eq(0);
+        await expect((await zunamiPool.strategyInfo(poolDst)).deposited).to.be.gt(0);
 
         console.log(
-            '(await zunamiPool.poolInfo(poolSrc)).deposited',
-            (await zunamiPool.poolInfo(poolSrc)).deposited
+            '(await zunamiPool.strategyInfo(poolSrc)).deposited',
+            (await zunamiPool.strategyInfo(poolSrc)).deposited
         );
         console.log(
-            '(await zunamiPool.poolInfo(poolDst)).deposited',
-            (await zunamiPool.poolInfo(poolDst)).deposited
+            '(await zunamiPool.strategyInfo(poolDst)).deposited',
+            (await zunamiPool.strategyInfo(poolDst)).deposited
         );
 
         await expect(zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc));
-        await expect((await zunamiPool.poolInfo(poolSrc)).deposited).to.be.gt(0);
-        await expect((await zunamiPool.poolInfo(poolDst)).deposited).to.be.eq(0);
+        await expect((await zunamiPool.strategyInfo(poolSrc)).deposited).to.be.gt(0);
+        await expect((await zunamiPool.strategyInfo(poolDst)).deposited).to.be.eq(0);
 
         console.log(
-            '(await zunamiPool.poolInfo(poolSrc)).deposited',
-            (await zunamiPool.poolInfo(poolSrc)).deposited
+            '(await zunamiPool.strategyInfo(poolSrc)).deposited',
+            (await zunamiPool.strategyInfo(poolSrc)).deposited
         );
         console.log(
-            '(await zunamiPool.poolInfo(poolDst)).deposited',
-            (await zunamiPool.poolInfo(poolDst)).deposited
+            '(await zunamiPool.strategyInfo(poolDst)).deposited',
+            (await zunamiPool.strategyInfo(poolDst)).deposited
         );
     });
 });

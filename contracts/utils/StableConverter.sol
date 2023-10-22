@@ -12,10 +12,9 @@ contract StableConverter is IStableConverter {
     using SafeERC20 for IERC20Metadata;
 
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
+    uint256 public constant DEFAULT_SLIPPAGE = 30; // 0.3%
 
     ICurvePool public immutable curve3Pool;
-
-    uint256 public constant defaultSlippage = 30; // 0.3%
 
     mapping(address => int128) public curve3PoolStableIndex;
     mapping(address => int8) public curve3PoolStableDecimals;
@@ -63,10 +62,13 @@ contract StableConverter is IStableConverter {
         int8 decimalsDiff
     ) internal pure returns (uint256) {
         require(slippage <= SLIPPAGE_DENOMINATOR, 'Wrong slippage');
-        if (slippage == 0) slippage = defaultSlippage;
-        uint256 value = (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
-        if (decimalsDiff == 0) return value;
-        if (decimalsDiff < 0) return value / (10 ** uint8(decimalsDiff * (-1)));
-        return value * (10 ** uint8(decimalsDiff));
+        if (slippage == 0) slippage = DEFAULT_SLIPPAGE;
+        uint256 value = (amount * (SLIPPAGE_DENOMINATOR - slippage));
+        if (decimalsDiff < 0) {
+            value = value / (10 ** uint8(decimalsDiff * (-1)));
+        } else {
+            value = value * (10 ** uint8(decimalsDiff));
+        }
+        return value / SLIPPAGE_DENOMINATOR;
     }
 }

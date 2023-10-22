@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import '../../ZunamiPool.sol';
 import '../../utils/Constants.sol';
 
-contract ZunamiPoolZETH is ZunamiPool {
+contract ZunamiPoolApsZETH is ZunamiPool {
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
