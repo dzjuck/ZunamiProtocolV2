@@ -5,7 +5,7 @@ import '../CurveStratBase.sol';
 import './interfaces/IStakeDaoVault.sol';
 
 abstract contract StakeDaoCurveStratBase is CurveStratBase {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     IStakeDaoVault public immutable vault;
 

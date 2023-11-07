@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../interfaces/IStrategy.sol';
 import './ZunamiPoolOwnable.sol';
 
 contract VaultStrat is IStrategy, ZunamiPoolOwnable {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     uint256 public constant RATIO_MULTIPLIER = 1e18;
     uint8 public constant POOL_ASSETS = 5;
@@ -46,7 +46,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
     function totalHoldings() external view returns (uint256) {
         uint256 tokensHoldings = 0;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            IERC20Metadata token = zunamiPool.tokens()[i];
+            IERC20 token = zunamiPool.tokens()[i];
             if (address(token) == address(0)) break;
             tokensHoldings +=
                 token.balanceOf(address(this)) *
@@ -57,7 +57,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
 
     function claimRewards(
         address receiver,
-        IERC20Metadata[] memory rewardTokens
+        IERC20[] memory rewardTokens
     ) external onlyZunamiPool {}
 
     function calcTokenAmount(uint256[POOL_ASSETS] memory, bool) external view returns (uint256) {
@@ -66,8 +66,8 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
 
     function transferAllTokensTo(address receiver) internal {
         uint256 tokenStratBalance;
-        IERC20Metadata[POOL_ASSETS] memory tokens = zunamiPool.tokens();
-        IERC20Metadata token_;
+        IERC20[POOL_ASSETS] memory tokens = zunamiPool.tokens();
+        IERC20 token_;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             token_ = tokens[i];
             if (address(token_) == address(0)) break;
@@ -80,8 +80,8 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
 
     function transferPortionTokensTo(address withdrawer, uint256 userDepositRatio) internal {
         uint256 transferAmountOut;
-        IERC20Metadata[POOL_ASSETS] memory tokens = zunamiPool.tokens();
-        IERC20Metadata token_;
+        IERC20[POOL_ASSETS] memory tokens = zunamiPool.tokens();
+        IERC20 token_;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             token_ = tokens[i];
             if (address(token_) == address(0)) break;

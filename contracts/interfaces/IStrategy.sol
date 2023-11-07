@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 interface IStrategy {
     function deposit(uint256[5] memory amounts) external returns (uint256);
@@ -16,7 +16,7 @@ interface IStrategy {
 
     function totalHoldings() external view returns (uint256);
 
-    function claimRewards(address receiver, IERC20Metadata[] memory rewardTokens) external;
+    function claimRewards(address receiver, IERC20[] memory rewardTokens) external;
 
     function calcTokenAmount(
         uint256[5] memory tokenAmounts,

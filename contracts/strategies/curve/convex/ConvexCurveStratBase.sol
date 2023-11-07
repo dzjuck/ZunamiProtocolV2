@@ -6,7 +6,7 @@ import './interfaces/IConvexRewards.sol';
 import './interfaces/IConvexBooster.sol';
 
 abstract contract ConvexCurveStratBase is CurveStratBase {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     error WrongBoosterDepositAll();
 

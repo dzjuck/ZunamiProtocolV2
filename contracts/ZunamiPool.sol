@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
@@ -15,7 +15,7 @@ import './interfaces/IPool.sol';
  *
  */
 contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     uint8 public constant POOL_ASSETS = 5;
 
@@ -26,7 +26,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
 
     StrategyInfo[] private _strategyInfo;
 
-    IERC20Metadata[POOL_ASSETS] private _tokens;
+    IERC20[POOL_ASSETS] private _tokens;
     uint256[POOL_ASSETS] private _decimalsMultipliers;
 
     uint256 public totalDeposited;
@@ -53,7 +53,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         return _strategyInfo[sid];
     }
 
-    function tokens() external view returns (IERC20Metadata[POOL_ASSETS] memory) {
+    function tokens() external view returns (IERC20[POOL_ASSETS] memory) {
         return _tokens;
     }
 
@@ -71,7 +71,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (i < tokens_.length) {
                 address oldToken = address(_tokens[i]);
-                _tokens[i] = IERC20Metadata(tokens_[i]);
+                _tokens[i] = IERC20(tokens_[i]);
                 _decimalsMultipliers[i] = _tokenDecimalMultipliers[i];
                 emit UpdatedToken(i, tokens_[i], _tokenDecimalMultipliers[i], oldToken);
             } else {
@@ -95,7 +95,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         uint256 _tokenDecimalMultiplier
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         address oldToken = address(_tokens[_tokenIndex]);
-        _tokens[_tokenIndex] = IERC20Metadata(_token);
+        _tokens[_tokenIndex] = IERC20(_token);
         _decimalsMultipliers[_tokenIndex] = _tokenDecimalMultiplier;
         emit UpdatedToken(_tokenIndex, _token, _tokenDecimalMultiplier, oldToken);
     }
@@ -110,7 +110,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
 
     function claimRewards(
         address receiver,
-        IERC20Metadata[] memory rewardTokens
+        IERC20[] memory rewardTokens
     ) external onlyRole(CONTROLLER_ROLE) {
         for (uint256 i = 0; i < _strategyInfo.length; i++) {
             StrategyInfo memory strategyInfo_ = _strategyInfo[i];
@@ -182,7 +182,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
 
         for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] > 0) {
-                IERC20Metadata(_tokens[i]).safeTransfer(address(strategy), amounts[i]);
+                IERC20(_tokens[i]).safeTransfer(address(strategy), amounts[i]);
             }
         }
 
@@ -305,7 +305,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
 
         uint256[POOL_ASSETS] memory tokensRemainder;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            IERC20Metadata token = _tokens[i];
+            IERC20 token = _tokens[i];
             if (address(token) == address(0)) break;
             tokensRemainder[i] = token.balanceOf(address(this));
             if (tokensRemainder[i] > 0) {

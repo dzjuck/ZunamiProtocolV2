@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
@@ -14,7 +14,7 @@ abstract contract ZunamiPoolControllerBase is
     AccessControlDefaultAdminRules,
     ReentrancyGuard
 {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     error ZeroAddress();
     error WrongSid();
@@ -28,11 +28,11 @@ abstract contract ZunamiPoolControllerBase is
     address public rewardCollector;
 
     IPool public pool;
-    IERC20Metadata[] public rewardTokens;
+    IERC20[] public rewardTokens;
 
     event SetDefaultDepositSid(uint256 sid);
     event SetDefaultWithdrawSid(uint256 sid);
-    event SetRewardTokens(IERC20Metadata[] rewardTokens);
+    event SetRewardTokens(IERC20[] rewardTokens);
 
     constructor(address pool_) AccessControlDefaultAdminRules(24 hours, msg.sender) {
         if (pool_ == address(0)) revert ZeroAddress();
@@ -63,7 +63,7 @@ abstract contract ZunamiPoolControllerBase is
     }
 
     function setRewardTokens(
-        IERC20Metadata[] memory rewardTokens_
+        IERC20[] memory rewardTokens_
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (rewardTokens_.length == 0) revert WrongRewardTokens();
 
@@ -85,7 +85,7 @@ abstract contract ZunamiPoolControllerBase is
 
         for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] > 0) {
-                IERC20Metadata(pool.tokens()[i]).safeTransferFrom(
+                IERC20(pool.tokens()[i]).safeTransferFrom(
                     _msgSender(),
                     address(pool),
                     amounts[i]

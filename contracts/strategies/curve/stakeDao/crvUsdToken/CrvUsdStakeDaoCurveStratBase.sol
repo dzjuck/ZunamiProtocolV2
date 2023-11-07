@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../../../../interfaces/IStableConverter.sol';
 import '../StakeDaoCurveStratBase.sol';
 
 contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     uint256 public constant ZUNAMI_DAI_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_USDC_TOKEN_ID = 1;
@@ -60,7 +60,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     ) internal view returns (uint256) {
         if (fromZunamiIndex == toZunamiIndex) return 0;
 
-        IERC20Metadata[5] memory zunamiTokens = zunamiPool.tokens();
+        IERC20[5] memory zunamiTokens = zunamiPool.tokens();
 
         return
             stableConverter.valuate(
@@ -74,7 +74,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         address pool,
         uint256[5] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
-        IERC20Metadata token = zunamiPool.tokens()[zunamiTokenIndex];
+        IERC20 token = zunamiPool.tokens()[zunamiTokenIndex];
 
         convertStable(ZUNAMI_DAI_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_DAI_TOKEN_ID]);
         convertStable(ZUNAMI_USDC_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_USDC_TOKEN_ID]);
@@ -95,7 +95,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     ) internal {
         if (fromZunamiIndex == toZunamiIndex) return;
 
-        IERC20Metadata fromToken = zunamiPool.tokens()[fromZunamiIndex];
+        IERC20 fromToken = zunamiPool.tokens()[fromZunamiIndex];
         fromToken.safeTransfer(address(stableConverter), fromAmount);
 
         stableConverter.handle(

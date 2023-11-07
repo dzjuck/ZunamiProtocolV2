@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../../interfaces/ICurvePool2.sol';
@@ -9,15 +9,15 @@ import '../ZunamiStratBase.sol';
 import { IOracle } from '../../lib/ConicOracle/interfaces/IOracle.sol';
 
 abstract contract CurveStratBase is ZunamiStratBase {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     ICurvePool2 public immutable pool;
-    IERC20Metadata public immutable poolToken;
+    IERC20 public immutable poolToken;
     IOracle public immutable oracle;
 
     constructor(address poolAddr, address poolTokenAddr, address oracleAddr) ZunamiStratBase() {
         pool = ICurvePool2(poolAddr);
-        poolToken = IERC20Metadata(poolTokenAddr);
+        poolToken = IERC20(poolTokenAddr);
         oracle = IOracle(oracleAddr);
     }
 

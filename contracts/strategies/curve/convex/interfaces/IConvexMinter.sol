@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-interface IConvexMinter is IERC20Metadata {
+interface IConvexMinter is IERC20 {
     function totalCliffs() external view returns (uint256);
 
     function reductionPerCliff() external view returns (uint256);

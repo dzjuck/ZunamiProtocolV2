@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
@@ -9,7 +9,7 @@ import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules
 import './ZunamiPoolControllerBase.sol';
 
 contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     event RewardCollectorChanged(address oldFeeCollector, address newFeeCollector);
 
@@ -39,7 +39,7 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
     ) internal override {
-        IERC20Metadata(address(pool)).safeTransferFrom(user, address(this), shares);
+        IERC20(address(pool)).safeTransferFrom(user, address(this), shares);
         withdrawDefaultPool(shares, minTokenAmounts, receiver);
     }
 }

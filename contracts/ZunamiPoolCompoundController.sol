@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
@@ -14,7 +14,7 @@ import './interfaces/IRewardManager.sol';
 import './ZunamiPoolControllerBase.sol';
 
 contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControllerBase {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     error WrongFee();
     error FeeMustBeWithdrawn();
@@ -77,7 +77,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     }
 
     function claimManagementFee() external nonReentrant {
-        IERC20Metadata feeToken_ = IERC20Metadata(pool.tokens()[feeTokenId]);
+        IERC20 feeToken_ = IERC20(pool.tokens()[feeTokenId]);
         uint256 collectedManagementFee_ = collectedManagementFee;
         uint256 feeTokenBalance = feeToken_.balanceOf(address(this));
         uint256 transferBalance = collectedManagementFee_ > feeTokenBalance
@@ -96,7 +96,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
 
         sellRewards();
 
-        IERC20Metadata feeToken = pool.tokens()[feeTokenId];
+        IERC20 feeToken = pool.tokens()[feeTokenId];
         uint256[POOL_ASSETS] memory amounts;
         amounts[feeTokenId] = feeToken.balanceOf(address(this)) - collectedManagementFee;
         feeToken.safeTransfer(address(pool), amounts[feeTokenId]);
@@ -121,11 +121,11 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
             return;
         }
 
-        IERC20Metadata feeToken_ = pool.tokens()[feeTokenId];
+        IERC20 feeToken_ = pool.tokens()[feeTokenId];
         uint256 feeTokenBalanceBefore = feeToken_.balanceOf(address(this));
 
         IRewardManager rewardManager_ = rewardManager;
-        IERC20Metadata rewardToken_;
+        IERC20 rewardToken_;
         for (uint256 i = 0; i < rewardsLength_; i++) {
             if (rewardBalances[i] == 0) continue;
             rewardToken_ = rewardTokens[i];

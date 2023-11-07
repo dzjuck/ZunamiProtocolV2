@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import './Constants.sol';
@@ -10,10 +10,10 @@ import '../interfaces/INativeConverter.sol';
 import '../interfaces/IWETH.sol';
 
 contract FraxEthNativeConverter is INativeConverter {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
-    IERC20Metadata public constant frxETH = IERC20Metadata(Constants.FRX_ETH_ADDRESS);
+    IERC20 public constant frxETH = IERC20(Constants.FRX_ETH_ADDRESS);
 
     int128 public constant ETH_frxETH_POOL_ETH_ID = 0;
     int128 public constant ETH_frxETH_POOL_frxETH_ID = 1;
@@ -60,7 +60,7 @@ contract FraxEthNativeConverter is INativeConverter {
             );
 
             wrapETH(tokenAmount);
-            IERC20Metadata(Constants.WETH_ADDRESS).safeTransfer(address(msg.sender), tokenAmount);
+            IERC20(Constants.WETH_ADDRESS).safeTransfer(address(msg.sender), tokenAmount);
         }
     }
 

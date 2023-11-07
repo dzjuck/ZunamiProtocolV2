@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import './interfaces/AggregatorV2V3Interface.sol';
@@ -12,7 +12,7 @@ import '../../interfaces/IRewardManager.sol';
 import '../../interfaces/INativeConverter.sol';
 
 contract SellingCurveRewardManagerFrxEth is IRewardManager {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     error WrongFeeToken(address feeToken);
 
@@ -73,12 +73,12 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
 
         ICurveExchangePool rewardEthPool = ICurveExchangePool(rewardEthCurvePools[reward]);
 
-        IERC20Metadata(reward).safeIncreaseAllowance(address(rewardEthPool), amount);
+        IERC20(reward).safeIncreaseAllowance(address(rewardEthPool), amount);
 
         (uint256 i, uint256 j) = getExchangeIndexes(reward);
         rewardEthPool.exchange(i, j, amount, 0);
 
-        IERC20Metadata wethErc = IERC20Metadata(Constants.WETH_ADDRESS);
+        IERC20 wethErc = IERC20(Constants.WETH_ADDRESS);
         uint256 wethAmount = wethErc.balanceOf(address(this));
 
         wethErc.safeTransfer(address(frxEthConverter), wethAmount);
@@ -86,7 +86,7 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
 
         checkSlippage(reward, amount, frxEthAmount);
 
-        IERC20Metadata(Constants.FRX_ETH_ADDRESS).safeTransfer(address(msg.sender), frxEthAmount);
+        IERC20(Constants.FRX_ETH_ADDRESS).safeTransfer(address(msg.sender), frxEthAmount);
     }
 
     function getExchangeIndexes(address reward) internal pure returns (uint256, uint256) {

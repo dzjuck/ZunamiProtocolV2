@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../utils/Constants.sol';
@@ -9,7 +9,7 @@ import '../interfaces/IStableConverter.sol';
 import '../interfaces/ICurvePool.sol';
 
 contract StableConverter is IStableConverter {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
     uint256 public constant DEFAULT_SLIPPAGE = 30; // 0.3%
@@ -35,7 +35,7 @@ contract StableConverter is IStableConverter {
     function handle(address from, address to, uint256 amount, uint256 slippage) public {
         if (amount == 0) return;
 
-        IERC20Metadata(from).safeIncreaseAllowance(address(curve3Pool), amount);
+        IERC20(from).safeIncreaseAllowance(address(curve3Pool), amount);
 
         curve3Pool.exchange(
             curve3PoolStableIndex[from],
@@ -47,7 +47,7 @@ contract StableConverter is IStableConverter {
                 curve3PoolStableDecimals[to] - curve3PoolStableDecimals[from]
             )
         );
-        IERC20Metadata to_ = IERC20Metadata(to);
+        IERC20 to_ = IERC20(to);
         to_.safeTransfer(address(msg.sender), to_.balanceOf(address(this)));
     }
 

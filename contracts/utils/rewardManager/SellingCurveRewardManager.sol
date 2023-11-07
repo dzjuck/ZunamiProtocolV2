@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../../utils/Constants.sol';
@@ -11,7 +11,7 @@ import '../../interfaces/IRewardManager.sol';
 import '../../interfaces/IStableConverter.sol';
 
 contract SellingCurveRewardManager is IRewardManager {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
 
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
 
@@ -68,12 +68,12 @@ contract SellingCurveRewardManager is IRewardManager {
 
         ICurveExchangePool rewardEthPool = ICurveExchangePool(rewardEthCurvePools[reward]);
 
-        IERC20Metadata(reward).safeIncreaseAllowance(address(rewardEthPool), amount);
+        IERC20(reward).safeIncreaseAllowance(address(rewardEthPool), amount);
 
         (uint256 i, uint256 j) = getExchangeIndexes(reward);
         rewardEthPool.exchange(i, j, amount, 0);
 
-        IERC20Metadata weth = IERC20Metadata(Constants.WETH_ADDRESS);
+        IERC20 weth = IERC20(Constants.WETH_ADDRESS);
         uint256 wethAmount = weth.balanceOf(address(this));
 
         weth.safeIncreaseAllowance(address(tricrypto2), wethAmount);
@@ -85,7 +85,7 @@ contract SellingCurveRewardManager is IRewardManager {
             0
         );
 
-        IERC20Metadata usdt = IERC20Metadata(Constants.USDT_ADDRESS);
+        IERC20 usdt = IERC20(Constants.USDT_ADDRESS);
         uint256 usdtAmount = usdt.balanceOf(address(this));
         checkSlippage(reward, amount, usdtAmount);
 
@@ -94,8 +94,8 @@ contract SellingCurveRewardManager is IRewardManager {
             stableConverter.handle(Constants.USDT_ADDRESS, feeToken, usdtAmount, 0);
         }
 
-        uint256 feeTokenAmount = IERC20Metadata(feeToken).balanceOf(address(this));
-        IERC20Metadata(feeToken).safeTransfer(address(msg.sender), feeTokenAmount);
+        uint256 feeTokenAmount = IERC20(feeToken).balanceOf(address(this));
+        IERC20(feeToken).safeTransfer(address(msg.sender), feeTokenAmount);
     }
 
     function getExchangeIndexes(address reward) internal pure returns (uint256, uint256) {

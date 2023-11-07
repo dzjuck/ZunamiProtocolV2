@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import { IERC20Metadata } from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { IStrategy } from './IStrategy.sol';
 
 interface IPool is IERC20 {
@@ -41,7 +41,7 @@ interface IPool is IERC20 {
     event FailedWithdrawal(address indexed withdrawer, uint256[5] amounts, uint256 withdrawn);
 
     event AddedStrategy(uint256 indexed sid, address indexed strategyAddr, uint256 startTime);
-    event ClaimedRewards(address indexed receiver, IERC20Metadata[] rewardTokens);
+    event ClaimedRewards(address indexed receiver, IERC20[] rewardTokens);
     event EnabledStrategy(address indexed pool);
     event DisableStrategy(address indexed pool);
     event UpdatedToken(
@@ -51,13 +51,13 @@ interface IPool is IERC20 {
         address tokenOld
     );
 
-    function tokens() external view returns (IERC20Metadata[5] memory);
+    function tokens() external view returns (IERC20[5] memory);
 
     function tokenDecimalsMultipliers() external view returns (uint256[5] memory);
 
     function strategyInfo(uint256 sid) external view returns (StrategyInfo memory);
 
-    function claimRewards(address receiver, IERC20Metadata[] memory rewardTokens) external;
+    function claimRewards(address receiver, IERC20[] memory rewardTokens) external;
 
     function totalHoldings() external view returns (uint256);
 
