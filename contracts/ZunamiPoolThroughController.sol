@@ -22,7 +22,7 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
         rewardCollector = _rewardCollector;
     }
 
-    function claimRewards() external nonReentrant {
+    function claimRewards() external whenNotPaused nonReentrant {
         claimPoolRewards(rewardCollector);
     }
 

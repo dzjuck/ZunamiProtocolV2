@@ -12,8 +12,6 @@ import { HardhatUserConfig } from 'hardhat/types';
 const REPORT_GAS = !!process.env.REPORT_GAS;
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 const ETH_NODE_API_KEY = process.env.ETH_NODE_API_KEY;
-const POLYGON_NODE_API_KEY = process.env.POLYGON_NODE_API_KEY;
-const BINANCE_NODE_API_KEY = process.env.BINANCE_NODE_API_KEY;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 const config: HardhatUserConfig = {
@@ -85,24 +83,6 @@ const config: HardhatUserConfig = {
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
         },
-        polygon: {
-            url: `${POLYGON_NODE_API_KEY}`,
-            chainId: 137,
-            accounts: [`${PRIVATE_KEY}`],
-            gas: 'auto',
-            gasMultiplier: 1.2,
-            gasPrice: 100000000000,
-            loggingEnabled: true,
-        },
-        bsc: {
-            url: `${BINANCE_NODE_API_KEY}`,
-            chainId: 56,
-            accounts: [`${PRIVATE_KEY}`],
-            gas: 'auto',
-            gasMultiplier: 1.2,
-            gasPrice: 5000000000,
-            loggingEnabled: true,
-        },
         development: {
             url: 'http://127.0.0.1:8545',
             gas: 12400000,
@@ -127,8 +107,6 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: `${process.env.ETHERSCAN_API_KEY}`,
-        // apiKey: `${process.env.BSCSCAN_API_KEY}`,
-        // apiKey: `${process.env.POLYGON_API_KEY}`,
     },
 };
 

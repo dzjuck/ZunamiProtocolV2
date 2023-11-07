@@ -91,7 +91,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
         emit ClaimedManagementFee(address(feeToken_), transferBalance);
     }
 
-    function autoCompoundAll() external nonReentrant {
+    function autoCompoundAll() external whenNotPaused nonReentrant {
         claimPoolRewards(address(this));
 
         sellRewards();
