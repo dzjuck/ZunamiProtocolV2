@@ -26,7 +26,7 @@ export async function createPoolAndCompoundController(token: string, rewardManag
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
     const zunamiPool = (await ZunamiPoolFactory.deploy('APS', 'APS')) as ZunamiPool;
 
-    await zunamiPool.addTokens([token], [1]);
+    await zunamiPool.setTokens([token], [1]);
 
     const ZunamiPooControllerFactory = await ethers.getContractFactory(
         'ZunamiPoolCompoundController'
@@ -228,15 +228,15 @@ describe('UZD flow aps tests', () => {
 
         await zunamiPoolControllerAps.autoCompoundAll();
 
-        expect(await zunamiPoolControllerAps.managementFees()).to.not.eq(0);
+        expect(await zunamiPoolControllerAps.collectedManagementFee()).to.not.eq(0);
 
         expect(await zunamiPool.balanceOf(zunamiPoolControllerAps.address)).to.eq(
-            await zunamiPoolControllerAps.managementFees()
+            await zunamiPoolControllerAps.collectedManagementFee()
         );
 
         await zunamiPoolControllerAps.claimManagementFee();
 
-        expect(await zunamiPoolControllerAps.managementFees()).to.eq(0);
+        expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
 
         let tokens;
         let balance;

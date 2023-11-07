@@ -85,18 +85,16 @@ contract SellingCurveRewardManager is IRewardManager {
             0
         );
 
-        if (feeToken != Constants.USDT_ADDRESS) {
-            IERC20Metadata usdt = IERC20Metadata(Constants.USDT_ADDRESS);
-            uint256 usdtAmount = usdt.balanceOf(address(this));
+        IERC20Metadata usdt = IERC20Metadata(Constants.USDT_ADDRESS);
+        uint256 usdtAmount = usdt.balanceOf(address(this));
+        checkSlippage(reward, amount, usdtAmount);
 
+        if (feeToken != Constants.USDT_ADDRESS) {
             usdt.safeTransfer(address(stableConverter), usdtAmount);
             stableConverter.handle(Constants.USDT_ADDRESS, feeToken, usdtAmount, 0);
         }
 
         uint256 feeTokenAmount = IERC20Metadata(feeToken).balanceOf(address(this));
-
-        checkSlippage(reward, amount, feeTokenAmount);
-
         IERC20Metadata(feeToken).safeTransfer(address(msg.sender), feeTokenAmount);
     }
 

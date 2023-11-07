@@ -11,6 +11,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     using SafeERC20 for IERC20Metadata;
 
     uint8 public constant POOL_ASSETS = 5;
+    uint256 public constant RATIO_MULTIPLIER = 1e18;
 
     uint256 public constant DEPOSIT_DENOMINATOR = 10000;
 
@@ -20,13 +21,13 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     event TokenPricerSet(address tokenPricerAddr);
 
     function updateMinDepositAmount(uint256 _minDepositAmount) public onlyOwner {
-        require(_minDepositAmount > 0 && _minDepositAmount <= 10000, 'Wrong amount!');
+        require(_minDepositAmount > 0 && _minDepositAmount <= DEPOSIT_DENOMINATOR, 'Wrong amount!');
         emit MinDepositAmountUpdated(minDepositAmount, _minDepositAmount);
         minDepositAmount = _minDepositAmount;
     }
 
     function calcTokenAmount(
-        uint256[5] memory tokenAmounts,
+        uint256[POOL_ASSETS] memory tokenAmounts,
         bool isDeposit
     ) external view virtual returns (uint256 sharesAmount);
 
@@ -39,12 +40,13 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     function totalHoldings() public view virtual returns (uint256) {
         uint256 poolHoldings = calcLiquidityValue(getLiquidityBalance());
 
-        IERC20Metadata[5] memory tokens = zunamiPool.tokens();
-        uint256[5] memory tokenDecimalsMultipliers = zunamiPool.tokenDecimalsMultipliers();
+        IERC20Metadata[POOL_ASSETS] memory tokens = zunamiPool.tokens();
+        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = zunamiPool
+            .tokenDecimalsMultipliers();
 
         IERC20Metadata token_;
         uint256 tokensHoldings;
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
             token_ = tokens[i];
             if (address(token_) == address(0)) break;
             tokensHoldings += token_.balanceOf(address(this)) * tokenDecimalsMultipliers[i];
@@ -55,7 +57,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
     function getLiquidityBalance() internal view virtual returns (uint256);
 
-    function deposit(uint256[5] memory amounts) external returns (uint256) {
+    function deposit(uint256[POOL_ASSETS] memory amounts) external returns (uint256) {
         if (!checkDepositSuccessful(amounts)) {
             return 0;
         }
@@ -63,17 +65,21 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         return calcLiquidityValue(depositLiquidityPool(amounts));
     }
 
-    function checkDepositSuccessful(uint256[5] memory amounts) internal view virtual returns (bool);
+    function checkDepositSuccessful(
+        uint256[POOL_ASSETS] memory amounts
+    ) internal view virtual returns (bool);
 
-    function depositLiquidityPool(uint256[5] memory amounts) internal virtual returns (uint256);
+    function depositLiquidityPool(
+        uint256[POOL_ASSETS] memory amounts
+    ) internal virtual returns (uint256);
 
     function withdraw(
         address receiver,
         uint256 poolTokenRatio, // multiplied by 1e18
-        uint256[5] memory tokenAmounts
+        uint256[POOL_ASSETS] memory tokenAmounts
     ) external virtual onlyZunamiPool returns (bool) {
-        require(poolTokenRatio > 0 && poolTokenRatio <= 1e18, 'Wrong PoolToken Ratio');
-        (bool success, uint256 poolTokenAmount) = calcLiquidityTokenAmount(
+        require(poolTokenRatio > 0 && poolTokenRatio <= RATIO_MULTIPLIER, 'Wrong PoolToken Ratio');
+        (bool success, uint256 poolTokenAmount) = calcRemovingLPTokenAmount(
             poolTokenRatio,
             tokenAmounts
         );
@@ -83,8 +89,8 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         }
 
         IERC20Metadata[POOL_ASSETS] memory tokens = zunamiPool.tokens();
-        uint256[] memory prevBalances = new uint256[](5);
-        for (uint256 i = 0; i < 5; i++) {
+        uint256[] memory prevBalances = new uint256[](POOL_ASSETS);
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (address(tokens[i]) == address(0)) break;
             prevBalances[i] = tokens[i].balanceOf(address(this));
         }
@@ -96,12 +102,15 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         return true;
     }
 
-    function calcLiquidityTokenAmount(
+    function calcRemovingLPTokenAmount(
         uint256 poolTokenRatio, // multiplied by 1e18
-        uint256[5] memory tokenAmounts
-    ) internal virtual returns (bool success, uint256 removingCrvLps);
+        uint256[POOL_ASSETS] memory tokenAmounts
+    ) internal virtual returns (bool success, uint256 removingLPTokenAmount);
 
-    function removeLiquidity(uint256 amount, uint256[5] memory minTokenAmounts) internal virtual;
+    function removeLiquidity(
+        uint256 amount,
+        uint256[POOL_ASSETS] memory minTokenAmounts
+    ) internal virtual;
 
     function claimRewards(
         address receiver,
@@ -146,7 +155,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     function convertTokensToDynamic(
         IERC20Metadata[5] memory tokens
     ) internal pure returns (IERC20Metadata[] memory tokesDynamic) {
-        tokesDynamic = new IERC20Metadata[](5);
+        tokesDynamic = new IERC20Metadata[](POOL_ASSETS);
         for (uint256 i = 0; i < tokens.length; i++) {
             tokesDynamic[i] = tokens[i];
         }

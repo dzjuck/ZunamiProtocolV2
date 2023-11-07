@@ -21,14 +21,14 @@ abstract contract CurveStratBase is ZunamiStratBase {
         oracle = IOracle(oracleAddr);
     }
 
-    function convertLiquidityTokenAmount(
-        uint256[5] memory amounts
+    function convertCurvePoolTokenAmounts(
+        uint256[POOL_ASSETS] memory amounts
     ) internal view virtual returns (uint256[2] memory);
 
     function checkDepositSuccessful(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal view override returns (bool) {
-        uint256[5] memory tokenDecimals = zunamiPool.tokenDecimalsMultipliers();
+        uint256[POOL_ASSETS] memory tokenDecimals = zunamiPool.tokenDecimalsMultipliers();
 
         uint256 amountsTotal;
         for (uint256 i = 0; i < 5; i++) {
@@ -37,13 +37,13 @@ abstract contract CurveStratBase is ZunamiStratBase {
 
         uint256 amountsMin = (amountsTotal * minDepositAmount) / DEPOSIT_DENOMINATOR;
 
-        uint256 depositedLp = pool.calc_token_amount(convertLiquidityTokenAmount(amounts), true);
+        uint256 depositedLp = pool.calc_token_amount(convertCurvePoolTokenAmounts(amounts), true);
 
         return (depositedLp * getLiquidityTokenPrice()) / PRICE_DENOMINATOR >= amountsMin;
     }
 
     function depositLiquidityPool(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256 poolTokenAmount) {
         uint256[2] memory amounts2 = convertAndApproveTokens(address(pool), amounts);
         poolTokenAmount = pool.add_liquidity(amounts2, 0);
@@ -55,7 +55,7 @@ abstract contract CurveStratBase is ZunamiStratBase {
 
     function convertAndApproveTokens(
         address pool,
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal virtual returns (uint256[2] memory amounts2);
 
     function getLiquidityTokenPrice() internal view override returns (uint256) {
@@ -63,31 +63,31 @@ abstract contract CurveStratBase is ZunamiStratBase {
     }
 
     function calcTokenAmount(
-        uint256[5] memory tokenAmounts,
+        uint256[POOL_ASSETS] memory tokenAmounts,
         bool isDeposit
-    ) external view override returns (uint256 sharesAmount) {
-        return pool.calc_token_amount(convertLiquidityTokenAmount(tokenAmounts), isDeposit);
+    ) public view override returns (uint256 sharesAmount) {
+        return pool.calc_token_amount(convertCurvePoolTokenAmounts(tokenAmounts), isDeposit);
     }
 
-    function calcLiquidityTokenAmount(
+    function calcRemovingLPTokenAmount(
         uint256 poolTokenRatio, // multiplied by 1e18
-        uint256[5] memory minTokenAmounts
-    ) internal view override returns (bool success, uint256 poolTokenAmount) {
-        poolTokenAmount = (getLiquidityBalance() * poolTokenRatio) / 1e18;
-        success = poolTokenAmount >= this.calcTokenAmount(minTokenAmounts, false);
+        uint256[POOL_ASSETS] memory minTokenAmounts
+    ) internal view override returns (bool success, uint256 removingLPTokenAmount) {
+        removingLPTokenAmount = (getLiquidityBalance() * poolTokenRatio) / RATIO_MULTIPLIER;
+        success = removingLPTokenAmount >= calcTokenAmount(minTokenAmounts, false);
     }
 
     function getCurveRemovingTokenIndex() internal pure virtual returns (int128);
 
     function removeLiquidity(
         uint256 amount,
-        uint256[5] memory minTokenAmounts
+        uint256[POOL_ASSETS] memory minTokenAmounts
     ) internal virtual override {
         int128 curveTokenIndex = getCurveRemovingTokenIndex();
         pool.remove_liquidity_one_coin(
             amount,
             curveTokenIndex,
-            convertLiquidityTokenAmount(minTokenAmounts)[uint256(int256(curveTokenIndex))]
+            convertCurvePoolTokenAmounts(minTokenAmounts)[uint256(int256(curveTokenIndex))]
         );
     }
 

@@ -20,6 +20,6 @@ contract ZunamiPoolUZD is ZunamiPool {
         tokenDecimalMultipliers[ZUNAMI_USDC_TOKEN_ID] = 1e12;
         tokenDecimalMultipliers[ZUNAMI_USDT_TOKEN_ID] = 1e12;
 
-        _addTokens(tokens, tokenDecimalMultipliers);
+        _setTokens(tokens, tokenDecimalMultipliers);
     }
 }

@@ -19,19 +19,20 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     error WrongFee();
     error FeeMustBeWithdrawn();
 
+    uint256 public constant PRICE_MULTIPLIER = 1e18;
     uint256 public constant FEE_DENOMINATOR = 1000;
     uint256 public constant MAX_FEE = 300; // 30%
 
-    uint256 public managementFee = 100; // 10%
+    uint256 public managementFeePercent = 100; // 10%
 
     uint256 public feeTokenId;
     address public feeDistributor;
 
-    uint256 public managementFees = 0;
+    uint256 public collectedManagementFee = 0;
 
     IRewardManager public rewardManager;
 
-    event ManagementFeeSet(uint256 oldManagementFee, uint256 newManagementFee);
+    event ManagementFeePercentSet(uint256 oldManagementFee, uint256 newManagementFee);
     event FeeDistributorChanged(address oldFeeDistributor, address newFeeDistributor);
     event SetFeeTokenId(uint256 tid);
     event SetRewardManager(address rewardManager);
@@ -55,14 +56,16 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
         emit SetRewardManager(rewardManagerAddr);
     }
 
-    function setManagementFee(uint256 newManagementFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (newManagementFee > MAX_FEE) revert WrongFee();
-        emit ManagementFeeSet(managementFee, newManagementFee);
-        managementFee = newManagementFee;
+    function setManagementFeePercent(
+        uint256 newManagementFeePercent
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (newManagementFeePercent > MAX_FEE) revert WrongFee();
+        emit ManagementFeePercentSet(managementFeePercent, newManagementFeePercent);
+        managementFeePercent = newManagementFeePercent;
     }
 
     function setFeeTokenId(uint256 _tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (managementFees != 0) revert FeeMustBeWithdrawn();
+        if (collectedManagementFee != 0) revert FeeMustBeWithdrawn();
 
         feeTokenId = _tokenId;
         emit SetFeeTokenId(_tokenId);
@@ -73,29 +76,29 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
         feeDistributor = _feeDistributor;
     }
 
-    function claimManagementFee() external {
+    function claimManagementFee() external nonReentrant {
         IERC20Metadata feeToken_ = IERC20Metadata(pool.tokens()[feeTokenId]);
-        uint256 managementFees_ = managementFees;
+        uint256 collectedManagementFee_ = collectedManagementFee;
         uint256 feeTokenBalance = feeToken_.balanceOf(address(this));
-        uint256 transferBalance = managementFees_ > feeTokenBalance
+        uint256 transferBalance = collectedManagementFee_ > feeTokenBalance
             ? feeTokenBalance
-            : managementFees_;
+            : collectedManagementFee_;
         if (transferBalance > 0) {
             feeToken_.safeTransfer(feeDistributor, transferBalance);
         }
-        managementFees = 0;
+        collectedManagementFee = 0;
 
         emit ClaimedManagementFee(address(feeToken_), transferBalance);
     }
 
-    function autoCompoundAll() external {
+    function autoCompoundAll() external nonReentrant {
         claimPoolRewards(address(this));
 
         sellRewards();
 
         IERC20Metadata feeToken = pool.tokens()[feeTokenId];
         uint256[POOL_ASSETS] memory amounts;
-        amounts[feeTokenId] = feeToken.balanceOf(address(this)) - managementFees;
+        amounts[feeTokenId] = feeToken.balanceOf(address(this)) - collectedManagementFee;
         feeToken.safeTransfer(address(pool), amounts[feeTokenId]);
 
         uint256 depositedValue = pool.deposit(defaultDepositSid, amounts, address(this));
@@ -132,11 +135,11 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
 
         uint256 feeTokenBalanceAfter = feeToken_.balanceOf(address(this));
 
-        managementFees += calcManagementFee(feeTokenBalanceAfter - feeTokenBalanceBefore);
+        collectedManagementFee += calcManagementFee(feeTokenBalanceAfter - feeTokenBalanceBefore);
     }
 
     function calcManagementFee(uint256 amount) internal view returns (uint256) {
-        return (amount * managementFee) / FEE_DENOMINATOR;
+        return (amount * managementFeePercent) / FEE_DENOMINATOR;
     }
 
     function tokenPrice() public view returns (uint256) {
@@ -144,7 +147,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     }
 
     function calcTokenPrice(uint256 _holdings, uint256 _tokens) public pure returns (uint256) {
-        return (_holdings * 1e18) / _tokens;
+        return (_holdings * PRICE_MULTIPLIER) / _tokens;
     }
 
     function depositPool(
@@ -153,7 +156,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     ) internal override returns (uint256 shares) {
         uint256 stableBefore = pool.balanceOf(address(this));
 
-        uint256 assets = super.depositPool(amounts, address(this));
+        uint256 assets = depositDefaultPool(amounts, address(this));
 
         if (totalSupply() == 0) {
             shares = assets;
@@ -172,7 +175,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
         address receiver
     ) internal override {
         uint256 assets = (pool.balanceOf(address(this)) * shares) / totalSupply();
-        super.withdrawPool(user, assets, minTokenAmounts, receiver);
+        withdrawDefaultPool(assets, minTokenAmounts, receiver);
         _burn(user, shares);
         emit Withdrawn(user, shares, assets, defaultWithdrawSid);
     }

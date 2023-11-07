@@ -99,7 +99,12 @@ abstract contract ZunamiPoolControllerBase is
     function depositPool(
         uint256[POOL_ASSETS] memory amounts,
         address receiver
-    ) internal virtual returns (uint256) {
+    ) internal virtual returns (uint256);
+
+    function depositDefaultPool(
+        uint256[POOL_ASSETS] memory amounts,
+        address receiver
+    ) internal returns (uint256) {
         return pool.deposit(defaultDepositSid, amounts, receiver);
     }
 
@@ -114,12 +119,18 @@ abstract contract ZunamiPoolControllerBase is
         withdrawPool(_msgSender(), shares, minTokenAmounts, receiver);
     }
 
-    function withdrawPool(
-        address,
+    function withdrawDefaultPool(
         uint256 shares,
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
     ) internal virtual {
         pool.withdraw(defaultWithdrawSid, shares, minTokenAmounts, receiver);
     }
+
+    function withdrawPool(
+        address user,
+        uint256 shares,
+        uint256[POOL_ASSETS] memory minTokenAmounts,
+        address receiver
+    ) internal virtual;
 }

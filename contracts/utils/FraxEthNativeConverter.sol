@@ -40,7 +40,7 @@ contract FraxEthNativeConverter is INativeConverter {
         if (amount == 0) return 0;
 
         if (buyToken) {
-            unwrapWETH(tokenAmount);
+            unwrapWETH(amount);
             tokenAmount = fraxEthPool.exchange{ value: amount }(
                 ETH_frxETH_POOL_ETH_ID,
                 ETH_frxETH_POOL_frxETH_ID,

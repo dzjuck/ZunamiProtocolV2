@@ -14,6 +14,9 @@ import '../../interfaces/INativeConverter.sol';
 contract SellingCurveRewardManagerFrxEth is IRewardManager {
     using SafeERC20 for IERC20Metadata;
 
+    error WrongFeeToken(address feeToken);
+
+    uint256 public constant TOKEN_PRICE_MULTIPLIER = 1e18;
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
 
     uint256 public constant CURVE_WETH_REWARD_POOL_WETH_ID = 0;
@@ -64,7 +67,8 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
         ] = 0x8c110B94C5f1d347fAcF5E1E938AB2db60E3c9a8; // https://data.chain.link/ethereum/mainnet/crypto-usd/spell-usd
     }
 
-    function handle(address reward, uint256 amount, address) external {
+    function handle(address reward, uint256 amount, address feeToken) external {
+        if (feeToken != Constants.FRX_ETH_ADDRESS) revert WrongFeeToken(feeToken);
         if (amount == 0) return;
 
         ICurveExchangePool rewardEthPool = ICurveExchangePool(rewardEthCurvePools[reward]);
@@ -127,11 +131,16 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 ethAnswer, , uint256 ethUpdatedAt, ) = ethOracle.latestRoundData();
             require(block.timestamp - ethUpdatedAt <= STALE_DELAY, 'Oracle eth stale');
 
-            wethAmountByOracle = (uint256(rewardAnswer) * amount * 1e18) / uint256(ethAnswer);
+            wethAmountByOracle =
+                (uint256(rewardAnswer) * amount * TOKEN_PRICE_MULTIPLIER) /
+                uint256(ethAnswer);
         }
 
         uint256 wethAmountByOracleWithSlippage = (wethAmountByOracle *
             (SLIPPAGE_DENOMINATOR - defaultSlippage)) / SLIPPAGE_DENOMINATOR;
-        require(wethAmount >= wethAmountByOracleWithSlippage / 1e18, 'Wrong slippage');
+        require(
+            wethAmount >= wethAmountByOracleWithSlippage / TOKEN_PRICE_MULTIPLIER,
+            'Wrong slippage'
+        );
     }
 }

@@ -16,6 +16,7 @@ interface IPool is IERC20 {
     error ZeroAddress();
     error DuplicatedStrategy();
     error IncorrectArguments();
+    error WrongWithdrawPercent();
     error WrongReceiver();
     error IncorrectSid();
     error WrongLength();
@@ -23,7 +24,7 @@ interface IPool is IERC20 {
     struct StrategyInfo {
         IStrategy strategy;
         uint256 startTime;
-        uint256 deposited;
+        uint256 minted;
         bool enabled;
     }
 
@@ -41,7 +42,8 @@ interface IPool is IERC20 {
 
     event AddedStrategy(uint256 indexed sid, address indexed strategyAddr, uint256 startTime);
     event ClaimedRewards(address indexed receiver, IERC20Metadata[] rewardTokens);
-    event ToggledEnabledStrategyStatus(address indexed pool, bool newStatus);
+    event EnabledStrategy(address indexed pool);
+    event DisableStrategy(address indexed pool);
     event UpdatedToken(
         uint256 indexed tid,
         address indexed token,

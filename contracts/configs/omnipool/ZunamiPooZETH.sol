@@ -17,6 +17,6 @@ contract ZunamiPoolZETH is ZunamiPool {
         tokenDecimalMultipliers[ZUNAMI_WETH_TOKEN_ID] = 1;
         tokenDecimalMultipliers[ZUNAMI_FRXETH_TOKEN_ID] = 1;
 
-        _addTokens(tokens, tokenDecimalMultipliers);
+        _setTokens(tokens, tokenDecimalMultipliers);
     }
 }

@@ -28,7 +28,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         )
     {}
 
-    function convertLiquidityTokenAmount(
+    function convertCurvePoolTokenAmounts(
         uint256[5] memory amounts
     ) internal view override returns (uint256[2] memory amounts2) {}
 

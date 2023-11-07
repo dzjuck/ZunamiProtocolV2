@@ -22,8 +22,15 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
         rewardCollector = _rewardCollector;
     }
 
-    function claimRewards() external {
+    function claimRewards() external nonReentrant {
         claimPoolRewards(rewardCollector);
+    }
+
+    function depositPool(
+        uint256[POOL_ASSETS] memory amounts,
+        address receiver
+    ) internal override returns (uint256) {
+        return depositDefaultPool(amounts, receiver);
     }
 
     function withdrawPool(
@@ -33,6 +40,6 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
         address receiver
     ) internal override {
         IERC20Metadata(address(pool)).safeTransferFrom(user, address(this), shares);
-        super.withdrawPool(user, shares, minTokenAmounts, receiver);
+        withdrawDefaultPool(shares, minTokenAmounts, receiver);
     }
 }

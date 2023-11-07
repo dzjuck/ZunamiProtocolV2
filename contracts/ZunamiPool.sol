@@ -61,25 +61,32 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         return _decimalsMultipliers;
     }
 
-    function _addTokens(
+    function _setTokens(
         address[] memory tokens_,
         uint256[] memory _tokenDecimalMultipliers
     ) internal {
-        if (tokens_.length != _tokenDecimalMultipliers.length && tokens_.length > POOL_ASSETS)
+        if (tokens_.length != _tokenDecimalMultipliers.length || tokens_.length > POOL_ASSETS)
             revert WrongLength();
 
-        for (uint256 i = 0; i < tokens_.length; i++) {
-            _tokens[i] = IERC20Metadata(tokens_[i]);
-            emit UpdatedToken(i, tokens_[i], _tokenDecimalMultipliers[i], address(0));
-            _decimalsMultipliers[i] = _tokenDecimalMultipliers[i];
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+            if (i < tokens_.length) {
+                address oldToken = address(_tokens[i]);
+                _tokens[i] = IERC20Metadata(tokens_[i]);
+                _decimalsMultipliers[i] = _tokenDecimalMultipliers[i];
+                emit UpdatedToken(i, tokens_[i], _tokenDecimalMultipliers[i], oldToken);
+            } else {
+                emit UpdatedToken(i, address(0), 0, address(_tokens[i]));
+                delete _tokens[i];
+                delete _decimalsMultipliers[i];
+            }
         }
     }
 
-    function addTokens(
+    function setTokens(
         address[] memory tokens_,
         uint256[] memory _tokenDecimalMultipliers
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _addTokens(tokens_, _tokenDecimalMultipliers);
+        _setTokens(tokens_, _tokenDecimalMultipliers);
     }
 
     function replaceToken(
@@ -87,14 +94,10 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         address _token,
         uint256 _tokenDecimalMultiplier
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        address oldToken = address(_tokens[_tokenIndex]);
         _tokens[_tokenIndex] = IERC20Metadata(_token);
         _decimalsMultipliers[_tokenIndex] = _tokenDecimalMultiplier;
-        emit UpdatedToken(
-            _tokenIndex,
-            _token,
-            _tokenDecimalMultiplier,
-            address(_tokens[_tokenIndex])
-        );
+        emit UpdatedToken(_tokenIndex, _token, _tokenDecimalMultiplier, oldToken);
     }
 
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -111,7 +114,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
     ) external onlyRole(CONTROLLER_ROLE) {
         for (uint256 i = 0; i < _strategyInfo.length; i++) {
             StrategyInfo memory strategyInfo_ = _strategyInfo[i];
-            if (strategyInfo_.deposited > 0 && strategyInfo_.enabled) {
+            if (strategyInfo_.minted > 0 && strategyInfo_.enabled) {
                 strategyInfo_.strategy.claimRewards(receiver, rewardTokens);
             }
         }
@@ -123,7 +126,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         uint256 total;
         for (uint256 sid = 0; sid < length; sid++) {
             StrategyInfo memory strategyInfo_ = _strategyInfo[sid];
-            if (strategyInfo_.deposited > 0 && strategyInfo_.enabled) {
+            if (strategyInfo_.minted > 0 && strategyInfo_.enabled) {
                 total += strategyInfo_.strategy.totalHoldings();
             }
         }
@@ -202,7 +205,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         }
 
         _mint(receiver, minted);
-        _strategyInfo[sid].deposited += minted;
+        _strategyInfo[sid].minted += minted;
 
         totalDeposited += depositedValue;
 
@@ -223,7 +226,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         if (
             !strategy.withdraw(
                 receiver == address(0) ? controllerAddr : receiver,
-                calcRatioSafe(amount, _strategyInfo[sid].deposited),
+                calcRatioSafe(amount, _strategyInfo[sid].minted),
                 tokenAmounts
             )
         ) revert WrongWithdrawParams(sid);
@@ -240,7 +243,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         uint256 sid
     ) internal {
         _burn(user, stableAmount);
-        _strategyInfo[sid].deposited -= stableAmount;
+        _strategyInfo[sid].minted -= stableAmount;
         totalDeposited -= userDeposit;
         emit Withdrawn(user, stableAmount, sid);
     }
@@ -268,7 +271,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
             StrategyInfo({
                 strategy: IStrategy(_strategyAddr),
                 startTime: startTime,
-                deposited: 0,
+                minted: 0,
                 enabled: true
             })
         );
@@ -313,7 +316,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
             }
         }
 
-        _strategyInfo[_receiverStrategy].deposited += zunamiStables;
+        _strategyInfo[_receiverStrategy].minted += zunamiStables;
 
         if (_strategyInfo[_receiverStrategy].strategy.deposit(tokensRemainder) == 0)
             revert WrongDeposit(_receiverStrategy, tokensRemainder);
@@ -323,36 +326,44 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         uint256 sid,
         uint256 withdrawPercent
     ) private returns (uint256 stableAmount) {
+        if (withdrawPercent == 0 || withdrawPercent > FUNDS_DENOMINATOR)
+            revert WrongWithdrawPercent();
+
         if (withdrawPercent == FUNDS_DENOMINATOR) {
             _strategyInfo[sid].strategy.withdrawAll();
 
-            stableAmount = _strategyInfo[sid].deposited;
-            _strategyInfo[sid].deposited = 0;
+            stableAmount = _strategyInfo[sid].minted;
+            _strategyInfo[sid].minted = 0;
         } else {
-            stableAmount = (_strategyInfo[sid].deposited * withdrawPercent) / FUNDS_DENOMINATOR;
+            stableAmount = (_strategyInfo[sid].minted * withdrawPercent) / FUNDS_DENOMINATOR;
             uint256[POOL_ASSETS] memory minAmounts;
 
             if (
                 !_strategyInfo[sid].strategy.withdraw(
                     address(this),
-                    calcRatioSafe(stableAmount, _strategyInfo[sid].deposited),
+                    calcRatioSafe(stableAmount, _strategyInfo[sid].minted),
                     minAmounts
                 )
             ) revert WrongWithdrawParams(sid);
-            _strategyInfo[sid].deposited -= stableAmount;
+            _strategyInfo[sid].minted -= stableAmount;
         }
 
         return stableAmount;
     }
 
-    function toggleStrategyStatus(uint256 _sid) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function enableStrategy(uint256 _sid) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_sid >= _strategyInfo.length) revert IncorrectSid();
 
-        _strategyInfo[_sid].enabled = !_strategyInfo[_sid].enabled;
+        _strategyInfo[_sid].enabled = true;
 
-        emit ToggledEnabledStrategyStatus(
-            address(_strategyInfo[_sid].strategy),
-            _strategyInfo[_sid].enabled
-        );
+        emit EnabledStrategy(address(_strategyInfo[_sid].strategy));
+    }
+
+    function disableStrategy(uint256 _sid) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_sid >= _strategyInfo.length) revert IncorrectSid();
+
+        _strategyInfo[_sid].enabled = false;
+
+        emit DisableStrategy(address(_strategyInfo[_sid].strategy));
     }
 }

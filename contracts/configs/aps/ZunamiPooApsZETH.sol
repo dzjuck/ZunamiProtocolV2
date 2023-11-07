@@ -15,6 +15,6 @@ contract ZunamiPoolApsZETH is ZunamiPool {
         uint256[] memory tokenDecimalMultipliers = new uint256[](1);
         tokenDecimalMultipliers[0] = 1;
 
-        _addTokens(tokens, tokenDecimalMultipliers);
+        _setTokens(tokens, tokenDecimalMultipliers);
     }
 }
