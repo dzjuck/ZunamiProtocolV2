@@ -11,8 +11,17 @@ import '../interfaces/ICurvePool.sol';
 contract StableConverter is IStableConverter {
     using SafeERC20 for IERC20;
 
+    error WrongFromStable(address stable);
+    error WrongToStable(address stable);
+
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
     uint256 public constant DEFAULT_SLIPPAGE = 30; // 0.3%
+
+    address[3] public SUPPORTED_STABLES = [
+        Constants.DAI_ADDRESS,
+        Constants.USDC_ADDRESS,
+        Constants.USDT_ADDRESS
+    ];
 
     ICurvePool public immutable curve3Pool;
 
@@ -32,7 +41,17 @@ contract StableConverter is IStableConverter {
         curve3PoolStableDecimals[Constants.USDT_ADDRESS] = 6;
     }
 
+    function isStableSupported(address stable) public view returns (bool) {
+        return
+            stable == SUPPORTED_STABLES[0] ||
+            stable == SUPPORTED_STABLES[1] ||
+            stable == SUPPORTED_STABLES[2];
+    }
+
     function handle(address from, address to, uint256 amount, uint256 slippage) public {
+        if (!isStableSupported(from)) revert WrongFromStable(from);
+        if (!isStableSupported(to)) revert WrongToStable(to);
+
         if (amount == 0) return;
 
         IERC20(from).safeIncreaseAllowance(address(curve3Pool), amount);
@@ -52,6 +71,9 @@ contract StableConverter is IStableConverter {
     }
 
     function valuate(address from, address to, uint256 amount) public view returns (uint256) {
+        if (!isStableSupported(from)) revert WrongFromStable(from);
+        if (!isStableSupported(to)) revert WrongToStable(to);
+
         if (amount == 0) return 0;
         return curve3Pool.get_dy(curve3PoolStableIndex[from], curve3PoolStableIndex[to], amount);
     }
