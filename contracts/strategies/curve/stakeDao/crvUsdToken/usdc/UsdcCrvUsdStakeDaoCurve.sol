@@ -9,6 +9,14 @@ contract UsdcCrvUsdStakeDaoCurve is CrvUsdStakeDaoCurveStratBase {
         address oracleAddr
     )
         CrvUsdStakeDaoCurveStratBase(
+            [
+                IERC20(Constants.DAI_ADDRESS),
+                IERC20(Constants.USDC_ADDRESS),
+                IERC20(Constants.USDT_ADDRESS),
+                IERC20(address(0)),
+                IERC20(address(0))
+            ],
+            [uint256(1), 1e12, 1e12, 0, 0],
             Constants.SDT_CRVUSD_USDC_VAULT_ADDRESS,
             Constants.CRV_CRVUSD_USDC_ADDRESS,
             Constants.CRV_CRVUSD_USDC_LP_ADDRESS,

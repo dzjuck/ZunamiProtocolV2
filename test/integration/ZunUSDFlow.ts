@@ -19,7 +19,7 @@ const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
 const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
 describe('ZunUSD flow tests', () => {
-    const strategyNames = ['UsdcCrvUsdStakeDaoCurve', 'UsdtCrvUsdStakeDaoCurve', 'VaultStrat'];
+    const strategyNames = ['UsdcCrvUsdStakeDaoCurve', 'UsdtCrvUsdStakeDaoCurve', 'ZunUsdVaultStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -43,7 +43,9 @@ describe('ZunUSD flow tests', () => {
             strategyNames,
             genericOracle,
             zunamiPool,
-            stableConverter
+            stableConverter,
+          undefined,
+          undefined
         );
 
         const tokenApprovedAmount = '1000000';
@@ -215,7 +217,9 @@ describe('ZunUSD flow tests', () => {
 
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
         await expect(
-            zunamiPoolController.connect(alice).deposit(getMinAmountZunUSD('1000'), admin.getAddress())
+            zunamiPoolController
+                .connect(alice)
+                .deposit(getMinAmountZunUSD('1000'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
 

@@ -23,12 +23,23 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     event SetStableConverter(address stableConverter);
 
     constructor(
+        IERC20[POOL_ASSETS] memory _tokens,
+        uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
         address _vaultAddr,
         address _poolAddr,
         address _poolLpAddr,
         address _oracleAddr,
         uint256 _zunamiTokenIndex
-    ) StakeDaoCurveStratBase(_vaultAddr, _poolAddr, _poolLpAddr, _oracleAddr) {
+    )
+        StakeDaoCurveStratBase(
+            _tokens,
+            _tokenDecimalsMultipliers,
+            _vaultAddr,
+            _poolAddr,
+            _poolLpAddr,
+            _oracleAddr
+        )
+    {
         zunamiTokenIndex = _zunamiTokenIndex;
     }
 
@@ -46,26 +57,27 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
             amounts[ZUNAMI_DAI_TOKEN_ID] == 0
         ) return [uint256(0), 0];
 
+        IERC20 token = tokens[zunamiTokenIndex];
+
+
         amounts2[CURVE_POOL_TOKEN_ID] =
             amounts[zunamiTokenIndex] +
-            valuateStable(ZUNAMI_DAI_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_DAI_TOKEN_ID]) +
-            valuateStable(ZUNAMI_USDC_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_USDC_TOKEN_ID]) +
-            valuateStable(ZUNAMI_USDT_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_USDT_TOKEN_ID]);
+            valuateStable(tokens[ZUNAMI_DAI_TOKEN_ID], token, amounts[ZUNAMI_DAI_TOKEN_ID]) +
+            valuateStable(tokens[ZUNAMI_USDC_TOKEN_ID], token, amounts[ZUNAMI_USDC_TOKEN_ID]) +
+            valuateStable(tokens[ZUNAMI_USDT_TOKEN_ID], token, amounts[ZUNAMI_USDT_TOKEN_ID]);
     }
 
     function valuateStable(
-        uint256 fromZunamiIndex,
-        uint256 toZunamiIndex,
+        IERC20 fromStable,
+        IERC20 toStable,
         uint256 amount
     ) internal view returns (uint256) {
-        if (fromZunamiIndex == toZunamiIndex) return 0;
-
-        IERC20[5] memory zunamiTokens = zunamiPool.tokens();
+        if (address(fromStable) == address(toStable)) return 0;
 
         return
             stableConverter.valuate(
-                address(zunamiTokens[fromZunamiIndex]),
-                address(zunamiTokens[toZunamiIndex]),
+                address(fromStable),
+                address(toStable),
                 amount
             );
     }
@@ -74,11 +86,11 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         address pool,
         uint256[5] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
-        IERC20 token = zunamiPool.tokens()[zunamiTokenIndex];
+        IERC20 token = tokens[zunamiTokenIndex];
 
-        convertStable(ZUNAMI_DAI_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_DAI_TOKEN_ID]);
-        convertStable(ZUNAMI_USDC_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_USDC_TOKEN_ID]);
-        convertStable(ZUNAMI_USDT_TOKEN_ID, zunamiTokenIndex, amounts[ZUNAMI_USDT_TOKEN_ID]);
+        convertStable(tokens[ZUNAMI_DAI_TOKEN_ID], token, amounts[ZUNAMI_DAI_TOKEN_ID]);
+        convertStable(tokens[ZUNAMI_USDC_TOKEN_ID], token, amounts[ZUNAMI_USDC_TOKEN_ID]);
+        convertStable(tokens[ZUNAMI_USDT_TOKEN_ID], token, amounts[ZUNAMI_USDT_TOKEN_ID]);
 
         amounts2[CURVE_POOL_TOKEN_ID] = token.balanceOf(address(this));
         token.safeIncreaseAllowance(address(pool), amounts2[CURVE_POOL_TOKEN_ID]);
@@ -89,20 +101,13 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     }
 
     function convertStable(
-        uint256 fromZunamiIndex,
-        uint256 toZunamiIndex,
+        IERC20 fromToken,
+        IERC20 toToken,
         uint256 fromAmount
     ) internal {
-        if (fromZunamiIndex == toZunamiIndex) return;
+        if (address(fromToken) == address(toToken)) return;
 
-        IERC20 fromToken = zunamiPool.tokens()[fromZunamiIndex];
         fromToken.safeTransfer(address(stableConverter), fromAmount);
-
-        stableConverter.handle(
-            address(fromToken),
-            address(zunamiPool.tokens()[toZunamiIndex]),
-            fromAmount,
-            0
-        );
+        stableConverter.handle(address(fromToken), address(toToken), fromAmount, 0);
     }
 }

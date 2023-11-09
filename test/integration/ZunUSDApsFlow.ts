@@ -17,6 +17,8 @@ import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
 import { ZunamiPool, ZunamiPoolCompoundController } from '../../typechain-types';
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
+
 import * as addrs from '../address.json';
 
 const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
@@ -77,7 +79,8 @@ async function mintTokenTo(
 }
 
 describe('ZunUSD flow APS tests', () => {
-    const strategyNames = ['VaultStrat'];
+    const strategyNames = ['ZunUSDVaultStrat'];
+    const strategyApsNames = ['VaultStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -110,14 +113,18 @@ describe('ZunUSD flow APS tests', () => {
             strategyNames,
             genericOracle,
             zunamiPool,
-            stableConverter
+            stableConverter,
+          undefined,
+          undefined
         );
 
         const strategiesAps = await createStrategies(
-            strategyNames,
+            strategyApsNames,
             genericOracle,
             zunamiPoolAps,
-            stableConverter
+            stableConverter,
+          [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
+          [1, 0, 0, 0, 0]
         );
 
         const tokenApprovedAmount = '10000';

@@ -15,7 +15,13 @@ abstract contract CurveStratBase is ZunamiStratBase {
     IERC20 public immutable poolToken;
     IOracle public immutable oracle;
 
-    constructor(address poolAddr, address poolTokenAddr, address oracleAddr) ZunamiStratBase() {
+    constructor(
+        IERC20[POOL_ASSETS] memory tokens_,
+        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
+        address poolAddr,
+        address poolTokenAddr,
+        address oracleAddr
+    ) ZunamiStratBase(tokens_, tokenDecimalsMultipliers_) {
         pool = ICurvePool2(poolAddr);
         poolToken = IERC20(poolTokenAddr);
         oracle = IOracle(oracleAddr);
@@ -28,7 +34,7 @@ abstract contract CurveStratBase is ZunamiStratBase {
     function checkDepositSuccessful(
         uint256[POOL_ASSETS] memory amounts
     ) internal view override returns (bool) {
-        uint256[POOL_ASSETS] memory tokenDecimals = zunamiPool.tokenDecimalsMultipliers();
+        uint256[POOL_ASSETS] memory tokenDecimals = tokenDecimalsMultipliers;
 
         uint256 amountsTotal;
         for (uint256 i = 0; i < 5; i++) {

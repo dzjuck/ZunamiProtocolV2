@@ -1,11 +1,17 @@
 import { GenericOracle, IStableConverter, ZunamiPool } from '../../typechain-types';
 import { ethers } from 'hardhat';
 
-async function deployStrategy(factory: ContractFactory, genericOracle: GenericOracle | undefined) {
+async function deployStrategy(factory: ContractFactory, genericOracle: GenericOracle | undefined, tokens: string[] | undefined,
+                              tokensDecimals: number[] | undefined) {
     if (genericOracle) {
         return await factory.deploy(genericOracle.address);
     } else {
-        return await factory.deploy();
+        if(tokens && tokensDecimals) {
+          return await factory.deploy(tokens, tokensDecimals);
+        } else {
+          return await factory.deploy();
+        }
+
     }
 }
 
@@ -13,7 +19,9 @@ export async function createStrategies(
     strategyNames: string[],
     genericOracle: GenericOracle,
     zunamiPool: ZunamiPool,
-    stableConverter: IStableConverter
+    stableConverter: IStableConverter,
+    tokens: string[] | undefined,
+    tokensDecimals: number[] | undefined
 ) {
     const strategies = [];
 
@@ -22,7 +30,9 @@ export async function createStrategies(
         const factory = await ethers.getContractFactory(strategyName);
         const strategy = await deployStrategy(
             factory,
-            strategyName.includes('Vault') ? undefined : genericOracle
+            strategyName.includes('Vault') ? undefined : genericOracle,
+            tokens,
+            tokensDecimals
         );
 
         await strategy.deployed();

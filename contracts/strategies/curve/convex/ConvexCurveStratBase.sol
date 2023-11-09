@@ -15,13 +15,15 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
     IConvexRewards public immutable cvxRewards;
 
     constructor(
+        IERC20[POOL_ASSETS] memory _tokens,
+        uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
         address _poolAddr,
         address _poolTokenAddr,
         address _oracleAddr,
         address _cvxBooster,
         address _cvxRewardsAddr,
         uint256 _cvxPID
-    ) CurveStratBase(_poolAddr, _poolTokenAddr, _oracleAddr) {
+    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr, _oracleAddr) {
         cvxBooster = IConvexBooster(_cvxBooster);
         cvxRewards = IConvexRewards(_cvxRewardsAddr);
         cvxPID = _cvxPID;

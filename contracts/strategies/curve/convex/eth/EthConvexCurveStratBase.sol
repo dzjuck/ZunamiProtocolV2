@@ -11,6 +11,8 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     int128 public constant CURVE_POOL_TOKEN_ID_INT = int128(CURVE_POOL_TOKEN_ID);
 
     constructor(
+        IERC20[POOL_ASSETS] memory _tokens,
+        uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
         address _poolAddr,
         address _poolLpAddr,
         address _oracleAddr,
@@ -19,6 +21,8 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         uint256 _cvxPID
     )
         ConvexCurveStratBase(
+            _tokens,
+            _tokenDecimalsMultipliers,
             _poolAddr,
             _poolLpAddr,
             _oracleAddr,
