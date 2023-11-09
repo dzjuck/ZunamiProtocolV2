@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 import '../../ZunamiPool.sol';
 import '../../utils/Constants.sol';
 
-contract ZunamiPoolZETH is ZunamiPool {
+contract ZunamiPoolZunETH is ZunamiPool {
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
-    constructor() ZunamiPool('Zunami ETH', 'zETH') {
+    constructor() ZunamiPool('Zunami ETH', 'zunETH') {
         address[] memory tokens = new address[](2);
         tokens[ZUNAMI_WETH_TOKEN_ID] = Constants.WETH_ADDRESS;
         tokens[ZUNAMI_FRXETH_TOKEN_ID] = Constants.FRX_ETH_ADDRESS;

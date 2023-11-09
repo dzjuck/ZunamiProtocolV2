@@ -12,13 +12,13 @@ import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConverterAndRewardManagerContracts } from '../utils/CreateConverterAndRewardManagerContracts';
 import { createStablecoins } from '../utils/CreateStablecoins';
 import { createStrategies } from '../utils/CreateStrategies';
-import { createPoolAndControllerUZD } from '../utils/CreatePoolAndControllerUZD';
-import { getMinAmountUZD } from '../utils/GetMinAmountUZD';
+import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
+import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
 const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
 const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
-describe('UZD flow tests', () => {
+describe('ZunUSD flow tests', () => {
     const strategyNames = ['UsdcCrvUsdStakeDaoCurve', 'UsdtCrvUsdStakeDaoCurve', 'VaultStrat'];
 
     async function deployFixture() {
@@ -32,7 +32,7 @@ describe('UZD flow tests', () => {
         const { curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle } =
             await createAndInitConicOracles([crvUSD_USDT_pool_addr, crvUSD_USDC_pool_addr]);
 
-        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerUZD();
+        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
 
         const { stableConverter, rewardManager } = await createConverterAndRewardManagerContracts(
             'StableConverter',
@@ -106,7 +106,7 @@ describe('UZD flow tests', () => {
                 await expect(
                     zunamiPoolController
                         .connect(user)
-                        .deposit(getMinAmountUZD('1000'), await user.getAddress())
+                        .deposit(getMinAmountZunUSD('1000'), await user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 expect(await dai.balanceOf(user.getAddress())).to.lt(daiBefore);
@@ -131,7 +131,7 @@ describe('UZD flow tests', () => {
                 await expect(
                     zunamiPoolController
                         .connect(user)
-                        .deposit(getMinAmountUZD('1000'), user.getAddress())
+                        .deposit(getMinAmountZunUSD('1000'), user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 let stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
@@ -165,7 +165,7 @@ describe('UZD flow tests', () => {
             await expect(
                 zunamiPoolController
                     .connect(alice)
-                    .deposit(getMinAmountUZD('1000'), admin.getAddress())
+                    .deposit(getMinAmountZunUSD('1000'), admin.getAddress())
             ).to.emit(zunamiPool, 'Deposited');
         }
 
@@ -215,7 +215,7 @@ describe('UZD flow tests', () => {
 
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
         await expect(
-            zunamiPoolController.connect(alice).deposit(getMinAmountUZD('1000'), admin.getAddress())
+            zunamiPoolController.connect(alice).deposit(getMinAmountZunUSD('1000'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
 

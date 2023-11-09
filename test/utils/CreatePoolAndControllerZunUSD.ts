@@ -2,12 +2,12 @@ import { ethers } from 'hardhat';
 import { ZunamiPoolBaseController, ZunamiPool } from '../../typechain-types';
 import * as addrs from '../address.json';
 
-export async function createPoolAndControllerUZD() {
-    const ZunamiPoolUZDFactory = await ethers.getContractFactory('ZunamiPoolUZD');
-    const zunamiPool = (await ZunamiPoolUZDFactory.deploy()) as ZunamiPool;
+export async function createPoolAndControllerZunUSD() {
+    const ZunamiPoolZunUSDFactory = await ethers.getContractFactory('ZunamiPoolZunUSD');
+    const zunamiPool = (await ZunamiPoolZunUSDFactory.deploy()) as ZunamiPool;
 
-    const ZunamiPooControllerUZDFactory = await ethers.getContractFactory('ZunamiPooControllerUZD');
-    const zunamiPoolController = (await ZunamiPooControllerUZDFactory.deploy(
+    const ZunamiPooControllerZunUSDFactory = await ethers.getContractFactory('ZunamiPooControllerZunUSD');
+    const zunamiPoolController = (await ZunamiPooControllerZunUSDFactory.deploy(
         zunamiPool.address
     )) as ZunamiPoolBaseController;
 

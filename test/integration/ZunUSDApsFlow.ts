@@ -12,8 +12,8 @@ import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConverterAndRewardManagerContracts } from '../utils/CreateConverterAndRewardManagerContracts';
 import { createStablecoins } from '../utils/CreateStablecoins';
 import { createStrategies } from '../utils/CreateStrategies';
-import { createPoolAndControllerUZD } from '../utils/CreatePoolAndControllerUZD';
-import { getMinAmountUZD } from '../utils/GetMinAmountUZD';
+import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
+import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
 import { ZunamiPool, ZunamiPoolCompoundController } from '../../typechain-types';
 
@@ -76,7 +76,7 @@ async function mintTokenTo(
     });
 }
 
-describe('UZD flow aps tests', () => {
+describe('ZunUSD flow APS tests', () => {
     const strategyNames = ['VaultStrat'];
 
     async function deployFixture() {
@@ -95,7 +95,7 @@ describe('UZD flow aps tests', () => {
             'SellingCurveRewardManager'
         );
 
-        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerUZD();
+        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
 
         const { stableConverter: stableConverterAps, rewardManager: rewardManagerAps } =
             await createConverterAndRewardManagerContracts(
@@ -187,7 +187,7 @@ describe('UZD flow aps tests', () => {
             await expect(
                 zunamiPoolController
                     .connect(admin)
-                    .deposit(getMinAmountUZD('10000'), admin.getAddress())
+                    .deposit(getMinAmountZunUSD('10000'), admin.getAddress())
             ).to.emit(zunamiPool, 'Deposited');
         }
 
