@@ -6,7 +6,7 @@ import {
     CurveRegistryCache,
     GenericOracle,
     ICurvePoolPricable,
-} from '../typechain-types';
+} from '../../typechain-types';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 

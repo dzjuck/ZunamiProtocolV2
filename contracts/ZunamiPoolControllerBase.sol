@@ -62,9 +62,7 @@ abstract contract ZunamiPoolControllerBase is
         emit SetDefaultWithdrawSid(_newPoolId);
     }
 
-    function setRewardTokens(
-        IERC20[] memory rewardTokens_
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (rewardTokens_.length == 0) revert WrongRewardTokens();
 
         rewardTokens = rewardTokens_;
@@ -85,11 +83,7 @@ abstract contract ZunamiPoolControllerBase is
 
         for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] > 0) {
-                IERC20(pool.tokens()[i]).safeTransferFrom(
-                    _msgSender(),
-                    address(pool),
-                    amounts[i]
-                );
+                IERC20(pool.tokens()[i]).safeTransferFrom(_msgSender(), address(pool), amounts[i]);
             }
         }
 

@@ -55,10 +55,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         return tokensHoldings;
     }
 
-    function claimRewards(
-        address receiver,
-        IERC20[] memory rewardTokens
-    ) external onlyZunamiPool {}
+    function claimRewards(address receiver, IERC20[] memory rewardTokens) external onlyZunamiPool {}
 
     function calcTokenAmount(uint256[POOL_ASSETS] memory, bool) external view returns (uint256) {
         return 0;

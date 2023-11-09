@@ -205,7 +205,9 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
         if (totalSupply() == 0) {
             minted = depositedValue;
         } else {
-            minted = ((totalSupply() + 10 ** _decimalsOffset()) * depositedValue) / (holdingsBefore + 1);
+            minted =
+                ((totalSupply() + 10 ** _decimalsOffset()) * depositedValue) /
+                (holdingsBefore + 1);
         }
 
         _mint(receiver, minted);
@@ -235,7 +237,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
             )
         ) revert WrongWithdrawParams(sid);
 
-        uint256 userDeposit = ((totalDeposited + 1) * amount) / (totalSupply() + 10 ** _decimalsOffset());
+        uint256 userDeposit = ((totalDeposited + 1) * amount) /
+            (totalSupply() + 10 ** _decimalsOffset());
 
         processSuccessfulWithdrawal(controllerAddr, userDeposit, amount, sid);
     }

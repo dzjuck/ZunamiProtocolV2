@@ -4,20 +4,20 @@ import { BigNumber } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
-import { abi as erc20ABI } from '../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
+import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 
-import { increaseChainTime } from './utils/IncreaseChainTime';
-import { mintStables } from './utils/MintStables';
-import { createAndInitConicOracles } from './utils/CreateAndInitConicOracles';
-import { createConverterAndRewardManagerContracts } from './utils/CreateConverterAndRewardManagerContracts';
-import { createStablecoins } from './utils/CreateStablecoins';
-import { createStrategies } from './utils/CreateStrategies';
-import { createPoolAndControllerUZD } from './utils/CreatePoolAndControllerUZD';
-import { getMinAmountUZD } from './utils/GetMinAmountUZD';
+import { increaseChainTime } from '../utils/IncreaseChainTime';
+import { mintStables } from '../utils/MintStables';
+import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
+import { createConverterAndRewardManagerContracts } from '../utils/CreateConverterAndRewardManagerContracts';
+import { createStablecoins } from '../utils/CreateStablecoins';
+import { createStrategies } from '../utils/CreateStrategies';
+import { createPoolAndControllerUZD } from '../utils/CreatePoolAndControllerUZD';
+import { getMinAmountUZD } from '../utils/GetMinAmountUZD';
 
-import { ZunamiPool, ZunamiPoolCompoundController } from '../typechain-types';
+import { ZunamiPool, ZunamiPoolCompoundController } from '../../typechain-types';
 
-import * as addrs from './address.json';
+import * as addrs from '../address.json';
 
 const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
 const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';

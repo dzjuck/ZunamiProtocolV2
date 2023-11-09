@@ -112,10 +112,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         uint256[POOL_ASSETS] memory minTokenAmounts
     ) internal virtual;
 
-    function claimRewards(
-        address receiver,
-        IERC20[] memory rewardTokens
-    ) public onlyZunamiPool {
+    function claimRewards(address receiver, IERC20[] memory rewardTokens) public onlyZunamiPool {
         claimCollectedRewards();
 
         transferTokensOut(rewardTokens, receiver, fillArrayN(0, rewardTokens.length));
