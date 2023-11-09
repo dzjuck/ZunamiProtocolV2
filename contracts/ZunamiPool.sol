@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
 
@@ -14,7 +14,7 @@ import './interfaces/IPool.sol';
  * @title Zunami Protocol v2
  *
  */
-contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
+contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     using SafeERC20 for IERC20;
 
     uint8 public constant POOL_ASSETS = 5;
@@ -47,7 +47,9 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControlDefaultAdminRules {
     constructor(
         string memory name_,
         string memory symbol_
-    ) ERC20(name_, symbol_) AccessControlDefaultAdminRules(24 hours, msg.sender) {}
+    ) ERC20(name_, symbol_) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 
     function _decimalsOffset() internal view virtual returns (uint8) {
         return 0;
