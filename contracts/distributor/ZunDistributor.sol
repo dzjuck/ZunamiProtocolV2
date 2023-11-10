@@ -9,18 +9,21 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Nonces.sol';
 import { EIP712 } from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 import { SignatureChecker } from '@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '../interfaces/IGauge.sol';
 
-contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
+contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGuard {
     using SafeERC20 for ERC20;
 
     bytes32 public constant BALLOT_TYPEHASH =
-        keccak256('Ballot(bytes32 gaugeIdsHash,bytes32 amountsHash,address voter,uint256 nonce)');
+        keccak256(
+            'Ballot(bytes32 gaugeIdsHash,bytes32 amountsHash,address voter,uint256 nonce,uint256 deadline)'
+        );
 
     uint256 public constant VOTING_PERIOD = (14 * 24 * 60 * 60) / 12; // 2 week in blocks
-    uint256 public constant ANNUAL_DECREASE_PERCENT = 350; // 35%
+    uint256 public constant ANNUAL_DECREASE_PERCENT = 35; // 35%
     uint256 public constant FIRST_YEAR_DISTRIBUTION_VALUE = 11_200_000 * 1e18; // in tokens
-    uint256 public constant DENOMINATOR = 1e3;
+    uint256 public constant DENOMINATOR = 100;
     uint256 public constant BLOCKS_IN_YEAR = (364 * 24 * 60 * 60) / 12;
 
     uint256 public immutable START_BLOCK;
@@ -58,6 +61,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
     error DistributionAlreadyHappened();
     error StartBlockInFuture();
     error InvalidSignature();
+    error ExpiredSignature();
 
     modifier afterStart() {
         if (block.number <= START_BLOCK) {
@@ -74,7 +78,13 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         address[] memory _gaugeAddrs,
         uint256[] memory _gaugeVotes
     ) Ownable(_owner) EIP712('ZunamiDistributor', '1') {
+        if (_token == address(0)) {
+            revert ZeroAddress();
+        }
         token = ERC20(_token);
+        if (_voteToken == address(0)) {
+            revert ZeroAddress();
+        }
         voteToken = ERC20Votes(_voteToken);
 
         if (_startBlock < block.number) {
@@ -88,7 +98,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         if (_gaugeAddrs.length != _gaugeVotes.length) {
             revert WrongLength();
         }
-        for (uint256 i; i < _gaugeAddrs.length; i++) {
+        for (uint256 i; i < _gaugeAddrs.length; ++i) {
             gauges[i] = Gauge(_gaugeAddrs[i], _gaugeVotes[i], 0);
         }
         gaugesNumber = _gaugeAddrs.length;
@@ -105,8 +115,12 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         uint256[] calldata gaugeIds,
         uint256[] calldata amounts,
         address voter,
+        uint256 deadline,
         bytes calldata signature
     ) external afterStart whenNotPaused returns (uint256) {
+        if (deadline < block.timestamp) {
+            revert ExpiredSignature();
+        }
         bool valid = SignatureChecker.isValidSignatureNow(
             voter,
             _hashTypedDataV4(
@@ -116,7 +130,8 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
                         keccak256(abi.encode(gaugeIds)),
                         keccak256(abi.encode(amounts)),
                         voter,
-                        _useNonce(voter)
+                        _useNonce(voter),
+                        deadline
                     )
                 )
             ),
@@ -143,7 +158,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         }
 
         // update votes' counters
-        for (uint256 i; i < gaugeIds.length; i++) {
+        for (uint256 i; i < gaugeIds.length; ++i) {
             if (gaugeIds[i] >= gaugesNumber) {
                 revert WrongGaugeId();
             }
@@ -163,7 +178,13 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         emit VoteCasted(voter, totalVotes);
     }
 
-    function distribute() external afterStart whenNotPaused returns (uint256 totalDistributed) {
+    function distribute()
+        external
+        afterStart
+        whenNotPaused
+        nonReentrant
+        returns (uint256 totalDistributed)
+    {
         if (!_isPeriodPassed(lastDistributionBlock)) {
             revert DistributionAlreadyHappened();
         }
@@ -173,11 +194,11 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         }
 
         uint256 totalVotes;
-        for (uint256 i; i < gaugesNumber; i++) {
+        for (uint256 i; i < gaugesNumber; ++i) {
             totalVotes += gauges[i].finalizedVotes;
         }
         uint256 amount;
-        for (uint256 i; i < gaugesNumber; i++) {
+        for (uint256 i; i < gaugesNumber; ++i) {
             amount = (_periodDistributionValue() * gauges[i].finalizedVotes) / totalVotes;
             token.safeTransfer(gauges[i].addr, amount);
             IGauge(gauges[i].addr).distribute(amount);
@@ -209,10 +230,10 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         if (gaugeId >= gaugesNumber) {
             revert WrongGaugeId();
         }
-        for (uint256 i = gaugeId; i < gaugesNumber - 1; i++) {
+        for (uint256 i = gaugeId; i < gaugesNumber - 1; ++i) {
             gauges[i] = gauges[i + 1];
         }
-        gauges[gaugesNumber - 1] = Gauge(address(0), 0, 0);
+        delete (gauges[gaugesNumber - 1]);
         gaugesNumber -= 1;
         emit GaugeDeleted(gaugeId);
     }
@@ -225,7 +246,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
     function withdrawStuckToken(ERC20 _token) external onlyOwner {
         uint256 tokenBalance = _token.balanceOf(address(this));
         if (tokenBalance > 0) {
-            _token.safeTransfer(msg.sender, tokenBalance);
+            _token.safeTransfer(owner(), tokenBalance);
         }
     }
 
@@ -234,7 +255,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
         value =
             (FIRST_YEAR_DISTRIBUTION_VALUE *
                 (DENOMINATOR - ANNUAL_DECREASE_PERCENT) ** (yearCount)) /
-            DENOMINATOR ** (yearCount);
+            DENOMINATOR ** (yearCount); // overflow after 29 years - it's ok
     }
 
     function _periodDistributionValue() internal view returns (uint256 value) {
@@ -244,18 +265,19 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces {
     function _finalizeVotingPeriod() internal {
         // update last votes if quorum reached
         uint256 totalVotes;
-        for (uint256 i; i < gaugesNumber; i++) {
+        for (uint256 i; i < gaugesNumber; ++i) {
             totalVotes += gauges[i].currentVotes;
         }
-        if (totalVotes >= votingThreshold) {
-            for (uint256 i; i < gaugesNumber; i++) {
+        if (totalVotes >= votingThreshold && totalVotes > 0) {
+            for (uint256 i; i < gaugesNumber; ++i) {
                 gauges[i].finalizedVotes = gauges[i].currentVotes;
+                // reset current votes counters
+                gauges[i].currentVotes = 0;
             }
-        }
-
-        // reset current votes counters
-        for (uint256 i; i < gaugesNumber; i++) {
-            gauges[i].currentVotes = 0;
+        } else {
+            for (uint256 i; i < gaugesNumber; ++i) {
+                gauges[i].currentVotes = 0;
+            }
         }
 
         lastFinalizeBlock = block.number;

@@ -389,6 +389,8 @@ describe('Distributor tests', () => {
             deployFixture
         );
 
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const deadline = latestBlock.timestamp + 100;
         const gaugeIds = [0, 1];
         const amounts = [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')];
 
@@ -405,6 +407,7 @@ describe('Distributor tests', () => {
             { name: 'amountsHash', type: 'bytes32' },
             { name: 'voter', type: 'address' },
             { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
         ];
 
         const types = {
@@ -416,11 +419,14 @@ describe('Distributor tests', () => {
             amountsHash: utils.keccak256(utils.defaultAbiCoder.encode(['uint256[]'], [amounts])),
             voter: voter.address,
             nonce: 0,
+            deadline,
         };
         const signature = await voter._signTypedData(domainData, types, message);
 
         // vote
-        await distributor.connect(dao).castVoteBySig(gaugeIds, amounts, voter.address, signature);
+        await distributor
+            .connect(dao)
+            .castVoteBySig(gaugeIds, amounts, voter.address, deadline, signature);
 
         let gaugeItem = await distributor.gauges(0);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('2000', 'ether'));
@@ -428,7 +434,97 @@ describe('Distributor tests', () => {
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
     });
 
-    it.skip('should distribute all', async () => {
+    it('invalid signature', async () => {
+        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
+            deployFixture
+        );
+
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const deadline = latestBlock.timestamp + 100;
+        const gaugeIds = [0, 1];
+        const amounts = [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')];
+
+        // prepare signature
+        const domainData = {
+            name: 'ZunamiDistributor',
+            version: '1',
+            chainId: 31337,
+            verifyingContract: distributor.address,
+        };
+
+        const Ballot = [
+            { name: 'gaugeIdsHash', type: 'bytes32' },
+            { name: 'amountsHash', type: 'bytes32' },
+            { name: 'voter', type: 'address' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+        ];
+
+        const types = {
+            Ballot,
+        };
+
+        const message = {
+            gaugeIdsHash: utils.keccak256(utils.defaultAbiCoder.encode(['uint256[]'], [gaugeIds])),
+            amountsHash: utils.keccak256(utils.defaultAbiCoder.encode(['uint256[]'], [amounts])),
+            voter: voter.address,
+            nonce: 0,
+            deadline,
+        };
+        const signature = await voter._signTypedData(domainData, types, message);
+
+        // vote
+        await expect(
+            distributor.castVoteBySig(gaugeIds, amounts, voter.address, deadline + 1, signature)
+        ).to.be.revertedWithCustomError(distributor, 'InvalidSignature');
+    });
+
+    it('expired signature', async () => {
+        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
+            deployFixture
+        );
+
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const deadline = latestBlock.timestamp;
+        const gaugeIds = [0, 1];
+        const amounts = [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')];
+
+        // prepare signature
+        const domainData = {
+            name: 'ZunamiDistributor',
+            version: '1',
+            chainId: 31337,
+            verifyingContract: distributor.address,
+        };
+
+        const Ballot = [
+            { name: 'gaugeIdsHash', type: 'bytes32' },
+            { name: 'amountsHash', type: 'bytes32' },
+            { name: 'voter', type: 'address' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+        ];
+
+        const types = {
+            Ballot,
+        };
+
+        const message = {
+            gaugeIdsHash: utils.keccak256(utils.defaultAbiCoder.encode(['uint256[]'], [gaugeIds])),
+            amountsHash: utils.keccak256(utils.defaultAbiCoder.encode(['uint256[]'], [amounts])),
+            voter: voter.address,
+            nonce: 0,
+            deadline,
+        };
+        const signature = await voter._signTypedData(domainData, types, message);
+
+        // vote
+        await expect(
+            distributor.castVoteBySig(gaugeIds, amounts, voter.address, deadline, signature)
+        ).to.be.revertedWithCustomError(distributor, 'ExpiredSignature');
+    });
+
+    it('should distribute all', async () => {
         const {
             voter,
             approveGauge,
@@ -441,64 +537,60 @@ describe('Distributor tests', () => {
             dao,
         } = await loadFixture(deployFixture);
 
+        let gaugeBal = parseUnits('0', 'wei');
+        let yearCount, yearValue;
+        const firstYearValue = await distributor.FIRST_YEAR_DISTRIBUTION_VALUE();
+        const periodBlocks = await distributor.VOTING_PERIOD();
+        const yearBlocks = await distributor.BLOCKS_IN_YEAR();
+
+        let distrAmount = firstYearValue.mul(periodBlocks).div(yearBlocks).div(2);
+
         // distribute in cycle
-        for (let i = 0; i < 240; i++) {
-            // check yearDistributionValue()
-            // check distributionValue()
-
-            // check result of full distribution
-
-            // vote
-            await distributor.castVote(
-                [0, 1],
-                [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
-            );
-
-            let gaugeItem = await distributor.gauges(0);
-            expect(gaugeItem.currentVotes).to.eq(parseUnits('2000', 'ether'));
-            gaugeItem = await distributor.gauges(1);
-            expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
-
+        for (let i = 1; i < 130; i++) {
+            // max 29 years - 754
+            // console.log(i, distrAmount);
             // wait 2 week - 100_800 blocks
             await mine(100_800);
 
             // distribute
-            expect(await ZUN.balanceOf(approveGauge.address)).to.eq(0);
-            expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
-            expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
-            expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(0);
-
             await distributor.distribute();
 
-            gaugeItem = await distributor.gauges(0);
-            expect(gaugeItem.finalizedVotes).to.eq(parseUnits('2000', 'ether'));
-            gaugeItem = await distributor.gauges(1);
-            expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
+            // check distributionValue
+            gaugeBal = gaugeBal.add(distrAmount);
+            expect(await ZUN.balanceOf(approveGauge.address)).to.eq(gaugeBal);
+            expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(gaugeBal);
 
-            expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-                parseUnits('287179487179487179487179', 'wei')
-            );
-            expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
-            expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
-            expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-                parseUnits('287179487179487179487179', 'wei')
-            );
-            expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-                parseUnits('143589743589743589743589', 'wei')
-            );
+            // check yearDistributionValue
+            if (i % 26 == 0) {
+                yearCount = BigNumber.from(i).div(26);
+                yearValue = firstYearValue
+                    .mul(BigNumber.from(650).pow(yearCount))
+                    .div(BigNumber.from(1000).pow(yearCount));
+                distrAmount = yearValue.mul(periodBlocks).div(yearBlocks).div(2);
+                // console.log(i, distrAmount);
+            }
         }
     });
 
-    it('out of tokens for distribution', async () => {
-        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
-            deployFixture
-        );
-    });
-
     it('stop distribution', async () => {
-        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
+        const { voter, approveGauge, transferGauge, ZUN, distributor, dao } = await loadFixture(
             deployFixture
         );
+
+        expect(await distributor.paused()).to.eq(false);
+
+        await expect(distributor.stopDistribution()).to.be.revertedWithCustomError(
+            distributor,
+            'OwnableUnauthorizedAccount'
+        );
+
+        expect(await distributor.paused()).to.eq(false);
+        expect(await ZUN.balanceOf(dao.address)).to.eq(0);
+
+        await distributor.connect(dao).stopDistribution();
+
+        expect(await distributor.paused()).to.eq(true);
+        expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
     });
 
     it('add gauge', async () => {
@@ -545,20 +637,105 @@ describe('Distributor tests', () => {
     });
 
     it('withdraw stuck token', async () => {
-        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
-            deployFixture
+        const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
+            await loadFixture(deployFixture);
+
+        await expect(distributor.withdrawStuckToken(ZUN.address)).to.be.revertedWithCustomError(
+            distributor,
+            'OwnableUnauthorizedAccount'
+        );
+
+        expect(await ZUN.balanceOf(dao.address)).to.eq(0);
+
+        await distributor.connect(dao).withdrawStuckToken(ZUN.address);
+
+        expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
+    });
+
+    it('vote/distribute before start block', async () => {
+        const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
+            await loadFixture(deployFixture);
+
+        const latestBlock = await ethers.provider.getBlock('latest');
+
+        const blockInFuture = latestBlock.number + 100;
+
+        // deploy distributor contract
+        const ZunDistributorFactory = await ethers.getContractFactory('ZunDistributor');
+        const testDistributor = (await ZunDistributorFactory.deploy(
+            ZUN.address,
+            vlZUN.address,
+            dao.address,
+            blockInFuture,
+            [approveGauge.address, transferGauge.address],
+            [parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
+        )) as ZunDistributor;
+
+        await expect(
+            testDistributor.castVote(
+                [0, 1],
+                [parseUnits('3000', 'ether'), parseUnits('4000', 'ether')]
+            )
+        ).to.be.revertedWithCustomError(testDistributor, 'StartBlockInFuture');
+
+        await expect(testDistributor.distribute()).to.be.revertedWithCustomError(
+            testDistributor,
+            'StartBlockInFuture'
         );
     });
 
-    it('vote/distribute/distributeAmount before start block', async () => {
-        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
-            deployFixture
-        );
-    });
+    it.skip('gas opti', async () => {
+        const {
+            voter,
+            approveGauge,
+            transferGauge,
+            approveGaugeRec,
+            transferGaugeRec,
+            ZUN,
+            vlZUN,
+            distributor,
+            dao,
+        } = await loadFixture(deployFixture);
 
-    it('distribution in border of years', async () => {
-        const { voter, approveGauge, transferGauge, vlZUN, distributor, dao } = await loadFixture(
-            deployFixture
+        // vote
+        let tx = await distributor.castVote(
+            [0, 1],
+            [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
         );
+
+        let receipt = await tx.wait();
+        console.log(receipt.cumulativeGasUsed);
+
+        let gaugeItem = await distributor.gauges(0);
+        expect(gaugeItem.currentVotes).to.eq(parseUnits('2000', 'ether'));
+        gaugeItem = await distributor.gauges(1);
+        expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
+
+        // wait 2 week - 100_800 blocks
+        await mine(100_800);
+
+        tx = await distributor.castVote(
+            [0, 1],
+            [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
+        );
+
+        receipt = await tx.wait();
+        console.log(receipt.cumulativeGasUsed);
+
+        tx = await distributor.castVote(
+            [0, 1],
+            [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
+        );
+
+        receipt = await tx.wait();
+        console.log(receipt.cumulativeGasUsed);
+
+        tx = await distributor.castVote(
+            [0, 1],
+            [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
+        );
+
+        receipt = await tx.wait();
+        console.log(receipt.cumulativeGasUsed);
     });
 });
