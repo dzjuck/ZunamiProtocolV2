@@ -19,7 +19,11 @@ const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
 const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
 describe('ZunUSD flow tests', () => {
-    const strategyNames = ['UsdcCrvUsdStakeDaoCurve', 'UsdtCrvUsdStakeDaoCurve', 'ZunUsdVaultStrat'];
+    const strategyNames = [
+        'UsdcCrvUsdStakeDaoCurve',
+        'UsdtCrvUsdStakeDaoCurve',
+        'ZunUsdVaultStrat',
+    ];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -44,8 +48,8 @@ describe('ZunUSD flow tests', () => {
             genericOracle,
             zunamiPool,
             stableConverter,
-          undefined,
-          undefined
+            undefined,
+            undefined
         );
 
         const tokenApprovedAmount = '1000000';

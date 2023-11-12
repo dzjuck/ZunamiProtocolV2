@@ -9,11 +9,7 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import './interfaces/IPool.sol';
 
-abstract contract ZunamiPoolControllerBase is
-    Pausable,
-    AccessControl,
-    ReentrancyGuard
-{
+abstract contract ZunamiPoolControllerBase is Pausable, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();

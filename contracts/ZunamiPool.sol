@@ -44,10 +44,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         _;
     }
 
-    constructor(
-        string memory name_,
-        string memory symbol_
-    ) ERC20(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 

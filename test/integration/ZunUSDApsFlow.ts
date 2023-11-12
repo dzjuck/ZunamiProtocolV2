@@ -17,7 +17,7 @@ import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
 import { ZunamiPool, ZunamiPoolCompoundController } from '../../typechain-types';
 
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 import * as addrs from '../address.json';
 
@@ -114,8 +114,8 @@ describe('ZunUSD flow APS tests', () => {
             genericOracle,
             zunamiPool,
             stableConverter,
-          undefined,
-          undefined
+            undefined,
+            undefined
         );
 
         const strategiesAps = await createStrategies(
@@ -123,8 +123,8 @@ describe('ZunUSD flow APS tests', () => {
             genericOracle,
             zunamiPoolAps,
             stableConverter,
-          [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
-          [1, 0, 0, 0, 0]
+            [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
+            [1, 0, 0, 0, 0]
         );
 
         const tokenApprovedAmount = '10000';

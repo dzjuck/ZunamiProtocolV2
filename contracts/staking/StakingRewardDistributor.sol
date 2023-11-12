@@ -5,8 +5,8 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
-import "./IERC20Supplied.sol";
-import "./IRewardDistributor.sol";
+import './IERC20Supplied.sol';
+import './IRewardDistributor.sol';
 
 contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     using SafeERC20 for IERC20;
@@ -90,11 +90,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     function addRewardToken(IERC20 _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 tid = rewardTokenInfo.length;
         rewardTokenInfo.push(
-            RewardTokenInfo({
-                token: _token,
-                rewardPerBlock: 0,
-                distributionBlock: 0
-            })
+            RewardTokenInfo({ token: _token, rewardPerBlock: 0, distributionBlock: 0 })
         );
         rewardTokenTidByAddress[address(_token)] = tid;
 
@@ -119,8 +115,8 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         uint256 length = rewardTokenInfo.length;
         for (uint256 tid = 0; tid < length; ++tid) {
             lastRewardBlocks[tid] = rewardTokenInfo[tid].distributionBlock > 0 &&
-            block.number >= rewardTokenInfo[tid].distributionBlock &&
-            block.number <= rewardTokenInfo[tid].distributionBlock + BLOCKS_IN_2_WEEKS
+                block.number >= rewardTokenInfo[tid].distributionBlock &&
+                block.number <= rewardTokenInfo[tid].distributionBlock + BLOCKS_IN_2_WEEKS
                 ? block.number
                 : 0;
             accRewardsPerShare[tid] = 0;
@@ -154,7 +150,8 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         }
 
         if (
-            reward.distributionBlock == 0 || block.number > reward.distributionBlock + BLOCKS_IN_2_WEEKS
+            reward.distributionBlock == 0 ||
+            block.number > reward.distributionBlock + BLOCKS_IN_2_WEEKS
         ) {
             reward.distributionBlock = block.number;
             reward.rewardPerBlock = amount / BLOCKS_IN_2_WEEKS;
@@ -204,7 +201,8 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
 
             uint256 blockLasted = currentBlock - pool.lastRewardBlocks[tid];
 
-            uint256 reward = (blockLasted * rewardToken.rewardPerBlock * pool.allocPoint) / totalAllocPoint;
+            uint256 reward = (blockLasted * rewardToken.rewardPerBlock * pool.allocPoint) /
+                totalAllocPoint;
 
             pool.accRewardsPerShare[tid] += (reward * ACC_REWARD_PRECISION) / lpSupply;
 
@@ -223,7 +221,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
             userPool.amount = userPool.amount + _amount;
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
-            if(address(stakingToken) != address(0)) {
+            if (address(stakingToken) != address(0)) {
                 stakingToken.mint(msg.sender, _amount);
             }
         }
@@ -231,7 +229,11 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         uint256 length = rewardTokenInfo.length;
         for (uint256 tid = 0; tid < length; ++tid) {
             accrueReward(tid, _pid);
-            userPool.accruedRewards[tid] = calcReward(tid, poolInfo[_pid], userPoolInfo[_pid][msg.sender]);
+            userPool.accruedRewards[tid] = calcReward(
+                tid,
+                poolInfo[_pid],
+                userPoolInfo[_pid][msg.sender]
+            );
         }
 
         userPool.depositedBlock = block.number;
@@ -246,7 +248,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
             updatePool(i);
             accrueReward(_tid, i);
             UserPoolInfo storage userPool = userPoolInfo[i][msg.sender];
-            userPool.accruedRewards[_tid] = calcReward(_tid,poolInfo[i], userPool);
+            userPool.accruedRewards[_tid] = calcReward(_tid, poolInfo[i], userPool);
         }
         uint256 claimable = rewards[_tid][msg.sender] - claimedRewards[_tid][msg.sender];
         if (claimable > 0) {
@@ -261,7 +263,9 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         if (userPool.amount == 0) {
             return;
         }
-        rewards[tid][msg.sender] += calcReward(tid, poolInfo[_pid], userPool) - userPool.accruedRewards[tid];
+        rewards[tid][msg.sender] +=
+            calcReward(tid, poolInfo[_pid], userPool) -
+            userPool.accruedRewards[tid];
     }
 
     function calcReward(
@@ -294,7 +298,6 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         for (uint256 tid = 0; tid < length; ++tid) {
             userPool.accruedRewards[tid] = 0;
         }
-
     }
 
     // Update the given pool's reward token allocation point. Can only be called by the owner.
@@ -320,14 +323,18 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         if (_amount > 0) {
             userPool.amount -= _amount;
             uint256 transferAmount = _amount;
-            if(userPool.infiniteLock || userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS) {
-                transferAmount = _amount * (PERCENT_DENOMINATOR - EXIT_PERCENT) / PERCENT_DENOMINATOR;
+            if (
+                userPool.infiniteLock || userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS
+            ) {
+                transferAmount =
+                    (_amount * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
+                    PERCENT_DENOMINATOR;
                 poolInfo[_pid].token.safeTransfer(earlyExitReceiver, _amount - transferAmount);
             }
             poolInfo[_pid].token.safeTransfer(address(msg.sender), transferAmount);
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
-            if(address(stakingToken) != address(0)) {
+            if (address(stakingToken) != address(0)) {
                 stakingToken.burn(_amount);
             }
         }
@@ -335,7 +342,11 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
         uint256 length = rewardTokenInfo.length;
         for (uint256 tid = 0; tid < length; ++tid) {
             accrueReward(tid, _pid);
-            userPool.accruedRewards[tid] = calcReward(tid, poolInfo[_pid], userPoolInfo[_pid][msg.sender]);
+            userPool.accruedRewards[tid] = calcReward(
+                tid,
+                poolInfo[_pid],
+                userPoolInfo[_pid][msg.sender]
+            );
         }
         emit Withdrawn(msg.sender, _pid, _amount);
     }
@@ -357,10 +368,15 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
 
     function isRewardTokenAdded(IERC20 _token) public view returns (bool) {
         uint256 tid = rewardTokenTidByAddress[address(_token)];
-        return rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == address(_token);
+        return
+            rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == address(_token);
     }
 
-    function getPendingReward(uint256 _tid, uint256 _pid, address _user) external view returns (uint256 total) {
+    function getPendingReward(
+        uint256 _tid,
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256 total) {
         RewardTokenInfo memory token = rewardTokenInfo[_tid];
         PoolInfo memory pool = poolInfo[_pid];
 

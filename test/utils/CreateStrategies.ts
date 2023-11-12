@@ -1,17 +1,20 @@
 import { GenericOracle, IStableConverter, ZunamiPool } from '../../typechain-types';
 import { ethers } from 'hardhat';
 
-async function deployStrategy(factory: ContractFactory, genericOracle: GenericOracle | undefined, tokens: string[] | undefined,
-                              tokensDecimals: number[] | undefined) {
+async function deployStrategy(
+    factory: ContractFactory,
+    genericOracle: GenericOracle | undefined,
+    tokens: string[] | undefined,
+    tokensDecimals: number[] | undefined
+) {
     if (genericOracle) {
         return await factory.deploy(genericOracle.address);
     } else {
-        if(tokens && tokensDecimals) {
-          return await factory.deploy(tokens, tokensDecimals);
+        if (tokens && tokensDecimals) {
+            return await factory.deploy(tokens, tokensDecimals);
         } else {
-          return await factory.deploy();
+            return await factory.deploy();
         }
-
     }
 }
 
