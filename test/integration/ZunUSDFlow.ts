@@ -22,7 +22,7 @@ describe('ZunUSD flow tests', () => {
     const strategyNames = [
         'UsdcCrvUsdStakeDaoCurve',
         'UsdtCrvUsdStakeDaoCurve',
-        'ZunUsdVaultStrat',
+        'ZunUSDVaultStrat',
     ];
 
     async function deployFixture() {

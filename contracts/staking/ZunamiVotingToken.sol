@@ -8,7 +8,7 @@ import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol';
 import './IERC20Supplied.sol';
 
 contract ZunamiVotingToken is IERC20Supplied, ERC20, AccessControl, ERC20Permit, ERC20Votes {
-    bytes32 public constant SUPPLIER_ROLE = keccak256('SUPPLIER_ROLE');
+    bytes32 public constant ISSUER_ROLE = keccak256('ISSUER_ROLE');
 
     constructor(
         address defaultAdmin
@@ -16,11 +16,11 @@ contract ZunamiVotingToken is IERC20Supplied, ERC20, AccessControl, ERC20Permit,
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
     }
 
-    function mint(address to, uint256 amount) public onlyRole(SUPPLIER_ROLE) {
+    function mint(address to, uint256 amount) public onlyRole(ISSUER_ROLE) {
         _mint(to, amount);
     }
 
-    function burn(uint256 value) public onlyRole(SUPPLIER_ROLE) {
+    function burn(uint256 value) public onlyRole(ISSUER_ROLE) {
         _burn(_msgSender(), value);
     }
 

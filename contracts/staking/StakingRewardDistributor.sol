@@ -5,10 +5,12 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+
 import './IERC20Supplied.sol';
 import './IRewardDistributor.sol';
 
-contract StakingRewardDistributor is IRewardDistributor, AccessControl {
+contract StakingRewardDistributor is IRewardDistributor, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // Create a new role identifier for the distributor role
@@ -169,7 +171,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     }
 
     // Update reward variables for all pools
-    function updateAllPools() public {
+    function updateAllPools() public nonReentrant {
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
             updatePool(pid);
@@ -177,7 +179,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     }
 
     // Update reward variables of the given pool to be up-to-date.
-    function updatePool(uint256 _pid) public {
+    function updatePool(uint256 _pid) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         uint256 currentBlock = block.number;
         uint256 lpSupply = pool.token.balanceOf(address(this));
@@ -211,7 +213,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     }
 
     // Deposit tokens to staking for reward token allocation.
-    function deposit(uint256 _pid, uint256 _amount, bool _infiniteLock) external {
+    function deposit(uint256 _pid, uint256 _amount, bool _infiniteLock) external nonReentrant {
         updatePool(_pid);
 
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
@@ -242,7 +244,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     }
 
     // claim rewards
-    function claim(uint256 _tid) external {
+    function claim(uint256 _tid) external nonReentrant {
         uint256 i;
         for (i = 0; i < poolInfo.length; ++i) {
             updatePool(i);
@@ -316,7 +318,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl {
     }
 
     // Withdraw tokens from rewardToken staking.
-    function withdraw(uint256 _pid, uint256 _amount) external {
+    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
         require(userPoolInfo[_pid][msg.sender].amount >= _amount, 'withdraw: not enough amount');
         updatePool(_pid);
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];

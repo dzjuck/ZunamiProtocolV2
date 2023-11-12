@@ -11,7 +11,7 @@ import { ethers } from 'hardhat';
 import { createStablecoins } from '../utils/CreateStablecoins';
 import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
-import { createConverterAndRewardManagerContracts } from '../utils/CreateConverterAndRewardManagerContracts';
+import { CreateConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
 import { parseUnits } from 'ethers/lib/utils';
 import { increaseChainTime } from '../utils/IncreaseChainTime';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
@@ -97,7 +97,7 @@ describe('Reward Viewer', async () => {
             await mintStables(owner, usdc);
             const { genericOracle } = await createAndInitConicOracles([crvUSD_USDC_pool_addr]);
             const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
-            const { stableConverter } = await createConverterAndRewardManagerContracts(
+            const { stableConverter } = await CreateConvertersAndRewardManagerContracts(
                 'StableConverter',
                 'SellingCurveRewardManager'
             );
@@ -183,7 +183,7 @@ describe('Reward Viewer', async () => {
             await mintStables(owner, usdc);
             const { genericOracle } = await createAndInitConicOracles([crvUSD_USDT_pool_addr]);
             const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
-            const { stableConverter } = await createConverterAndRewardManagerContracts(
+            const { stableConverter } = await CreateConvertersAndRewardManagerContracts(
                 'StableConverter',
                 'SellingCurveRewardManager'
             );

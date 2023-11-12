@@ -86,7 +86,7 @@ describe('ZunETH flow tests', () => {
         };
     }
 
-    it.only('should deposit assets', async () => {
+    it('should deposit assets', async () => {
         const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies, wEth, frxEth } =
             await loadFixture(deployFixture);
 
