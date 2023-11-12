@@ -59,7 +59,6 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
 
         IERC20 token = tokens[zunamiTokenIndex];
 
-
         amounts2[CURVE_POOL_TOKEN_ID] =
             amounts[zunamiTokenIndex] +
             valuateStable(tokens[ZUNAMI_DAI_TOKEN_ID], token, amounts[ZUNAMI_DAI_TOKEN_ID]) +
@@ -74,12 +73,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     ) internal view returns (uint256) {
         if (address(fromStable) == address(toStable)) return 0;
 
-        return
-            stableConverter.valuate(
-                address(fromStable),
-                address(toStable),
-                amount
-            );
+        return stableConverter.valuate(address(fromStable), address(toStable), amount);
     }
 
     function convertAndApproveTokens(
@@ -100,11 +94,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         return CURVE_POOL_TOKEN_ID_INT;
     }
 
-    function convertStable(
-        IERC20 fromToken,
-        IERC20 toToken,
-        uint256 fromAmount
-    ) internal {
+    function convertStable(IERC20 fromToken, IERC20 toToken, uint256 fromAmount) internal {
         if (address(fromToken) == address(toToken)) return;
 
         fromToken.safeTransfer(address(stableConverter), fromAmount);

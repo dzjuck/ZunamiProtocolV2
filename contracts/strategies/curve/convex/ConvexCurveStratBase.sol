@@ -29,7 +29,7 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
         cvxPID = _cvxPID;
     }
 
-    function depositLiquidity(uint256 amount) internal override {
+    function depositBooster(uint256 amount) internal override {
         poolToken.safeIncreaseAllowance(address(cvxBooster), amount);
         if (!cvxBooster.depositAll(cvxPID, true)) revert WrongBoosterDepositAll();
     }

@@ -20,7 +20,7 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
         vault = IStakeDaoVault(_vaultAddr);
     }
 
-    function depositLiquidity(uint256 amount) internal override {
+    function depositBooster(uint256 amount) internal override {
         poolToken.safeIncreaseAllowance(address(vault), amount);
         vault.deposit(address(this), amount, true);
     }

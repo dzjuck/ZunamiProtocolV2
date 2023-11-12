@@ -1,14 +1,27 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import '../../../../utils/Constants.sol';
+import '../../../../interfaces/INativeConverter.sol';
+import '../../../../interfaces/ICurvePool2Native.sol';
+import '../../../../interfaces/IWETH.sol';
 import '../ConvexCurveStratBase.sol';
 
 contract EthConvexCurveStratBase is ConvexCurveStratBase {
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
+    uint128 public constant CURVE_POOL_ETH_ID = 0;
+    int128 public constant CURVE_POOL_ETH_ID_INT = int128(CURVE_POOL_ETH_ID);
+
     uint128 public constant CURVE_POOL_TOKEN_ID = 1;
     int128 public constant CURVE_POOL_TOKEN_ID_INT = int128(CURVE_POOL_TOKEN_ID);
+
+    //    address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
+
+    INativeConverter public immutable nativeConverter;
 
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
@@ -18,7 +31,8 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         address _oracleAddr,
         address _cvxBooster,
         address _cvxRewardsAddr,
-        uint256 _cvxPID
+        uint256 _cvxPID,
+        address _nativeConverterAddr
     )
         ConvexCurveStratBase(
             _tokens,
@@ -30,18 +44,75 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
             _cvxRewardsAddr,
             _cvxPID
         )
-    {}
+    {
+        nativeConverter = INativeConverter(_nativeConverterAddr);
+    }
+
+    receive() external payable {
+        // receive ETH on conversion
+    }
+
+    function getLiquidityTokenPrice() internal view override returns (uint256) {
+        return
+            (oracle.getUSDPrice(address(poolToken)) * 1e18) /
+            oracle.getUSDPrice(Constants.WETH_ADDRESS);
+    }
 
     function convertCurvePoolTokenAmounts(
         uint256[5] memory amounts
-    ) internal view override returns (uint256[2] memory amounts2) {}
+    ) internal view override returns (uint256[2] memory amounts2) {
+        if (amounts[ZUNAMI_WETH_TOKEN_ID] == 0 && amounts[ZUNAMI_FRXETH_TOKEN_ID] == 0)
+            return [uint256(0), 0];
+
+        return [
+            amounts[ZUNAMI_WETH_TOKEN_ID] +
+                nativeConverter.valuate(false, amounts[ZUNAMI_FRXETH_TOKEN_ID]),
+            0
+        ];
+    }
 
     function convertAndApproveTokens(
-        address pool,
+        address,
         uint256[5] memory amounts
-    ) internal override returns (uint256[2] memory amounts2) {}
+    ) internal override returns (uint256[2] memory amounts2) {
+        if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
+            amounts[ZUNAMI_WETH_TOKEN_ID] += nativeConverter.handle(
+                false,
+                amounts[ZUNAMI_FRXETH_TOKEN_ID],
+                0
+            );
+        }
+
+        if (amounts[ZUNAMI_WETH_TOKEN_ID] > 0) {
+            unwrapETH(amounts[ZUNAMI_WETH_TOKEN_ID]);
+        }
+
+        amounts2[CURVE_POOL_ETH_ID] = address(this).balance;
+    }
+
+    function depositCurve(
+        uint256[2] memory amounts2
+    ) internal override returns (uint256 deposited) {
+        return
+            ICurvePool2Native(address(pool)).add_liquidity{ value: amounts2[CURVE_POOL_ETH_ID] }(
+                amounts2,
+                0
+            );
+    }
 
     function getCurveRemovingTokenIndex() internal pure override returns (int128) {
-        return CURVE_POOL_TOKEN_ID_INT;
+        return CURVE_POOL_ETH_ID_INT;
+    }
+
+    function convertRemovedAmount(uint256 receivedAmount) internal override {
+        weth.deposit{ value: receivedAmount }();
+    }
+
+    function unwrapETH(uint256 amount) internal {
+        weth.withdraw(amount);
+    }
+
+    function wrapETH(uint256 amount) internal {
+        weth.deposit{ value: amount }();
     }
 }

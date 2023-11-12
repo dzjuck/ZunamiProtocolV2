@@ -69,14 +69,14 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
             return 0;
         }
 
-        return calcLiquidityValue(depositLiquidityPool(amounts));
+        return calcLiquidityValue(depositLiquidity(amounts));
     }
 
     function checkDepositSuccessful(
         uint256[POOL_ASSETS] memory amounts
     ) internal view virtual returns (bool);
 
-    function depositLiquidityPool(
+    function depositLiquidity(
         uint256[POOL_ASSETS] memory amounts
     ) internal virtual returns (uint256);
 
@@ -86,7 +86,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         uint256[POOL_ASSETS] memory tokenAmounts
     ) external virtual onlyZunamiPool returns (bool) {
         require(poolTokenRatio > 0 && poolTokenRatio <= RATIO_MULTIPLIER, 'Wrong PoolToken Ratio');
-        (bool success, uint256 poolTokenAmount) = calcRemovingLPTokenAmount(
+        (bool success, uint256 liquidityAmount) = calcRemovingLiquidityAmount(
             poolTokenRatio,
             tokenAmounts
         );
@@ -101,14 +101,14 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
             prevBalances[i] = tokens[i].balanceOf(address(this));
         }
 
-        removeLiquidity(poolTokenAmount, tokenAmounts);
+        removeLiquidity(liquidityAmount, tokenAmounts);
 
         transferTokensOut(convertTokensToDynamic(tokens), receiver, prevBalances);
 
         return true;
     }
 
-    function calcRemovingLPTokenAmount(
+    function calcRemovingLiquidityAmount(
         uint256 poolTokenRatio, // multiplied by 1e18
         uint256[POOL_ASSETS] memory tokenAmounts
     ) internal virtual returns (bool success, uint256 removingLPTokenAmount);
