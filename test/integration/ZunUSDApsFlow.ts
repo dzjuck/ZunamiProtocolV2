@@ -9,7 +9,7 @@ import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/E
 import { increaseChainTime } from '../utils/IncreaseChainTime';
 import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
-import { createConverterAndRewardManagerContracts } from '../utils/CreateConverterAndRewardManagerContracts';
+import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
 import { createStablecoins } from '../utils/CreateStablecoins';
 import { createStrategies } from '../utils/CreateStrategies';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
@@ -93,7 +93,7 @@ describe('ZunUSD flow APS tests', () => {
         const { curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle } =
             await createAndInitConicOracles([crvUSD_USDT_pool_addr, crvUSD_USDC_pool_addr]);
 
-        const { stableConverter, rewardManager } = await createConverterAndRewardManagerContracts(
+        const { stableConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
             'StableConverter',
             'SellingCurveRewardManager'
         );
@@ -101,7 +101,7 @@ describe('ZunUSD flow APS tests', () => {
         const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
 
         const { stableConverter: stableConverterAps, rewardManager: rewardManagerAps } =
-            await createConverterAndRewardManagerContracts(
+            await createConvertersAndRewardManagerContracts(
                 'StubStableConverter',
                 'SellingCurveRewardManager'
             );

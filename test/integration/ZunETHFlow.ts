@@ -7,71 +7,64 @@ import { expect } from 'chai';
 import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 
 import { increaseChainTime } from '../utils/IncreaseChainTime';
-import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
-import { createStablecoins } from '../utils/CreateStablecoins';
 import { createStrategies } from '../utils/CreateStrategies';
-import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
-import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
+import { createPoolAndControllerZunETH } from '../utils/createPoolAndControllerZunETH';
+import { getMinAmountZunETH } from '../utils/getMinAmountZunETH';
+import { createEthCoins } from '../utils/CreateEthCoins';
+import { mintEthCoins } from '../utils/MintEthCoins';
 
-const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
-const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
+const ETH_stETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 
-describe('ZunUSD flow tests', () => {
-    const strategyNames = [
-        'UsdcCrvUsdStakeDaoCurve',
-        'UsdtCrvUsdStakeDaoCurve',
-        'ZunUsdVaultStrat',
-    ];
+describe('ZunETH flow tests', () => {
+    const strategyNames = ['stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat', 'ZunETHVaultStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [admin, alice, bob, feeCollector] = await ethers.getSigners();
 
-        const { dai, usdt, usdc } = createStablecoins(admin);
+        const { wEth, frxEth } = createEthCoins(admin);
 
-        await mintStables(admin, usdc);
+        await mintEthCoins(admin, wEth);
 
         const { curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle } =
-            await createAndInitConicOracles([crvUSD_USDT_pool_addr, crvUSD_USDC_pool_addr]);
+            await createAndInitConicOracles([ETH_stETH_pool_addr]);
 
-        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
+        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunETH();
 
-        const { stableConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
-            'StableConverter',
-            'SellingCurveRewardManager'
-        );
+        const { frxEthNativeConverter, stableConverter, rewardManager } =
+            await createConvertersAndRewardManagerContracts(
+                'StableConverter',
+                'SellingCurveRewardManager'
+            );
 
         const strategies = await createStrategies(
             strategyNames,
             genericOracle,
             zunamiPool,
             stableConverter,
+            frxEthNativeConverter,
             undefined,
             undefined
         );
 
-        const tokenApprovedAmount = '1000000';
+        const tokenApprovedAmount = '10000';
 
         for (const user of [admin, alice, bob]) {
-            await dai
+            await wEth
                 .connect(user)
                 .approve(zunamiPoolController.address, parseUnits(tokenApprovedAmount, 'ether'));
-            await usdc
+            await frxEth
                 .connect(user)
-                .approve(zunamiPoolController.address, parseUnits(tokenApprovedAmount, 'mwei'));
-            await usdt
-                .connect(user)
-                .approve(zunamiPoolController.address, parseUnits(tokenApprovedAmount, 'mwei'));
+                .approve(zunamiPoolController.address, parseUnits(tokenApprovedAmount, 'ether'));
         }
 
-        const tokenAmount = '10000';
+        const tokenAmount = '100';
 
         for (const user of [alice, bob]) {
-            await dai.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'ether'));
-            await usdc.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'mwei'));
-            await usdt.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'mwei'));
+            await wEth.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'ether'));
+            await frxEth.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'ether'));
         }
 
         return {
@@ -88,14 +81,13 @@ describe('ZunUSD flow tests', () => {
             curveLPOracle,
             chainlinkOracle,
             genericOracle,
-            dai,
-            usdc,
-            usdt,
+            wEth,
+            frxEth,
         };
     }
 
-    it('should deposit assets', async () => {
-        const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies, dai, usdc, usdt } =
+    it.only('should deposit assets', async () => {
+        const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies, wEth, frxEth } =
             await loadFixture(deployFixture);
 
         for (let poolId = 0; poolId < strategies.length; poolId++) {
@@ -104,20 +96,18 @@ describe('ZunUSD flow tests', () => {
             await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
             for (const user of [admin, alice, bob]) {
-                const daiBefore = await dai.balanceOf(user.getAddress());
-                const usdcBefore = await usdc.balanceOf(user.getAddress());
-                const usdtBefore = await usdt.balanceOf(user.getAddress());
+                const wEthBefore = await wEth.balanceOf(user.getAddress());
+                const frxEthBefore = await frxEth.balanceOf(user.getAddress());
                 const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
 
                 await expect(
                     zunamiPoolController
                         .connect(user)
-                        .deposit(getMinAmountZunUSD('1000'), await user.getAddress())
+                        .deposit(getMinAmountZunETH('10'), await user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
-                expect(await dai.balanceOf(user.getAddress())).to.lt(daiBefore);
-                expect(await usdc.balanceOf(user.getAddress())).to.lt(usdcBefore);
-                expect(await usdt.balanceOf(user.getAddress())).to.lt(usdtBefore);
+                expect(await wEth.balanceOf(user.getAddress())).to.lt(wEthBefore);
+                expect(await frxEth.balanceOf(user.getAddress())).to.lt(frxEthBefore);
                 expect(await zunamiPool.balanceOf(user.getAddress())).to.gt(zStableBefore);
             }
         }
@@ -137,7 +127,7 @@ describe('ZunUSD flow tests', () => {
                 await expect(
                     zunamiPoolController
                         .connect(user)
-                        .deposit(getMinAmountZunUSD('1000'), user.getAddress())
+                        .deposit(getMinAmountZunETH('1000'), user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 let stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
@@ -171,7 +161,7 @@ describe('ZunUSD flow tests', () => {
             await expect(
                 zunamiPoolController
                     .connect(alice)
-                    .deposit(getMinAmountZunUSD('1000'), admin.getAddress())
+                    .deposit(getMinAmountZunETH('1000'), admin.getAddress())
             ).to.emit(zunamiPool, 'Deposited');
         }
 
@@ -223,7 +213,7 @@ describe('ZunUSD flow tests', () => {
         await expect(
             zunamiPoolController
                 .connect(alice)
-                .deposit(getMinAmountZunUSD('1000'), admin.getAddress())
+                .deposit(getMinAmountZunETH('1000'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
 

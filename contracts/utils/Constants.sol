@@ -16,6 +16,8 @@ library Constants {
     address internal constant UZD_ADDRESS = address(0); // Be added after deployment of UZD v2 pool
     address internal constant ZETH_ADDRESS = address(0); // Be added after deployment of ZETH v2 pool
 
+    address public constant CHAINLINK_FEED_REGISTRY_ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
     address internal constant CRV_3POOL_ADDRESS = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
     address internal constant CRV_3POOL_LP_ADDRESS = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;
 

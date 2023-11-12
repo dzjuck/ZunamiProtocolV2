@@ -6,8 +6,7 @@ import './EthERC4626StratBase.sol';
 
 contract sfrxETHERC4626Strat is EthERC4626StratBase {
     constructor(
-        address _oracleAddr,
-        address _nativeConverterAddr
+        address _oracleAddr
     )
         EthERC4626StratBase(
             [
@@ -20,8 +19,7 @@ contract sfrxETHERC4626Strat is EthERC4626StratBase {
             [uint256(1), 1, 0, 0, 0],
             Constants.SFRXETH_ADDRESS,
             Constants.FRX_ETH_ADDRESS,
-            _oracleAddr,
-            _nativeConverterAddr
+            _oracleAddr
         )
     {}
 }

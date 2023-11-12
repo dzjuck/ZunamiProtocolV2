@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import '../../utils/Constants.sol';
 import '../../strategies/VaultStrat.sol';
 
-contract ZunUsdVaultStrat is VaultStrat {
+contract ZunETHVaultStrat is VaultStrat {
     constructor()
         VaultStrat(
             [

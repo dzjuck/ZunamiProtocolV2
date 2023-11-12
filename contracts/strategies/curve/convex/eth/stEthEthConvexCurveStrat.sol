@@ -6,8 +6,7 @@ import './EthConvexCurveStratBase.sol';
 
 contract stEthEthConvexCurveStrat is EthConvexCurveStratBase {
     constructor(
-        address _oracleAddr,
-        address _ethConverterAddr
+        address _oracleAddr
     )
         EthConvexCurveStratBase(
             [
@@ -23,8 +22,7 @@ contract stEthEthConvexCurveStrat is EthConvexCurveStratBase {
             _oracleAddr,
             Constants.CRV_BOOSTER_ADDRESS,
             Constants.CVX_ETH_stETH_REWARDS_ADDRESS,
-            Constants.CVX_ETH_stETH_PID,
-            _ethConverterAddr
+            Constants.CVX_ETH_stETH_PID
         )
     {}
 }

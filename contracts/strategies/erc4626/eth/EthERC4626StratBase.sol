@@ -15,23 +15,26 @@ contract EthERC4626StratBase is ERC4626StratBase {
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
-    INativeConverter public immutable nativeConverter;
+    INativeConverter public nativeConverter;
+
+    event SetNativeConverter(address nativeConverter);
 
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
         address vaultAddr,
         address vaultAssetAddr,
-        address oracleAddr,
-        address nativeConverterAddr
-    ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr, oracleAddr) {
+        address oracleAddr
+    ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr, oracleAddr) {}
+
+    function setNativeConverter(address nativeConverterAddr) external onlyOwner {
         nativeConverter = INativeConverter(nativeConverterAddr);
+        emit SetNativeConverter(nativeConverterAddr);
     }
 
     function getLiquidityTokenPrice() internal view override returns (uint256) {
-        return
-            (oracle.getUSDPrice(address(vaultAsset)) * 1e18) /
-            oracle.getUSDPrice(Constants.WETH_ADDRESS);
+        return (oracle.getUSDPrice(address(vaultAsset)) * 1e18) /
+            oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);
     }
 
     function convertVaultAssetAmounts(
@@ -49,6 +52,7 @@ contract EthERC4626StratBase is ERC4626StratBase {
         amount = amounts[ZUNAMI_FRXETH_TOKEN_ID];
         uint256 wethBalance = amounts[ZUNAMI_WETH_TOKEN_ID];
         if (wethBalance > 0) {
+            IERC20(tokens[ZUNAMI_WETH_TOKEN_ID]).transfer(address(nativeConverter), wethBalance);
             amount += nativeConverter.handle(true, wethBalance, 0);
         }
 

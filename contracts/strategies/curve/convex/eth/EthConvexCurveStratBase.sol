@@ -17,11 +17,11 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     uint128 public constant CURVE_POOL_TOKEN_ID = 1;
     int128 public constant CURVE_POOL_TOKEN_ID_INT = int128(CURVE_POOL_TOKEN_ID);
 
-    //    address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
     IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
 
-    INativeConverter public immutable nativeConverter;
+    INativeConverter public nativeConverter;
+
+    event SetNativeConverter(address nativeConverter);
 
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
@@ -31,8 +31,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         address _oracleAddr,
         address _cvxBooster,
         address _cvxRewardsAddr,
-        uint256 _cvxPID,
-        address _nativeConverterAddr
+        uint256 _cvxPID
     )
         ConvexCurveStratBase(
             _tokens,
@@ -44,18 +43,21 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
             _cvxRewardsAddr,
             _cvxPID
         )
-    {
-        nativeConverter = INativeConverter(_nativeConverterAddr);
-    }
+    {}
 
     receive() external payable {
         // receive ETH on conversion
     }
 
+    function setNativeConverter(address nativeConverterAddr) external onlyOwner {
+        nativeConverter = INativeConverter(nativeConverterAddr);
+        emit SetNativeConverter(nativeConverterAddr);
+    }
+
     function getLiquidityTokenPrice() internal view override returns (uint256) {
         return
             (oracle.getUSDPrice(address(poolToken)) * 1e18) /
-            oracle.getUSDPrice(Constants.WETH_ADDRESS);
+            oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);
     }
 
     function convertCurvePoolTokenAmounts(
@@ -75,7 +77,9 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         address,
         uint256[5] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
+
         if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
+            IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).transfer(address(nativeConverter), amounts[ZUNAMI_FRXETH_TOKEN_ID]);
             amounts[ZUNAMI_WETH_TOKEN_ID] += nativeConverter.handle(
                 false,
                 amounts[ZUNAMI_FRXETH_TOKEN_ID],

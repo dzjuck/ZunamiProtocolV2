@@ -1,4 +1,9 @@
-import { GenericOracle, IStableConverter, ZunamiPool } from '../../typechain-types';
+import {
+    GenericOracle,
+    INativeConverter,
+    IStableConverter,
+    ZunamiPool,
+} from '../../typechain-types';
 import { ethers } from 'hardhat';
 
 async function deployStrategy(
@@ -23,6 +28,7 @@ export async function createStrategies(
     genericOracle: GenericOracle,
     zunamiPool: ZunamiPool,
     stableConverter: IStableConverter,
+    frxEthNativeConverter: INativeConverter,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
 ) {
@@ -44,6 +50,10 @@ export async function createStrategies(
 
         if (strategyName.includes('CrvUsdStakeDaoCurve')) {
             strategy.setStableConverter(stableConverter.address);
+        }
+
+        if (strategyName.includes('frxETH') || strategyName.includes('stEth')) {
+            strategy.setNativeConverter(frxEthNativeConverter.address);
         }
 
         strategies.push(strategy);
