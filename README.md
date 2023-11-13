@@ -1,36 +1,34 @@
 # Zunami Protocol V2
 
-## The First Decentralized Revenue Aggregator
+## Introduction
 
-Zunami Protocol is the DAO that works with stablecoins and solves the main issues of current yield-farming protocols by streamlining interaction with DeFi, making it easier and cheaper while increasing profitability by differentiating and rebalancing users’ funds.
+#### What is Zunami?
+Zunami is a decentralized protocol that issues aggregated stablecoins, whose collateral is utilized in omnipools and differentiated among various profit-generating strategies. We create Omni pools and issue zunStables on top of them. Currently, we have launched two aggregated stablecoins - zunUSD and zunETH.
+#### What is Omni pool?
+The Omni pool operates as a Yield Aggregator by providing liquidity to the multiple strategies and reinvesting profits. Each zunStable is backed by its own Omni pool, managed through DAO governance. The DAO manages the addition of new strategies and the rebalancing of funds between strategies.
 
-## Why we created Zunami Protocol
+#### Why market need zunStables?
+We see a vast number of stablecoins in the market, and their quantity continues to grow. It becomes evident that there is a need for aggregated products capable of providing users with an optimized experience. By design, zunStables aim to lead the charts through the aggregation of the best tools in the market.
 
-The technological advancement in the finance area is undergoing a significant reshaping. During the last few years, the overall capitalization of stablecoins skyrocketed. However, the cryptocurrency realm is still regarded as a Wild West, full of traps for new investors interested in making quick profits. Decentralized Finance and stablecoins: the two emerging trends are now combining into a game-changing equation that will benefit tech-savvy users.
+#### What is the role of the ZUN token?
+- Governance Control: Key decisions will be determined via DAO voting.
+- Liquidity Management: ZUN stakers oversee liquidity within the Omni pool and APS.
+- ZUN Distribution: ZUN Stakers can engage in a bi-weekly Gauge weight vote to influence the allocation of $ZUN token emissions.
+- Revenue Sharing: All protocol revenue, totaling 100%, will be distributed among ZUN stakers.
 
-The number of users in Yield-farming applications is growing exponentially, but we are still far from market mass adoption. We, the creators of the Zunami Protocol, have identified a number of problems in existing solutions that repel both inexperienced users and hardened veterans of the crypto world. Our goal is to create an application that will break the barrier between traditional finances and DeFi and will be the best solution for stablecoin holders.
+## How safe is it to use Zunami and zunStables?
 
-## What problems does Zunami Protocol solve?
+#### Risk Assessment:
+- Smart Contract Risk: the smart contracts of Zunami v2 immutable and underwent a comprehensive audit before deployment from Nomoi.
+- Depeg Risk: zunStables are 100% collateralized and incorporate a safeguard against depegging through the Algoritmic peg stabilizer mechanism. This mechanism manages minting and redemption based on the proportion within the curve pool.
+- Collateral Risk: all stablecoins utilized in Omni pool strategies are chosen following a risk management policy. Should the collateralization fall below 100%, a recapitalization process will initiate, utilizing both ZUN tokens and protocol-generated earnings.
+- Custody Risk: after three months from the launch of Zunami v2, the protocol will transition entirely to on-chain DAO governance, determined by the votes of ZUN stakers.
 
-#### 1. Complicated UX due to the number of functioning stablecoin pools.
-
-#### 2. Frequent interest rates changes in yield-farming pools.
-
-#### 3. Deposit and funds withdrawal is too expensive.
-
-#### 4. Costly & inconvenient rewards selling on your own.
-
-## Zunami Protocol benefits
-
-#### 1. Simplified usage. New UI makes user journey in DeFi smooth & easy. Perform complex interactions in one step.
-
-#### 2. Automated revenue aggregator. Less hassle, more profit. A sophisticated decentralized system makes sure your savings work even while you sleep. Delegate, automate, enjoy.
-
-#### 3. Low entry threshold. Zunami Protocol establishes a new gateway to the DeFi realm making yield-farming accessible not only to the crypto whales.
-
-#### 4. Cross-chain liquidity providing. Earn in the best pools and protocols, no matter what blockchain they are on.
-
-#### 5. DAO-oriented project.
+#### Zunami Protocol benefits:
+- Aggregated Income - funds are distributed among the best income-generating strategies;
+- Simplified user experience - simply buy zunStables on a DEX and stake them to maximize income;
+- Real Yield - the protocol is built on a self-sustainable economy and generates real income;
+- DAO-oriented project - a community-driven decentralized protocol.
 
 ## Our contacts
 
@@ -49,21 +47,3 @@ The number of users in Yield-farming applications is growing exponentially, but 
 #### 7. Blog - https://zunamiprotocol.medium.com/
 
 #### 8. Email - hello@zunami.io
-
-
-# Development
-
-### **Lint**
-
-```bash
-npm run lint:check
-```
-
-Runs solhint.
-<br/>
-
-### **Prettier (lint fix)**
-
-```bash
-npm run lint:fix
-```
