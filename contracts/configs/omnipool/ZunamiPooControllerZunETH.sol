@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '../../ZunamiPoolThroughController.sol';
+import '../../ZunamiPoolThroughRedemptionFeeController.sol';
 
-contract ZunamiPooControllerZunETH is ZunamiPoolThroughController {
-    constructor(address pool) ZunamiPoolThroughController(pool) {}
+contract ZunamiPooControllerZunETH is ZunamiPoolThroughRedemptionFeeController {
+    constructor(address pool) ZunamiPoolThroughRedemptionFeeController(pool) {}
 }

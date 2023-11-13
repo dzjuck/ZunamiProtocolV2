@@ -18,8 +18,13 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
     address public rewardCollector;
     bool public onlyIssuerMode = false;
 
-    event RewardCollectorChanged(address oldFeeCollector, address newFeeCollector);
+    event RewardCollectorChanged(address oldRewardCollector, address newRewardCollector);
     event SetOnlyIssuerMode(bool onlyIssuerMode);
+
+    modifier onlyIssuance() {
+        if (onlyIssuerMode && !hasRole(ISSUER_ROLE, msg.sender)) revert OnlyIssuer();
+        _;
+    }
 
     constructor(address pool_) ZunamiPoolControllerBase(pool_) {
         rewardCollector = msg.sender;
@@ -43,9 +48,7 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
     function depositPool(
         uint256[POOL_ASSETS] memory amounts,
         address receiver
-    ) internal virtual override returns (uint256) {
-        if (onlyIssuerMode && !hasRole(ISSUER_ROLE, msg.sender)) revert OnlyIssuer();
-
+    ) internal virtual override onlyIssuance returns (uint256) {
         return depositDefaultPool(amounts, receiver);
     }
 
@@ -54,9 +57,7 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
         uint256 shares,
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
-    ) internal virtual override {
-        if (onlyIssuerMode && !hasRole(ISSUER_ROLE, msg.sender)) revert OnlyIssuer();
-
+    ) internal virtual override onlyIssuance {
         IERC20(address(pool)).safeTransferFrom(user, address(this), shares);
         withdrawDefaultPool(shares, minTokenAmounts, receiver);
     }
