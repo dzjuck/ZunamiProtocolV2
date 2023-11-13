@@ -98,7 +98,8 @@ describe('ZunUSD flow APS tests', () => {
             'SellingCurveRewardManager'
         );
 
-        const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
+        const { zunamiPool, zunamiPoolController, frxEthNativeConverter } =
+            await createPoolAndControllerZunUSD();
 
         const { stableConverter: stableConverterAps, rewardManager: rewardManagerAps } =
             await createConvertersAndRewardManagerContracts(
@@ -114,6 +115,7 @@ describe('ZunUSD flow APS tests', () => {
             genericOracle,
             zunamiPool,
             stableConverter,
+            frxEthNativeConverter,
             undefined,
             undefined
         );
@@ -123,6 +125,7 @@ describe('ZunUSD flow APS tests', () => {
             genericOracle,
             zunamiPoolAps,
             stableConverter,
+            frxEthNativeConverter,
             [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
             [1, 0, 0, 0, 0]
         );

@@ -14,9 +14,8 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
         address _vaultAddr,
         address _poolAddr,
-        address _poolTokenAddr,
-        address _oracleAddr
-    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr, _oracleAddr) {
+        address _poolTokenAddr
+    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr) {
         vault = IStakeDaoVault(_vaultAddr);
     }
 

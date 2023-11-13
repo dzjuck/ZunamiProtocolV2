@@ -13,18 +13,15 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
 
     IERC4626 public immutable vault;
     IERC20 public immutable vaultAsset;
-    IOracle public immutable oracle;
 
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
         address vaultAddr,
-        address vaultAssetAddr,
-        address oracleAddr
+        address vaultAssetAddr
     ) ZunamiStratBase(tokens_, tokenDecimalsMultipliers_) {
         vault = IERC4626(vaultAddr);
         vaultAsset = IERC20(vaultAssetAddr);
-        oracle = IOracle(oracleAddr);
     }
 
     function getLiquidityTokenPrice() internal view virtual override returns (uint256) {

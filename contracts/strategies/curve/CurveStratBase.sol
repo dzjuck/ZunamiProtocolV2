@@ -13,18 +13,15 @@ abstract contract CurveStratBase is ZunamiStratBase {
 
     ICurvePool2 public immutable pool;
     IERC20 public immutable poolToken;
-    IOracle public immutable oracle;
 
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
         address poolAddr,
-        address poolTokenAddr,
-        address oracleAddr
+        address poolTokenAddr
     ) ZunamiStratBase(tokens_, tokenDecimalsMultipliers_) {
         pool = ICurvePool2(poolAddr);
         poolToken = IERC20(poolTokenAddr);
-        oracle = IOracle(oracleAddr);
     }
 
     function convertCurvePoolTokenAmounts(

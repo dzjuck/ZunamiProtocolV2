@@ -5,9 +5,7 @@ import '../../../../utils/Constants.sol';
 import './EthConvexCurveStratBase.sol';
 
 contract stEthEthConvexCurveStrat is EthConvexCurveStratBase {
-    constructor(
-        address _oracleAddr
-    )
+    constructor()
         EthConvexCurveStratBase(
             [
                 IERC20(Constants.WETH_ADDRESS),
@@ -19,7 +17,6 @@ contract stEthEthConvexCurveStrat is EthConvexCurveStratBase {
             [uint256(1), 1, 0, 0, 0],
             Constants.CRV_ETH_stETH_ADDRESS,
             Constants.CRV_ETH_stETH_LP_ADDRESS,
-            _oracleAddr,
             Constants.CRV_BOOSTER_ADDRESS,
             Constants.CVX_ETH_stETH_REWARDS_ADDRESS,
             Constants.CVX_ETH_stETH_PID

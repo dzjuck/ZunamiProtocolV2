@@ -28,7 +28,6 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
         address _poolAddr,
         address _poolLpAddr,
-        address _oracleAddr,
         address _cvxBooster,
         address _cvxRewardsAddr,
         uint256 _cvxPID
@@ -38,7 +37,6 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
             _tokenDecimalsMultipliers,
             _poolAddr,
             _poolLpAddr,
-            _oracleAddr,
             _cvxBooster,
             _cvxRewardsAddr,
             _cvxPID
@@ -77,9 +75,11 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         address,
         uint256[5] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
-
         if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
-            IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).transfer(address(nativeConverter), amounts[ZUNAMI_FRXETH_TOKEN_ID]);
+            IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).transfer(
+                address(nativeConverter),
+                amounts[ZUNAMI_FRXETH_TOKEN_ID]
+            );
             amounts[ZUNAMI_WETH_TOKEN_ID] += nativeConverter.handle(
                 false,
                 amounts[ZUNAMI_FRXETH_TOKEN_ID],

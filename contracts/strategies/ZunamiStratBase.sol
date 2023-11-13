@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
+import '../lib/ConicOracle/interfaces/IOracle.sol';
 import '../interfaces/IStrategy.sol';
 import './ZunamiPoolOwnable.sol';
 
@@ -19,9 +20,10 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
     IERC20[POOL_ASSETS] public tokens;
     uint256[POOL_ASSETS] public tokenDecimalsMultipliers;
+    IOracle public oracle;
 
     event MinDepositAmountUpdated(uint256 oldAmount, uint256 newAmount);
-    event TokenPricerSet(address tokenPricerAddr);
+    event PriceOracleSet(address oracleAddr);
 
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
@@ -31,7 +33,14 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         tokenDecimalsMultipliers = tokenDecimalsMultipliers_;
     }
 
-    function updateMinDepositAmount(uint256 _minDepositAmount) public onlyOwner {
+    function setPriceOracle(address oracleAddr) public onlyOwner {
+        if (oracleAddr == address(0)) revert ZeroAddress();
+
+        oracle = IOracle(oracleAddr);
+        emit PriceOracleSet(oracleAddr);
+    }
+
+    function updateMinDepositAmount(uint256 _minDepositAmount) external onlyOwner {
         require(_minDepositAmount > 0 && _minDepositAmount <= DEPOSIT_DENOMINATOR, 'Wrong amount!');
         emit MinDepositAmountUpdated(minDepositAmount, _minDepositAmount);
         minDepositAmount = _minDepositAmount;

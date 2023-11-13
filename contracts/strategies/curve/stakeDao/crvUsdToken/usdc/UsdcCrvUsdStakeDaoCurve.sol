@@ -5,9 +5,7 @@ import '../../../../../utils/Constants.sol';
 import '../CrvUsdStakeDaoCurveStratBase.sol';
 
 contract UsdcCrvUsdStakeDaoCurve is CrvUsdStakeDaoCurveStratBase {
-    constructor(
-        address oracleAddr
-    )
+    constructor()
         CrvUsdStakeDaoCurveStratBase(
             [
                 IERC20(Constants.DAI_ADDRESS),
@@ -20,7 +18,6 @@ contract UsdcCrvUsdStakeDaoCurve is CrvUsdStakeDaoCurveStratBase {
             Constants.SDT_CRVUSD_USDC_VAULT_ADDRESS,
             Constants.CRV_CRVUSD_USDC_ADDRESS,
             Constants.CRV_CRVUSD_USDC_LP_ADDRESS,
-            oracleAddr,
             ZUNAMI_USDC_TOKEN_ID
         )
     {}

@@ -8,19 +8,17 @@ import { ethers } from 'hardhat';
 
 async function deployStrategy(
     factory: ContractFactory,
-    genericOracle: GenericOracle | undefined,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
 ) {
-    if (genericOracle) {
-        return await factory.deploy(genericOracle.address);
+    let strategy;
+    if (tokens && tokensDecimals) {
+        strategy = await factory.deploy(tokens, tokensDecimals);
     } else {
-        if (tokens && tokensDecimals) {
-            return await factory.deploy(tokens, tokensDecimals);
-        } else {
-            return await factory.deploy();
-        }
+        strategy = await factory.deploy();
     }
+    await strategy.deployed();
+    return strategy;
 }
 
 export async function createStrategies(
@@ -28,7 +26,7 @@ export async function createStrategies(
     genericOracle: GenericOracle,
     zunamiPool: ZunamiPool,
     stableConverter: IStableConverter,
-    frxEthNativeConverter: INativeConverter,
+    frxEthNativeConverter: INativeConverter | undefined,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
 ) {
@@ -36,24 +34,22 @@ export async function createStrategies(
 
     // Init all strategies
     for (const strategyName of strategyNames) {
+        console.log(strategyName);
         const factory = await ethers.getContractFactory(strategyName);
-        const strategy = await deployStrategy(
-            factory,
-            strategyName.includes('Vault') ? undefined : genericOracle,
-            tokens,
-            tokensDecimals
-        );
+        const strategy = await deployStrategy(factory, tokens, tokensDecimals);
 
-        await strategy.deployed();
+        await strategy.setZunamiPool(zunamiPool.address);
 
-        strategy.setZunamiPool(zunamiPool.address);
+        if (!strategyName.includes('Vault')) {
+            await strategy.setPriceOracle(genericOracle);
+        }
 
         if (strategyName.includes('CrvUsdStakeDaoCurve')) {
-            strategy.setStableConverter(stableConverter.address);
+            await strategy.setStableConverter(stableConverter.address);
         }
 
         if (strategyName.includes('frxETH') || strategyName.includes('stEth')) {
-            strategy.setNativeConverter(frxEthNativeConverter.address);
+            await strategy.setNativeConverter(frxEthNativeConverter.address);
         }
 
         strategies.push(strategy);

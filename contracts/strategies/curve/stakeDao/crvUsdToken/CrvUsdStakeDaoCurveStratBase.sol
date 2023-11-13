@@ -28,7 +28,6 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         address _vaultAddr,
         address _poolAddr,
         address _poolLpAddr,
-        address _oracleAddr,
         uint256 _zunamiTokenIndex
     )
         StakeDaoCurveStratBase(
@@ -36,8 +35,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
             _tokenDecimalsMultipliers,
             _vaultAddr,
             _poolAddr,
-            _poolLpAddr,
-            _oracleAddr
+            _poolLpAddr
         )
     {
         zunamiTokenIndex = _zunamiTokenIndex;

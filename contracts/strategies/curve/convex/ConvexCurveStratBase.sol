@@ -19,11 +19,10 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
         address _poolAddr,
         address _poolTokenAddr,
-        address _oracleAddr,
         address _cvxBooster,
         address _cvxRewardsAddr,
         uint256 _cvxPID
-    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr, _oracleAddr) {
+    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr) {
         cvxBooster = IConvexBooster(_cvxBooster);
         cvxRewards = IConvexRewards(_cvxRewardsAddr);
         cvxPID = _cvxPID;

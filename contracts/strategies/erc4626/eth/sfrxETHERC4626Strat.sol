@@ -5,9 +5,7 @@ import '../../../utils/Constants.sol';
 import './EthERC4626StratBase.sol';
 
 contract sfrxETHERC4626Strat is EthERC4626StratBase {
-    constructor(
-        address _oracleAddr
-    )
+    constructor()
         EthERC4626StratBase(
             [
                 IERC20(Constants.WETH_ADDRESS),
@@ -18,8 +16,7 @@ contract sfrxETHERC4626Strat is EthERC4626StratBase {
             ],
             [uint256(1), 1, 0, 0, 0],
             Constants.SFRXETH_ADDRESS,
-            Constants.FRX_ETH_ADDRESS,
-            _oracleAddr
+            Constants.FRX_ETH_ADDRESS
         )
     {}
 }

@@ -38,16 +38,18 @@ describe('ZunUSD flow tests', () => {
 
         const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
 
-        const { stableConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
-            'StableConverter',
-            'SellingCurveRewardManager'
-        );
+        const { stableConverter, rewardManager, frxEthNativeConverter } =
+            await createConvertersAndRewardManagerContracts(
+                'StableConverter',
+                'SellingCurveRewardManager'
+            );
 
         const strategies = await createStrategies(
             strategyNames,
             genericOracle,
             zunamiPool,
             stableConverter,
+            frxEthNativeConverter,
             undefined,
             undefined
         );

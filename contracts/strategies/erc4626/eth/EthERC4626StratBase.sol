@@ -23,9 +23,8 @@ contract EthERC4626StratBase is ERC4626StratBase {
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
         address vaultAddr,
-        address vaultAssetAddr,
-        address oracleAddr
-    ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr, oracleAddr) {}
+        address vaultAssetAddr
+    ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr) {}
 
     function setNativeConverter(address nativeConverterAddr) external onlyOwner {
         nativeConverter = INativeConverter(nativeConverterAddr);
@@ -33,7 +32,8 @@ contract EthERC4626StratBase is ERC4626StratBase {
     }
 
     function getLiquidityTokenPrice() internal view override returns (uint256) {
-        return (oracle.getUSDPrice(address(vaultAsset)) * 1e18) /
+        return
+            (oracle.getUSDPrice(address(vaultAsset)) * 1e18) /
             oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);
     }
 
