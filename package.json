@@ -11,7 +11,8 @@
     "test": "hardhat test",
     "test:coverage": "hardhat coverage  --testfiles 'test/*.ts'",
     "test:verbose": "hardhat test --verbose test/*.ts",
-    "deploy:mainnet": "hardhat run --network mainnet ./scripts/deploy.js"
+    "deploy:zunUSD:mainnet": "hardhat run --network mainnet ./scripts/deployZunUSD.js",
+    "deploy:zunUSD:testnet": "hardhat run --network sepolia ./scripts/deployZunUSDTest.js"
   },
   "repository": {
     "type": "git",

@@ -20,7 +20,7 @@ describe('Distributor tests', () => {
 
         // deploy test ERC20 token
         const ERC20Factory = await ethers.getContractFactory('ERC20Token');
-        const ZUN = (await ERC20Factory.deploy()) as ERC20;
+        const ZUN = (await ERC20Factory.deploy(18)) as ERC20;
 
         // deploy test ERC20Votes token
         const ERC20VotesFactory = await ethers.getContractFactory('ERC20VotesToken');

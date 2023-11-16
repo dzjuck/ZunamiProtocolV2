@@ -1,0 +1,17 @@
+Start deploy
+Deploy test tokens
+daiTest deployed: 0xdC30b3bdE2734A0Bc55AF01B38943ef04aaCB423
+usdcTest deployed: 0x2d691C2492e056ADCAE7cA317569af25910fC4cb
+usdtTest deployed: 0x8aaB454dFD2d3b483791698367fFEa8Cf3352Ee2
+Deploy zunUSD omnipool:
+ZunamiPool: 0x83287Da602f0C32f6C9B09E2F1b2951767ebF239
+ZunamiPool tokens set: [
+  '0xdC30b3bdE2734A0Bc55AF01B38943ef04aaCB423',
+  '0x2d691C2492e056ADCAE7cA317569af25910fC4cb',
+  '0x8aaB454dFD2d3b483791698367fFEa8Cf3352Ee2'
+] [ 1, 1000000000000, 1000000000000 ]
+Deploy zunUSD pool controller:
+ZunamiPoolController: 0x3694Db838a8cAf3b1c234529bB1b447bd849F357
+VaultStrat strategy deployed to: 0x1e21bF8b74568371B9C781850414B3485D7D02F3
+Added VaultStrat pool to ZunamiPool
+Set zunami pool address 0x83287Da602f0C32f6C9B09E2F1b2951767ebF239 in VaultStrat strategy

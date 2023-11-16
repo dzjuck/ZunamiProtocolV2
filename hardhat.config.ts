@@ -75,13 +75,20 @@ const config: HardhatUserConfig = {
             loggingEnabled: false,
         },
         mainnet: {
-            url: `${ETH_NODE_API_KEY}`,
+            url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
             chainId: 1,
             gas: 'auto',
             gasMultiplier: 1.2,
             gasPrice: 20000000000,
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
+        },
+        sepolia: {
+          url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+          chainId: 11155111,
+          gas: 'auto',
+          accounts: [`${PRIVATE_KEY}`],
+          loggingEnabled: true,
         },
         development: {
             url: 'http://127.0.0.1:8545',
