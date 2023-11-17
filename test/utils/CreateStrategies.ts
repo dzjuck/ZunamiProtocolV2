@@ -41,11 +41,11 @@ export async function createStrategies(
         await strategy.setZunamiPool(zunamiPool.address);
 
         if (!strategyName.includes('Vault')) {
-            await strategy.setPriceOracle(genericOracle);
+            await strategy.setPriceOracle(genericOracle.address);
         }
 
         if (strategyName.includes('CrvUsdStakeDaoCurve')) {
-            await strategy.setStableConverter(stableConverter.address);
+          await strategy.setStableConverter(stableConverter.address);
         }
 
         if (strategyName.includes('frxETH') || strategyName.includes('stEth')) {
