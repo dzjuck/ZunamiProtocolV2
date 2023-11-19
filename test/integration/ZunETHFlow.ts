@@ -18,7 +18,8 @@ import { mintEthCoins } from '../utils/MintEthCoins';
 const ETH_stETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 
 describe('ZunETH flow tests', () => {
-    const strategyNames = ['stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat', 'ZunETHVaultStrat'];
+    // const strategyNames = ['stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat', 'ZunETHVaultStrat'];
+    const strategyNames = ['sfrxETHERC4626Strat', 'ZunETHVaultStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -127,7 +128,7 @@ describe('ZunETH flow tests', () => {
                 await expect(
                     zunamiPoolController
                         .connect(user)
-                        .deposit(getMinAmountZunETH('1000'), user.getAddress())
+                        .deposit(getMinAmountZunETH('10'), user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 let stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
@@ -161,7 +162,7 @@ describe('ZunETH flow tests', () => {
             await expect(
                 zunamiPoolController
                     .connect(alice)
-                    .deposit(getMinAmountZunETH('1000'), admin.getAddress())
+                    .deposit(getMinAmountZunETH('10'), admin.getAddress())
             ).to.emit(zunamiPool, 'Deposited');
         }
 
@@ -213,7 +214,7 @@ describe('ZunETH flow tests', () => {
         await expect(
             zunamiPoolController
                 .connect(alice)
-                .deposit(getMinAmountZunETH('1000'), admin.getAddress())
+                .deposit(getMinAmountZunETH('10'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
 

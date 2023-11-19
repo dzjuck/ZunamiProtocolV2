@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "@chainlink/contracts/src/v0.8/Denominations.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
+import '@chainlink/contracts/src/v0.8/Denominations.sol';
+import '@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol';
 
-import "../../interfaces/IOracle.sol";
+import '../../interfaces/IOracle.sol';
 
 interface IAggregatorV3Interface {
     function decimals() external view returns (uint8);
@@ -16,7 +16,9 @@ interface IAggregatorV3Interface {
     /// @notice `getRoundData` and `latestRoundData` should both raise "No data present"
     /// if they do not have data to report, instead of returning unset values
     /// which could be misinterpreted as actual reported values.
-    function getRoundData(uint80 _roundId)
+    function getRoundData(
+        uint80 _roundId
+    )
         external
         view
         returns (
@@ -74,9 +76,9 @@ contract ChainlinkOracle is IOracle {
             uint256 timeStamp_,
             uint80 answeredInRound_
         ) {
-            require(timeStamp_ != 0, "round not complete");
-            require(price_ != 0, "negative price");
-            require(answeredInRound_ >= roundID_, "stale price");
+            require(timeStamp_ != 0, 'round not complete');
+            require(price_ != 0, 'negative price');
+            require(answeredInRound_ >= roundID_, 'stale price');
             return _scaleFrom(uint256(price_), _feedRegistry.decimals(token, denomination));
         } catch Error(string memory reason) {
             if (shouldRevert) revert(reason);
@@ -94,7 +96,7 @@ contract ChainlinkOracle is IOracle {
 
     function _scaleFrom(uint256 value, uint8 decimals) internal pure returns (uint256) {
         if (decimals == 18) return value;
-        if (decimals > 18) return value / 10**(decimals - 18);
-        else return value * 10**(18 - decimals);
+        if (decimals > 18) return value / 10 ** (decimals - 18);
+        else return value * 10 ** (18 - decimals);
     }
 }

@@ -3,30 +3,22 @@ pragma solidity ^0.8.20;
 
 library ScaledMath {
     uint256 internal constant DECIMALS = 18;
-    uint256 internal constant ONE = 10**DECIMALS;
+    uint256 internal constant ONE = 10 ** DECIMALS;
 
     function mulDown(uint256 a, uint256 b) internal pure returns (uint256) {
         return (a * b) / ONE;
     }
 
-    function mulDown(
-        uint256 a,
-        uint256 b,
-        uint256 decimals
-    ) internal pure returns (uint256) {
-        return (a * b) / (10**decimals);
+    function mulDown(uint256 a, uint256 b, uint256 decimals) internal pure returns (uint256) {
+        return (a * b) / (10 ** decimals);
     }
 
     function divDown(uint256 a, uint256 b) internal pure returns (uint256) {
         return (a * ONE) / b;
     }
 
-    function divDown(
-        uint256 a,
-        uint256 b,
-        uint256 decimals
-    ) internal pure returns (uint256) {
-        return (a * 10**decimals) / b;
+    function divDown(uint256 a, uint256 b, uint256 decimals) internal pure returns (uint256) {
+        return (a * 10 ** decimals) / b;
     }
 
     function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -44,12 +36,8 @@ library ScaledMath {
         return (a * b) / uint128(ONE);
     }
 
-    function mulDown(
-        int256 a,
-        int256 b,
-        uint256 decimals
-    ) internal pure returns (int256) {
-        return (a * b) / int256(10**decimals);
+    function mulDown(int256 a, int256 b, uint256 decimals) internal pure returns (int256) {
+        return (a * b) / int256(10 ** decimals);
     }
 
     function divDown(int256 a, int256 b) internal pure returns (int256) {
@@ -60,12 +48,8 @@ library ScaledMath {
         return (a * uint128(ONE)) / b;
     }
 
-    function divDown(
-        int256 a,
-        int256 b,
-        uint256 decimals
-    ) internal pure returns (int256) {
-        return (a * int256(10**decimals)) / b;
+    function divDown(int256 a, int256 b, uint256 decimals) internal pure returns (int256) {
+        return (a * int256(10 ** decimals)) / b;
     }
 
     function convertScale(
@@ -93,7 +77,7 @@ library ScaledMath {
         uint8 fromDecimals,
         uint8 toDecimals
     ) internal pure returns (uint256) {
-        return a * (10**(toDecimals - fromDecimals));
+        return a * (10 ** (toDecimals - fromDecimals));
     }
 
     function downscale(
@@ -101,7 +85,7 @@ library ScaledMath {
         uint8 fromDecimals,
         uint8 toDecimals
     ) internal pure returns (uint256) {
-        return a / (10**(fromDecimals - toDecimals));
+        return a / (10 ** (fromDecimals - toDecimals));
     }
 
     function upscale(
@@ -109,7 +93,7 @@ library ScaledMath {
         uint8 fromDecimals,
         uint8 toDecimals
     ) internal pure returns (int256) {
-        return a * int256(10**(toDecimals - fromDecimals));
+        return a * int256(10 ** (toDecimals - fromDecimals));
     }
 
     function downscale(
@@ -117,7 +101,7 @@ library ScaledMath {
         uint8 fromDecimals,
         uint8 toDecimals
     ) internal pure returns (int256) {
-        return a / int256(10**(fromDecimals - toDecimals));
+        return a / int256(10 ** (fromDecimals - toDecimals));
     }
 
     function intPow(uint256 a, uint256 n) internal pure returns (uint256) {

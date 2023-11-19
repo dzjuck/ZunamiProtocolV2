@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/access/Ownable2Step.sol';
 
-import "../../libraries/Types.sol";
-import "../../libraries/ScaledMath.sol";
-import "../../libraries/ScaledMath.sol";
-import "../../libraries/CurvePoolUtils.sol";
-import "../../interfaces/IOracle.sol";
-import "../../interfaces/vendor/ICurveFactory.sol";
-import "../../interfaces/vendor/ICurvePoolV0.sol";
-import "../../interfaces/vendor/ICurvePoolV1.sol";
-import "../../interfaces/vendor/ICurveMetaRegistry.sol";
-import "../../interfaces/ICurveRegistryCache.sol";
+import '../../libraries/Types.sol';
+import '../../libraries/ScaledMath.sol';
+import '../../libraries/ScaledMath.sol';
+import '../../libraries/CurvePoolUtils.sol';
+import '../../interfaces/IOracle.sol';
+import '../../interfaces/vendor/ICurveFactory.sol';
+import '../../interfaces/vendor/ICurvePoolV0.sol';
+import '../../interfaces/vendor/ICurvePoolV1.sol';
+import '../../interfaces/vendor/ICurveMetaRegistry.sol';
+import '../../interfaces/ICurveRegistryCache.sol';
 
 contract CurveLPOracle is IOracle, Ownable2Step {
     using ScaledMath for uint256;
@@ -45,7 +45,7 @@ contract CurveLPOracle is IOracle, Ownable2Step {
     function getUSDPrice(address token) external view returns (uint256) {
         // Getting the pool data
         address pool = _getCurvePool(token);
-        require(curveRegistryCache.isRegistered(pool), "token not supported");
+        require(curveRegistryCache.isRegistered(pool), 'token not supported');
         uint256[] memory decimals = curveRegistryCache.decimals(pool);
         address[] memory coins = curveRegistryCache.coins(pool);
 
@@ -59,9 +59,9 @@ contract CurveLPOracle is IOracle, Ownable2Step {
             uint256 price = _genericOracle.getUSDPrice(coin);
             prices[i] = price;
             thresholds[i] = imbalanceThresholds[token];
-            require(price > 0, "price is 0");
+            require(price > 0, 'price is 0');
             uint256 balance = _getBalance(pool, i);
-            require(balance > 0, "balance is 0");
+            require(balance > 0, 'balance is 0');
             value += balance.convertScale(uint8(decimals[i]), 18).mulDown(price);
         }
 
@@ -82,7 +82,7 @@ contract CurveLPOracle is IOracle, Ownable2Step {
     }
 
     function setImbalanceThreshold(address token, uint256 threshold) external onlyOwner {
-        require(threshold <= _MAX_IMBALANCE_THRESHOLD, "threshold too high");
+        require(threshold <= _MAX_IMBALANCE_THRESHOLD, 'threshold too high');
         imbalanceThresholds[token] = threshold;
         emit ImbalanceThresholdUpdated(token, threshold);
     }

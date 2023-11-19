@@ -25,7 +25,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
     }
 
     function getLiquidityTokenPrice() internal view virtual override returns (uint256) {
-        return oracle.getUSDPrice(address(vaultAsset));
+        return (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(1e18)) / 1e18;
     }
 
     function getLiquidityBalance() internal view virtual override returns (uint256) {

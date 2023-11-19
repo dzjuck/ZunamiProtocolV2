@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
-import "../interfaces/IPool.sol";
-import "./IStakingRewardDistributor.sol";
+import '../interfaces/IPool.sol';
+import './IStakingRewardDistributor.sol';
 import '../RewardTokenManager.sol';
 
 contract RecapitalizationManager is AccessControl, RewardTokenManager {
@@ -34,7 +34,9 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         _setRewardTokens(rewardTokens_);
     }
 
-    function setRewardDistributor(address rewardDistributorAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setRewardDistributor(
+        address rewardDistributorAddr
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (rewardDistributorAddr == address(0)) revert ZeroAddress();
 
         stakingRewardDistributor = IStakingRewardDistributor(rewardDistributorAddr);
@@ -69,7 +71,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         uint256 tid
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         IERC20 depositedToken = pool.token(tid);
-        if(address(depositedToken) == address(0)) revert WrongTid(tid);
+        if (address(depositedToken) == address(0)) revert WrongTid(tid);
 
         _sellRewards(rewardManager, depositedToken);
 
@@ -86,7 +88,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         uint256 tid
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         IERC20 depositedToken = pool.token(tid);
-        if(address(depositedToken) == address(0)) revert WrongTid(tid);
+        if (address(depositedToken) == address(0)) revert WrongTid(tid);
 
         stakingRewardDistributor.withdrawPoolToken(address(zunToken), zunAmount);
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import '@openzeppelin/contracts/access/Ownable2Step.sol';
 
-import "../../interfaces/IOracle.sol";
+import '../../interfaces/IOracle.sol';
 
 contract GenericOracle is IOracle, Ownable2Step {
     event CustomOracleAdded(address token, address oracle);
@@ -16,7 +16,7 @@ contract GenericOracle is IOracle, Ownable2Step {
     constructor() Ownable(msg.sender) {}
 
     function initialize(address curveLpOracle, address chainlinkOracle) external onlyOwner {
-        require(address(_curveLpOracle) == address(0), "already initialized");
+        require(address(_curveLpOracle) == address(0), 'already initialized');
         _chainlinkOracle = IOracle(chainlinkOracle);
         _curveLpOracle = IOracle(curveLpOracle);
     }

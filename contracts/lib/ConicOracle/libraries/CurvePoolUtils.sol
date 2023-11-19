@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "../interfaces/vendor/ICurvePoolV2.sol";
-import "../interfaces/vendor/ICurvePoolV1.sol";
-import "./ScaledMath.sol";
+import '../interfaces/vendor/ICurvePoolV2.sol';
+import '../interfaces/vendor/ICurvePoolV1.sol';
+import './ScaledMath.sol';
 
 library CurvePoolUtils {
     using ScaledMath for uint256;
@@ -29,7 +29,7 @@ library CurvePoolUtils {
 
     function ensurePoolBalanced(PoolMeta memory poolMeta) internal view {
         uint256 fromDecimals = poolMeta.decimals[0];
-        uint256 fromBalance = 10**fromDecimals;
+        uint256 fromBalance = 10 ** fromDecimals;
         uint256 fromPrice = poolMeta.prices[0];
         for (uint256 i = 1; i < poolMeta.numberOfCoins; i++) {
             uint256 toDecimals = poolMeta.decimals[i];
@@ -52,7 +52,7 @@ library CurvePoolUtils {
 
             require(
                 _isWithinThreshold(toExpected, toActual, poolMeta.thresholds[i]),
-                "pool is not balanced"
+                'pool is not balanced'
             );
         }
     }

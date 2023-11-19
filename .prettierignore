@@ -27,4 +27,3 @@ yarn.lock
 
 # Solidity
 contracts/mock
-contracts/lib/ConicOracle

@@ -78,10 +78,20 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     event PoolAdded(address indexed token, uint256 indexed pid, uint256 allocPoint);
     event Claimed(address indexed user, uint256 amount);
     event Deposited(address indexed user, uint256 indexed pid, uint256 amount);
-    event EmergencyWithdrawn(address indexed user, uint256 indexed pid, uint256 amount, uint256 amountAdjusted);
+    event EmergencyWithdrawn(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        uint256 amountAdjusted
+    );
     event RewardPerBlockSet(uint256 indexed tid, uint256 rewardPerBlock);
     event PoolSet(address indexed token, uint256 indexed pid, uint256 allocPoint);
-    event Withdrawn(address indexed user, uint256 indexed pid, uint256 amount, uint256 amountAdjusted);
+    event Withdrawn(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        uint256 amountAdjusted
+    );
     event EarlyExitReceiverChanged(address receiver);
 
     constructor() {
@@ -146,12 +156,16 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     }
 
     function getPoolTokenRatio(uint256 pid) public view returns (uint256) {
-        return poolInfo[pid].token.balanceOf(address(this)) * 1e18 / totalAmounts[pid];
+        return (poolInfo[pid].token.balanceOf(address(this)) * 1e18) / totalAmounts[pid];
     }
-    function withdrawPoolToken(address token, uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
+
+    function withdrawPoolToken(
+        address token,
+        uint256 amount
+    ) external onlyRole(RECAPITALIZATION_ROLE) {
         uint256 pid = poolPidByAddress[token];
         PoolInfo memory poolInfo_ = poolInfo[pid];
-        if(amount >= poolInfo_.token.balanceOf(address(this))) revert WrongAmount();
+        if (amount >= poolInfo_.token.balanceOf(address(this))) revert WrongAmount();
         poolInfo_.token.safeTransfer(msg.sender, amount);
     }
 
@@ -307,7 +321,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     function withdrawEmergency(uint256 _pid) external {
         PoolInfo storage pool = poolInfo[_pid];
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
-        uint256 amountAdjusted = userPool.amount * getPoolTokenRatio(_pid) / 1e18;
+        uint256 amountAdjusted = (userPool.amount * getPoolTokenRatio(_pid)) / 1e18;
 
         pool.token.safeTransfer(address(msg.sender), amountAdjusted);
         emit EmergencyWithdrawn(msg.sender, _pid, userPool.amount, amountAdjusted);
@@ -345,19 +359,20 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
         require(userPoolInfo[_pid][msg.sender].amount >= _amount, 'withdraw: not enough amount');
         updatePool(_pid);
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
-        uint256 amountAdjusted = _amount * getPoolTokenRatio(_pid) / 1e18;
+        uint256 amountAdjusted = (_amount * getPoolTokenRatio(_pid)) / 1e18;
         if (_amount > 0) {
             userPool.amount -= _amount;
             totalAmounts[_pid] -= _amount;
 
             uint256 transferAmount = amountAdjusted;
-            if (
-                userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS
-            ) {
+            if (userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS) {
                 transferAmount =
                     (amountAdjusted * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
                     PERCENT_DENOMINATOR;
-                poolInfo[_pid].token.safeTransfer(earlyExitReceiver, amountAdjusted - transferAmount);
+                poolInfo[_pid].token.safeTransfer(
+                    earlyExitReceiver,
+                    amountAdjusted - transferAmount
+                );
             }
             poolInfo[_pid].token.safeTransfer(address(msg.sender), transferAmount);
 

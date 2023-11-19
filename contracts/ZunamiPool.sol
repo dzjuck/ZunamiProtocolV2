@@ -212,7 +212,6 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
                 ((totalSupply() + 10 ** _decimalsOffset()) * depositedValue) /
                 (holdingsBefore + 1);
         }
-
         _mint(receiver, minted);
         _strategyInfo[sid].minted += minted;
 

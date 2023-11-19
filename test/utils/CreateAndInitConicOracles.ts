@@ -16,6 +16,12 @@ export async function createAndInitConicOracles(curvePools: string[]) {
     const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
     const genericOracle = (await GenericOracleFactory.deploy()) as GenericOracle;
 
+    const FrxETHOracleFactory = await ethers.getContractFactory('FrxETHOracle');
+    const frxETHOracle = await FrxETHOracleFactory.deploy(genericOracle.address);
+
+    const FRX_ETH_ADDRESS = '0x5E8422345238F34275888049021821E8E08CAa1f';
+    await genericOracle.setCustomOracle(FRX_ETH_ADDRESS, frxETHOracle.address);
+
     const CurveLPOracleFactory = await ethers.getContractFactory('CurveLPOracle');
     const curveLPOracle = (await CurveLPOracleFactory.deploy(
         genericOracle.address,

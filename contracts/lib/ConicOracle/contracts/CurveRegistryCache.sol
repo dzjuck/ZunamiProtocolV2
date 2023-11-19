@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "../libraries/CurvePoolUtils.sol";
+import '../libraries/CurvePoolUtils.sol';
 
-import "../interfaces/ICurveRegistryCache.sol";
-import "../interfaces/vendor/ICurveMetaRegistry.sol";
-import "../interfaces/vendor/ICurvePoolV1.sol";
+import '../interfaces/ICurveRegistryCache.sol';
+import '../interfaces/vendor/ICurveMetaRegistry.sol';
+import '../interfaces/vendor/ICurvePoolV1.sol';
 
 contract CurveRegistryCache is ICurveRegistryCache {
     ICurveMetaRegistry internal constant _CURVE_REGISTRY =
@@ -14,7 +14,7 @@ contract CurveRegistryCache is ICurveRegistryCache {
     IBooster public constant BOOSTER = IBooster(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
 
     modifier onlyInitialized(address pool) {
-        require(_isRegistered[pool], "CurveRegistryCache: pool not initialized");
+        require(_isRegistered[pool], 'CurveRegistryCache: pool not initialized');
         _;
     }
 
@@ -37,7 +37,7 @@ contract CurveRegistryCache is ICurveRegistryCache {
 
     function _initPool(address pool_) internal {
         if (_isRegistered[pool_]) return;
-        require(_isCurvePool(pool_), "CurveRegistryCache: invalid curve pool");
+        require(_isCurvePool(pool_), 'CurveRegistryCache: invalid curve pool');
 
         _isRegistered[pool_] = true;
         address curveLpToken_ = _CURVE_REGISTRY.get_lp_token(pool_);
@@ -60,7 +60,7 @@ contract CurveRegistryCache is ICurveRegistryCache {
         address[] memory coins_ = new address[](nCoins_);
         for (uint256 i; i < nCoins_; i++) {
             address coin_ = staticCoins_[i];
-            require(coin_ != address(0), "CurveRegistryCache: invalid coin");
+            require(coin_ != address(0), 'CurveRegistryCache: invalid coin');
             coins_[i] = coin_;
             _hasCoinDirectly[pool_][coin_] = true;
             _hasCoinAnywhere[pool_][coin_] = true;
@@ -76,63 +76,42 @@ contract CurveRegistryCache is ICurveRegistryCache {
         return _isRegistered[pool_];
     }
 
-    function lpToken(address pool_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (address)
-    {
+    function lpToken(
+        address pool_
+    ) external view override onlyInitialized(pool_) returns (address) {
         return _lpToken[pool_];
     }
 
-    function assetType(address pool_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (CurvePoolUtils.AssetType)
-    {
+    function assetType(
+        address pool_
+    ) external view override onlyInitialized(pool_) returns (CurvePoolUtils.AssetType) {
         return _assetType[pool_];
     }
 
-    function hasCoinDirectly(address pool_, address coin_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (bool)
-    {
+    function hasCoinDirectly(
+        address pool_,
+        address coin_
+    ) external view override onlyInitialized(pool_) returns (bool) {
         return _hasCoinDirectly[pool_][coin_];
     }
 
-    function hasCoinAnywhere(address pool_, address coin_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (bool)
-    {
+    function hasCoinAnywhere(
+        address pool_,
+        address coin_
+    ) external view override onlyInitialized(pool_) returns (bool) {
         return _hasCoinAnywhere[pool_][coin_];
     }
 
-    function basePool(address pool_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (address)
-    {
+    function basePool(
+        address pool_
+    ) external view override onlyInitialized(pool_) returns (address) {
         return _basePool[pool_];
     }
 
-    function coinIndex(address pool_, address coin_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (int128)
-    {
+    function coinIndex(
+        address pool_,
+        address coin_
+    ) external view override onlyInitialized(pool_) returns (int128) {
         return _coinIndex[pool_][coin_];
     }
 
@@ -144,17 +123,7 @@ contract CurveRegistryCache is ICurveRegistryCache {
         address pool_,
         address from_,
         address to_
-    )
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (
-            int128,
-            int128,
-            bool
-        )
-    {
+    ) external view override onlyInitialized(pool_) returns (int128, int128, bool) {
         return (
             _coinIndex[pool_][from_],
             _coinIndex[pool_][to_],
@@ -162,13 +131,9 @@ contract CurveRegistryCache is ICurveRegistryCache {
         );
     }
 
-    function decimals(address pool_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (uint256[] memory)
-    {
+    function decimals(
+        address pool_
+    ) external view override onlyInitialized(pool_) returns (uint256[] memory) {
         return _decimals[pool_];
     }
 
@@ -177,13 +142,9 @@ contract CurveRegistryCache is ICurveRegistryCache {
     /// Version 1 uses `uint256` for `coins` and `balances`, and `int128` for `get_dy`
     /// Version 2 uses `uint256` for `coins` and `balances`, and `uint256` for `get_dy`
     /// They correspond with which interface the pool implements: ICurvePoolV0, ICurvePoolV1, ICurvePoolV2
-    function interfaceVersion(address pool_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (uint256)
-    {
+    function interfaceVersion(
+        address pool_
+    ) external view override onlyInitialized(pool_) returns (uint256) {
         return _interfaceVersion[pool_];
     }
 
@@ -191,13 +152,9 @@ contract CurveRegistryCache is ICurveRegistryCache {
         return _poolFromLpToken[lpToken_];
     }
 
-    function coins(address pool_)
-        external
-        view
-        override
-        onlyInitialized(pool_)
-        returns (address[] memory)
-    {
+    function coins(
+        address pool_
+    ) external view override onlyInitialized(pool_) returns (address[] memory) {
         return _coins[pool_];
     }
 

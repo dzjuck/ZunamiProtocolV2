@@ -32,9 +32,10 @@ interface ICurvePoolV2 {
         address receiver
     ) external returns (uint256);
 
-    function add_liquidity(uint256[2] memory amounts, uint256 min_mint_amount)
-        external
-        returns (uint256);
+    function add_liquidity(
+        uint256[2] memory amounts,
+        uint256 min_mint_amount
+    ) external returns (uint256);
 
     function add_liquidity(
         uint256[3] memory amounts,
@@ -43,9 +44,10 @@ interface ICurvePoolV2 {
         address receiver
     ) external returns (uint256);
 
-    function add_liquidity(uint256[3] memory amounts, uint256 min_mint_amount)
-        external
-        returns (uint256);
+    function add_liquidity(
+        uint256[3] memory amounts,
+        uint256 min_mint_amount
+    ) external returns (uint256);
 
     function remove_liquidity(
         uint256 _amount,
@@ -54,8 +56,7 @@ interface ICurvePoolV2 {
         address receiver
     ) external;
 
-    function remove_liquidity(uint256 _amount, uint256[2] memory min_amounts)
-        external;
+    function remove_liquidity(uint256 _amount, uint256[2] memory min_amounts) external;
 
     function remove_liquidity(
         uint256 _amount,
@@ -64,8 +65,7 @@ interface ICurvePoolV2 {
         address receiver
     ) external;
 
-    function remove_liquidity(uint256 _amount, uint256[3] memory min_amounts)
-        external;
+    function remove_liquidity(uint256 _amount, uint256[3] memory min_amounts) external;
 
     function remove_liquidity_one_coin(
         uint256 token_amount,
@@ -75,21 +75,14 @@ interface ICurvePoolV2 {
         address receiver
     ) external returns (uint256);
 
-    function get_dy(
-        uint256 i,
-        uint256 j,
-        uint256 dx
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
+
+    function calc_token_amount(uint256[] memory amounts) external view returns (uint256);
+
+    function calc_withdraw_one_coin(
+        uint256 token_amount,
+        uint256 i
     ) external view returns (uint256);
-
-    function calc_token_amount(uint256[] memory amounts)
-        external
-        view
-        returns (uint256);
-
-    function calc_withdraw_one_coin(uint256 token_amount, uint256 i)
-        external
-        view
-        returns (uint256);
 
     function get_virtual_price() external view returns (uint256);
 }

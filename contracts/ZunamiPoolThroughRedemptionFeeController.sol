@@ -25,14 +25,14 @@ contract ZunamiPoolThroughRedemptionFeeController is ZunamiPoolThroughController
     constructor(address pool_) ZunamiPoolThroughController(pool_) {}
 
     function changeWithdrawFee(uint256 withdrawFee_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(withdrawFee_ > MAX_FEE) revert FeeWronglyHigh();
+        if (withdrawFee_ > MAX_FEE) revert FeeWronglyHigh();
         withdrawFee = withdrawFee_;
 
         emit WithdrawFeeChanged(withdrawFee_);
     }
 
     function changeFeeDistributor(address feeDistributor_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(feeDistributor_ == address(0)) revert ZeroAddress();
+        if (feeDistributor_ == address(0)) revert ZeroAddress();
         feeDistributor = feeDistributor_;
 
         emit FeeDistributorChanged(feeDistributor_);
@@ -43,7 +43,7 @@ contract ZunamiPoolThroughRedemptionFeeController is ZunamiPoolThroughController
         uint256 shares,
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
-    ) internal override virtual {
+    ) internal virtual override {
         uint256 nominalFee = _calcFee(msg.sender, shares);
         if (nominalFee > 0) {
             IERC20(pool).safeTransfer(feeDistributor, nominalFee);
@@ -52,15 +52,11 @@ contract ZunamiPoolThroughRedemptionFeeController is ZunamiPoolThroughController
         super.withdrawPool(user, shares, minTokenAmounts, receiver);
     }
 
-    function _calcFee(address caller, uint256 value)
-    internal
-    view
-    returns (uint256 nominalFee)
-    {
+    function _calcFee(address caller, uint256 value) internal view returns (uint256 nominalFee) {
         nominalFee = 0;
         uint256 withdrawFee_ = withdrawFee;
         if (withdrawFee_ > 0 && !hasRole(ISSUER_ROLE, caller)) {
-            nominalFee = value * withdrawFee_ / FEE_DENOMINATOR;
+            nominalFee = (value * withdrawFee_) / FEE_DENOMINATOR;
         }
     }
 }

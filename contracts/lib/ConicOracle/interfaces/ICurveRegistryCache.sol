@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "./vendor/IBooster.sol";
-import "../libraries/CurvePoolUtils.sol";
+import './vendor/IBooster.sol';
+import '../libraries/CurvePoolUtils.sol';
 
 interface ICurveRegistryCache {
     function BOOSTER() external view returns (IBooster);
@@ -29,14 +29,7 @@ interface ICurveRegistryCache {
         address pool_,
         address from_,
         address to_
-    )
-        external
-        view
-        returns (
-            int128,
-            int128,
-            bool
-        );
+    ) external view returns (int128, int128, bool);
 
     function decimals(address pool_) external view returns (uint256[] memory);
 
