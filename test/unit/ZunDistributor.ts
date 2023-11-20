@@ -12,7 +12,7 @@ import {
     TransferGauge,
 } from '../../typechain-types';
 
-describe('Distributor tests', () => {
+describe('ZunDistributor tests', () => {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [voter, dao, approveGaugeRec, transferGaugeRec, addedGaugeRec] =

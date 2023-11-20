@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
@@ -107,35 +107,8 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     }
 
     function sellRewards() internal virtual {
-        uint256 rewardsLength_ = rewardTokens.length;
-        uint256[] memory rewardBalances = new uint256[](rewardsLength_);
-        bool allRewardsEmpty = true;
-
-        for (uint256 i = 0; i < rewardsLength_; i++) {
-            rewardBalances[i] = rewardTokens[i].balanceOf(address(this));
-            if (rewardBalances[i] > 0) {
-                allRewardsEmpty = false;
-            }
-        }
-        if (allRewardsEmpty) {
-            return;
-        }
-
-        IERC20 feeToken_ = pool.tokens()[feeTokenId];
-        uint256 feeTokenBalanceBefore = feeToken_.balanceOf(address(this));
-
-        IRewardManager rewardManager_ = rewardManager;
-        IERC20 rewardToken_;
-        for (uint256 i = 0; i < rewardsLength_; i++) {
-            if (rewardBalances[i] == 0) continue;
-            rewardToken_ = rewardTokens[i];
-            rewardToken_.safeTransfer(address(rewardManager_), rewardBalances[i]);
-            rewardManager_.handle(address(rewardToken_), rewardBalances[i], address(feeToken_));
-        }
-
-        uint256 feeTokenBalanceAfter = feeToken_.balanceOf(address(this));
-
-        collectedManagementFee += calcManagementFee(feeTokenBalanceAfter - feeTokenBalanceBefore);
+        uint256 received = _sellRewards(rewardManager, pool.tokens()[feeTokenId]);
+        collectedManagementFee += calcManagementFee(received);
     }
 
     function calcManagementFee(uint256 amount) internal view returns (uint256) {

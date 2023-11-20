@@ -84,11 +84,11 @@ const config: HardhatUserConfig = {
             loggingEnabled: true,
         },
         sepolia: {
-          url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
-          chainId: 11155111,
-          gas: 'auto',
-          accounts: [`${PRIVATE_KEY}`],
-          loggingEnabled: true,
+            url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+            chainId: 11155111,
+            gas: 'auto',
+            accounts: [`${PRIVATE_KEY}`],
+            loggingEnabled: true,
         },
         development: {
             url: 'http://127.0.0.1:8545',

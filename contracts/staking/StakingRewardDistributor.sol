@@ -8,13 +8,16 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import './IERC20Supplied.sol';
-import './IRewardDistributor.sol';
+import './IStakingRewardDistributor.sol';
 
-contract StakingRewardDistributor is IRewardDistributor, AccessControl, ReentrancyGuard {
+contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    error WrongAmount();
 
     // Create a new role identifier for the distributor role
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256('DISTRIBUTOR_ROLE');
+    bytes32 public constant RECAPITALIZATION_ROLE = keccak256('RECAPITALIZATION_ROLE');
 
     uint256 private constant ACC_REWARD_PRECISION = 1e12;
 
@@ -29,7 +32,6 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
         uint256 amount; // How many tokens the user has provided.
         uint256[] accruedRewards; // Reward accrued.
         uint256 depositedBlock;
-        bool infiniteLock;
     }
 
     // Info of each pool.
@@ -68,16 +70,18 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
 
+    uint256[] public totalAmounts;
+
     address public earlyExitReceiver;
 
     event RewardTokenAdded(address indexed token, uint256 indexed tid);
     event PoolAdded(address indexed token, uint256 indexed pid, uint256 allocPoint);
     event Claimed(address indexed user, uint256 amount);
     event Deposited(address indexed user, uint256 indexed pid, uint256 amount);
-    event EmergencyWithdrawn(address indexed user, uint256 indexed pid, uint256 amount);
+    event EmergencyWithdrawn(address indexed user, uint256 indexed pid, uint256 amount, uint256 amountAdjusted);
     event RewardPerBlockSet(uint256 indexed tid, uint256 rewardPerBlock);
     event PoolSet(address indexed token, uint256 indexed pid, uint256 allocPoint);
-    event Withdrawn(address indexed user, uint256 indexed pid, uint256 amount);
+    event Withdrawn(address indexed user, uint256 indexed pid, uint256 amount, uint256 amountAdjusted);
     event EarlyExitReceiverChanged(address receiver);
 
     constructor() {
@@ -139,6 +143,16 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
         poolPidByAddress[address(_token)] = pid;
 
         emit PoolAdded(address(_token), pid, _allocPoint);
+    }
+
+    function getPoolTokenRatio(uint256 pid) public view returns (uint256) {
+        return poolInfo[pid].token.balanceOf(address(this)) * 1e18 / totalAmounts[pid];
+    }
+    function withdrawPoolToken(address token, uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
+        uint256 pid = poolPidByAddress[token];
+        PoolInfo memory poolInfo_ = poolInfo[pid];
+        if(amount >= poolInfo_.token.balanceOf(address(this))) revert WrongAmount();
+        poolInfo_.token.safeTransfer(msg.sender, amount);
     }
 
     // Start 2 week per block distribution for stakers
@@ -213,14 +227,16 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
     }
 
     // Deposit tokens to staking for reward token allocation.
-    function deposit(uint256 _pid, uint256 _amount, bool _infiniteLock) external nonReentrant {
+    function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
         updatePool(_pid);
 
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
 
         if (_amount > 0) {
             poolInfo[_pid].token.safeTransferFrom(address(msg.sender), address(this), _amount);
-            userPool.amount = userPool.amount + _amount;
+
+            userPool.amount += _amount;
+            totalAmounts[_pid] += _amount;
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
             if (address(stakingToken) != address(0)) {
@@ -239,7 +255,6 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
         }
 
         userPool.depositedBlock = block.number;
-        userPool.infiniteLock = userPool.infiniteLock || _infiniteLock; // stay true if was true
         emit Deposited(msg.sender, _pid, _amount);
     }
 
@@ -292,9 +307,17 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
     function withdrawEmergency(uint256 _pid) external {
         PoolInfo storage pool = poolInfo[_pid];
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
-        pool.token.safeTransfer(address(msg.sender), userPool.amount);
-        emit EmergencyWithdrawn(msg.sender, _pid, userPool.amount);
+        uint256 amountAdjusted = userPool.amount * getPoolTokenRatio(_pid) / 1e18;
+
+        pool.token.safeTransfer(address(msg.sender), amountAdjusted);
+        emit EmergencyWithdrawn(msg.sender, _pid, userPool.amount, amountAdjusted);
+        totalAmounts[_pid] -= userPool.amount;
         userPool.amount = 0;
+
+        IERC20Supplied stakingToken = pool.stakingToken;
+        if (address(stakingToken) != address(0)) {
+            stakingToken.burn(userPool.amount);
+        }
 
         uint256 length = rewardTokenInfo.length;
         for (uint256 tid = 0; tid < length; ++tid) {
@@ -322,16 +345,19 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
         require(userPoolInfo[_pid][msg.sender].amount >= _amount, 'withdraw: not enough amount');
         updatePool(_pid);
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
+        uint256 amountAdjusted = _amount * getPoolTokenRatio(_pid) / 1e18;
         if (_amount > 0) {
             userPool.amount -= _amount;
-            uint256 transferAmount = _amount;
+            totalAmounts[_pid] -= _amount;
+
+            uint256 transferAmount = amountAdjusted;
             if (
-                userPool.infiniteLock || userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS
+                userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS
             ) {
                 transferAmount =
-                    (_amount * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
+                    (amountAdjusted * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
                     PERCENT_DENOMINATOR;
-                poolInfo[_pid].token.safeTransfer(earlyExitReceiver, _amount - transferAmount);
+                poolInfo[_pid].token.safeTransfer(earlyExitReceiver, amountAdjusted - transferAmount);
             }
             poolInfo[_pid].token.safeTransfer(address(msg.sender), transferAmount);
 
@@ -350,7 +376,7 @@ contract StakingRewardDistributor is IRewardDistributor, AccessControl, Reentran
                 userPoolInfo[_pid][msg.sender]
             );
         }
-        emit Withdrawn(msg.sender, _pid, _amount);
+        emit Withdrawn(msg.sender, _pid, _amount, amountAdjusted);
     }
 
     // Number of pools.

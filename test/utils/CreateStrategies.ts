@@ -45,7 +45,7 @@ export async function createStrategies(
         }
 
         if (strategyName.includes('CrvUsdStakeDaoCurve')) {
-          await strategy.setStableConverter(stableConverter.address);
+            await strategy.setStableConverter(stableConverter.address);
         }
 
         if (strategyName.includes('frxETH') || strategyName.includes('stEth')) {

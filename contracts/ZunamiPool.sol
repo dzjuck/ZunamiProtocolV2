@@ -60,6 +60,10 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         return _tokens;
     }
 
+    function token(uint256 tid) external view returns (IERC20) {
+        return _tokens[tid];
+    }
+
     function tokenDecimalsMultipliers() external view returns (uint256[POOL_ASSETS] memory) {
         return _decimalsMultipliers;
     }
@@ -311,11 +315,11 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
         uint256[POOL_ASSETS] memory tokensRemainder;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            IERC20 token = _tokens[i];
-            if (address(token) == address(0)) break;
-            tokensRemainder[i] = token.balanceOf(address(this));
+            IERC20 token_ = _tokens[i];
+            if (address(token_) == address(0)) break;
+            tokensRemainder[i] = token_.balanceOf(address(this));
             if (tokensRemainder[i] > 0) {
-                token.safeTransfer(
+                token_.safeTransfer(
                     address(_strategyInfo[_receiverStrategy].strategy),
                     tokensRemainder[i]
                 );

@@ -1,8 +1,8 @@
 const { ethers } = require('hardhat');
 
-const {createAndInitConicOracles} = require("./utils/CreateAndInitConicOracles");
+const { createAndInitConicOracles } = require('./utils/CreateAndInitConicOracles');
 
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
     console.log('Start deploy');
 
@@ -36,15 +36,20 @@ async function main() {
     console.log('ZunamiPool tokens set:', tokens, tokensMultipliers);
 
     console.log('Deploy zunUSD pool controller:');
-    const ZunamiPoolThroughController = await ethers.getContractFactory('ZunamiPoolThroughController');
+    const ZunamiPoolThroughController = await ethers.getContractFactory(
+        'ZunamiPoolThroughController'
+    );
 
     const zunamiPoolController = await ZunamiPoolThroughController.deploy(zunamiPool.address);
     await zunamiPoolController.deployed();
     console.log('ZunamiPoolController:', zunamiPoolController.address);
 
-    const stratName = "VaultStrat";
+    const stratName = 'VaultStrat';
     const VaultStratFactory = await ethers.getContractFactory(stratName);
-    const strategy = await VaultStratFactory.deploy([...tokens, ADDRESS_ZERO, ADDRESS_ZERO], [...tokensMultipliers, 0, 0]);
+    const strategy = await VaultStratFactory.deploy(
+        [...tokens, ADDRESS_ZERO, ADDRESS_ZERO],
+        [...tokensMultipliers, 0, 0]
+    );
     await strategy.deployed();
     console.log(`${stratName} strategy deployed to: ${strategy.address}`);
 

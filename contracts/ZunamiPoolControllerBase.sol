@@ -8,33 +8,38 @@ import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import './interfaces/IPool.sol';
+import './RewardTokenManager.sol';
 
-abstract contract ZunamiPoolControllerBase is Pausable, AccessControl, ReentrancyGuard {
+abstract contract ZunamiPoolControllerBase is
+    Pausable,
+    AccessControl,
+    ReentrancyGuard,
+    RewardTokenManager
+{
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
     error WrongSid();
-    error WrongRewardTokens();
 
     uint8 public constant POOL_ASSETS = 5;
 
     uint256 public defaultDepositSid;
     uint256 public defaultWithdrawSid;
 
-    address public rewardCollector;
-
     IPool public pool;
-    IERC20[] public rewardTokens;
 
     event SetDefaultDepositSid(uint256 sid);
     event SetDefaultWithdrawSid(uint256 sid);
-    event SetRewardTokens(IERC20[] rewardTokens);
 
     constructor(address pool_) {
         if (pool_ == address(0)) revert ZeroAddress();
         pool = IPool(pool_);
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setRewardTokens(rewardTokens_);
     }
 
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -57,13 +62,6 @@ abstract contract ZunamiPoolControllerBase is Pausable, AccessControl, Reentranc
 
         defaultWithdrawSid = _newPoolId;
         emit SetDefaultWithdrawSid(_newPoolId);
-    }
-
-    function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (rewardTokens_.length == 0) revert WrongRewardTokens();
-
-        rewardTokens = rewardTokens_;
-        emit SetRewardTokens(rewardTokens);
     }
 
     function claimPoolRewards(address collector) internal {

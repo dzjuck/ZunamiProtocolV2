@@ -53,6 +53,8 @@ interface IPool is IERC20 {
 
     function tokens() external view returns (IERC20[5] memory);
 
+    function token(uint256 tid) external view returns (IERC20);
+
     function tokenDecimalsMultipliers() external view returns (uint256[5] memory);
 
     function strategyInfo(uint256 sid) external view returns (StrategyInfo memory);
@@ -68,6 +70,8 @@ interface IPool is IERC20 {
         uint256[5] memory amounts,
         address receiver
     ) external returns (uint256);
+
+    function depositStrategy(uint256 sid, uint256[5] memory amounts) external returns (uint256);
 
     function withdraw(
         uint256 sid,

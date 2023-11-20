@@ -15,6 +15,7 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
 
     bytes32 public constant ISSUER_ROLE = keccak256('ISSUER_ROLE');
 
+    address public rewardCollector;
     bool public onlyIssuerMode = false;
 
     event RewardCollectorChanged(address oldFeeCollector, address newFeeCollector);
@@ -22,7 +23,6 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
 
     constructor(address pool_) ZunamiPoolControllerBase(pool_) {
         rewardCollector = msg.sender;
-
         _grantRole(ISSUER_ROLE, msg.sender);
     }
 

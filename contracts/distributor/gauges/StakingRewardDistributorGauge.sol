@@ -4,12 +4,12 @@ pragma solidity 0.8.21;
 import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '../../staking/IRewardDistributor.sol';
+import '../../staking/IStakingRewardDistributor.sol';
 
 contract StakingRewardDistributorGauge is Ownable2Step {
     using SafeERC20 for ERC20;
 
-    IRewardDistributor public immutable REWARD_DISTRIBUTOR;
+    IStakingRewardDistributor public immutable REWARD_DISTRIBUTOR;
     ERC20 public immutable TOKEN;
     uint256 public immutable TID;
 
@@ -23,7 +23,7 @@ contract StakingRewardDistributorGauge is Ownable2Step {
         TOKEN = ERC20(_token);
 
         require(_rewardDistributor != address(0), 'Zero receiver address');
-        REWARD_DISTRIBUTOR = IRewardDistributor(_rewardDistributor);
+        REWARD_DISTRIBUTOR = IStakingRewardDistributor(_rewardDistributor);
 
         TID = _tid;
     }
