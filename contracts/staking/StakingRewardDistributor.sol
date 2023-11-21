@@ -14,6 +14,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     using SafeERC20 for IERC20;
 
     error WrongAmount();
+    error TokenAlreadyAdded();
 
     // Create a new role identifier for the distributor role
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256('DISTRIBUTOR_ROLE');
@@ -31,7 +32,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     // Info of each user per pool.
     struct UserPoolInfo {
         uint256 amount; // How many tokens the user has provided.
-        uint256[] accruedRewards; // Reward accrued.
+        mapping(uint256 => uint256) accruedRewards; // Reward accrued.
         uint256 depositedBlock;
     }
 
@@ -71,7 +72,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
 
-    uint256[] public totalAmounts;
+    mapping(uint256 => uint256) public totalAmounts;
 
     address public earlyExitReceiver;
 
@@ -121,7 +122,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
         IERC20Supplied _stakingToken,
         bool _withUpdate
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(!isPoolAdded(_token), 'add: token already added');
+        if(isPoolAdded(_token)) revert TokenAlreadyAdded();
 
         if (_withUpdate) {
             updateAllPools();
@@ -208,7 +209,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     }
 
     // Update reward variables of the given pool to be up-to-date.
-    function updatePool(uint256 _pid) public nonReentrant {
+    function updatePool(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         uint256 currentBlock = block.number;
         uint256 lpSupply = pool.token.balanceOf(address(this));
@@ -291,7 +292,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     }
 
     function accrueReward(uint256 tid, uint256 _pid) internal {
-        UserPoolInfo memory userPool = userPoolInfo[_pid][msg.sender];
+        UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
         if (userPool.amount == 0) {
             return;
         }
@@ -303,8 +304,8 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     function calcReward(
         uint256 tid,
         PoolInfo memory pool,
-        UserPoolInfo memory userPool
-    ) internal pure returns (uint256) {
+        UserPoolInfo storage userPool
+    ) internal view returns (uint256) {
         return (userPool.amount * pool.accRewardsPerShare[tid]) / ACC_REWARD_PRECISION;
     }
 
@@ -357,8 +358,14 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
 
     // Withdraw tokens from rewardToken staking.
     function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
-        require(userPoolInfo[_pid][msg.sender].amount >= _amount, 'withdraw: not enough amount');
+        if(userPoolInfo[_pid][msg.sender].amount < _amount) revert WrongAmount();
+
         updatePool(_pid);
+        uint256 rewardTokenInfoLength = rewardTokenInfo.length;
+        for (uint256 tid = 0; tid < rewardTokenInfoLength; ++tid) {
+            accrueReward(tid, _pid);
+        }
+
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
         uint256 amountAdjusted = (_amount * getPoolTokenRatio(_pid)) / 1e18;
         if (_amount > 0) {
@@ -366,10 +373,12 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
             totalAmounts[_pid] -= _amount;
 
             uint256 transferAmount = amountAdjusted;
-            if (userPool.depositedBlock > block.number - BLOCKS_IN_4_MONTHS) {
+
+            if (block.number - userPool.depositedBlock <= BLOCKS_IN_4_MONTHS) {
                 transferAmount =
                     (amountAdjusted * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
                     PERCENT_DENOMINATOR;
+
                 poolInfo[_pid].token.safeTransfer(
                     earlyExitReceiver,
                     amountAdjusted - transferAmount
@@ -379,13 +388,12 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
             if (address(stakingToken) != address(0)) {
+                IERC20(address(stakingToken)).transferFrom(msg.sender, address(this), _amount);
                 stakingToken.burn(_amount);
             }
         }
 
-        uint256 length = rewardTokenInfo.length;
-        for (uint256 tid = 0; tid < length; ++tid) {
-            accrueReward(tid, _pid);
+        for (uint256 tid = 0; tid < rewardTokenInfoLength; ++tid) {
             userPool.accruedRewards[tid] = calcReward(
                 tid,
                 poolInfo[_pid],
@@ -435,7 +443,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
         uint256 accRewardPerShare = pool.accRewardsPerShare[_tid] +
             ((reward * ACC_REWARD_PRECISION) / lpSupply);
 
-        UserPoolInfo memory userPool = userPoolInfo[_pid][_user];
+        UserPoolInfo storage userPool = userPoolInfo[_pid][_user];
         total =
             ((userPool.amount * accRewardPerShare) / ACC_REWARD_PRECISION) -
             userPool.accruedRewards[_tid];

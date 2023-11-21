@@ -14,20 +14,24 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     error WrongDistributionBlock(uint256 distributionBlock, uint256 nowBlock);
     error WrongTid(uint256 tid);
     error ZeroAddress();
+    error ZeroParam();
 
     uint256 public constant ACCUMULATION_PERIOD = (14 * 24 * 60 * 60) / 12; // 2 week in blocks
 
     uint256 public distributionBlock;
     IStakingRewardDistributor public stakingRewardDistributor;
     IERC20 public immutable zunToken;
+    uint256 accumulationPeriod;
 
     event SetRewardDistributor(address rewardDistributorAddr);
+    event SetAccumulationPeriod(uint256 accumulationPeriod);
 
     constructor(address zunToken_) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         distributionBlock = block.number;
 
         zunToken = IERC20(zunToken_);
+        setAccumulationPeriod(ACCUMULATION_PERIOD);
     }
 
     function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -41,6 +45,15 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
 
         stakingRewardDistributor = IStakingRewardDistributor(rewardDistributorAddr);
         emit SetRewardDistributor(rewardDistributorAddr);
+    }
+
+    function setAccumulationPeriod(
+        uint256 _accumulationPeriod
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_accumulationPeriod == 0) revert ZeroParam();
+
+        accumulationPeriod = _accumulationPeriod;
+        emit SetAccumulationPeriod(_accumulationPeriod);
     }
 
     function distributeRewards() external {
