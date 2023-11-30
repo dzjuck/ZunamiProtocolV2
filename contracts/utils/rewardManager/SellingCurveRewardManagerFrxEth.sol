@@ -118,7 +118,8 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 answer, , uint256 updatedAt, ) = oracle.latestRoundData();
             require(block.timestamp - updatedAt <= STALE_DELAY, 'Oracle stale');
 
-            wethAmountByOracle = (uint256(answer) * amount);
+            wethAmountByOracle = uint256(answer) * amount * TOKEN_PRICE_MULTIPLIER / oracle
+                .decimals();
         } else {
             AggregatorV2V3Interface rewardOracle = AggregatorV2V3Interface(
                 rewardUsdChainlinkOracles[reward]

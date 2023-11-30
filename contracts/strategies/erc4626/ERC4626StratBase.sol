@@ -69,7 +69,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         uint256[POOL_ASSETS] memory tokenAmounts,
         bool
     ) public view override returns (uint256 sharesAmount) {
-        return vault.convertToAssets(convertVaultAssetAmounts(tokenAmounts));
+        return vault.convertToShares(convertVaultAssetAmounts(tokenAmounts));
     }
 
     function calcRemovingLiquidityAmount(

@@ -25,6 +25,11 @@ contract ZunamiVotingToken is IERC20Supplied, ERC20, AccessControl, ERC20Permit,
         _burn(_msgSender(), value);
     }
 
+    function burnFrom(address account, uint256 value) public onlyRole(ISSUER_ROLE) {
+        _spendAllowance(account, _msgSender(), value);
+        _burn(_msgSender(), value);
+    }
+
     // The following functions are overrides required by Solidity.
     function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Votes) {
         super._update(from, to, value);

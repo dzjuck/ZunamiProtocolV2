@@ -33,7 +33,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     bool public launched;
 
     modifier startedStrategy(uint256 sid) {
-        if (_strategyInfo.length == 0) revert NoStrategies();
+        if (sid >= _strategyInfo.length) revert NoStrategies();
         if (block.timestamp < _strategyInfo[sid].startTime) revert NotStartedStrategy(sid);
         _;
     }

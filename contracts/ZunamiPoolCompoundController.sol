@@ -61,6 +61,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newManagementFeePercent > MAX_FEE) revert WrongFee();
         emit ManagementFeePercentSet(managementFeePercent, newManagementFeePercent);
+        autoCompoundAll();
         managementFeePercent = newManagementFeePercent;
     }
 
@@ -91,7 +92,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
         emit ClaimedManagementFee(address(feeToken_), transferBalance);
     }
 
-    function autoCompoundAll() external whenNotPaused nonReentrant {
+    function autoCompoundAll() public whenNotPaused nonReentrant {
         claimPoolRewards(address(this));
 
         sellRewards();
