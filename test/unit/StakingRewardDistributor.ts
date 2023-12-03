@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import { ethers, upgrades } from 'hardhat';
 import { loadFixture, mine } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumber, utils } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
@@ -29,7 +29,15 @@ describe('StakingRewardDistributor tests', () => {
 
         // deploy distributor contract
         const StakingRewardDistributorFactory = await ethers.getContractFactory('StakingRewardDistributor');
-        const stakingRewardDistributor = (await StakingRewardDistributorFactory.deploy()) as StakingRewardDistributor;
+
+        const instance = await upgrades.deployProxy(
+          StakingRewardDistributorFactory,
+          [],
+          { kind: "uups" }
+        );
+        await instance.deployed();
+
+        const stakingRewardDistributor = instance as StakingRewardDistributor;
 
         await vlZUN.grantRole(await vlZUN.ISSUER_ROLE(), stakingRewardDistributor.address);
 
@@ -97,6 +105,19 @@ describe('StakingRewardDistributor tests', () => {
 
         // wait 1 week - 50_400 blocks
         await mine(50_400);
+
+        await stakingRewardDistributor.connect(users[1]).claim(tid1);
+        await stakingRewardDistributor.connect(users[1]).claim(tid2);
+
+        await stakingRewardDistributor.connect(users[0]).claim(tid1);
+        await stakingRewardDistributor.connect(users[0]).claim(tid2);
+
+
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(ethUnits('2000'));
+        expect(await REWARD.balanceOf(users[1].address)).to.eq('24997519841269841000000000');
+        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499751984126000000000');
+        expect(await REWARD.balanceOf(users[0].address)).to.eq('75002480158730159000000000');
+        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500248015874000000000');
 
         await stakingRewardDistributor.connect(users[1]).claim(tid1);
         await stakingRewardDistributor.connect(users[1]).claim(tid2);

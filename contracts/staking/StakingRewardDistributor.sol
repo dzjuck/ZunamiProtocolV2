@@ -3,14 +3,15 @@ pragma solidity ^0.8.20;
 
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
 import './IERC20Supplied.sol';
 import './IStakingRewardDistributor.sol';
 
-contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, ReentrancyGuard {
+contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     error WrongAmount();
@@ -69,7 +70,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     // Info of each user that stakes tokens.
     mapping(uint256 => mapping(address => UserPoolInfo)) public userPoolInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
-    uint256 public totalAllocPoint = 0;
+    uint256 public totalAllocPoint;
 
     mapping(uint256 => uint256) public totalAmounts;
 
@@ -95,8 +96,18 @@ contract StakingRewardDistributor is IStakingRewardDistributor, AccessControl, R
     );
     event EarlyExitReceiverChanged(address receiver);
 
-    constructor() {
+    function initialize() public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE)  {}
+
+    function version() public pure returns (uint256) {
+        return 1;
     }
 
     function setEarlyExitReceiver(address _receiver) external onlyRole(DEFAULT_ADMIN_ROLE) {
