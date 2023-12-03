@@ -189,6 +189,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
 
         reward.token.safeTransferFrom(msg.sender, address(this), amount);
 
+        // finalized previous distribution
         if (reward.rewardPerBlock > 0) {
             updateAllPools();
         }
@@ -208,6 +209,9 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
 
             reward.distributionBlock = block.number;
         }
+
+        // init a new distribution
+        updateAllPools();
 
         emit RewardPerBlockSet(tid, reward.rewardPerBlock);
     }
@@ -231,19 +235,26 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             RewardTokenInfo memory rewardToken = rewardTokenInfo[tid];
             uint256 distributionBlock = rewardToken.distributionBlock;
 
+            // distribution hasn't started yet
+            if(distributionBlock == 0) continue;
+
+            // distribution has ended, set last reward block to end block to distribute all
             if (currentBlock > distributionBlock + BLOCKS_IN_2_WEEKS) {
                 currentBlock = distributionBlock + BLOCKS_IN_2_WEEKS;
             }
-            if (currentBlock <= pool.lastRewardBlocks[tid]) {
-                continue;
-            }
 
+            // if zero supply, set to current block
             if (lpSupply == 0) {
                 pool.lastRewardBlocks[tid] = currentBlock;
                 continue;
             }
 
-            if(pool.lastRewardBlocks[tid] == 0) continue;
+            // if last reward block is current block, skip
+            if (currentBlock <= pool.lastRewardBlocks[tid]) {
+                continue;
+            }
+
+            if(pool.lastRewardBlocks[tid] == 0) pool.lastRewardBlocks[tid] = currentBlock;
 
             uint256 blockLasted = currentBlock - pool.lastRewardBlocks[tid];
 
@@ -473,6 +484,8 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             return 0;
         }
         uint256 blockLasted = currentBlock - pool.lastRewardBlocks[_tid];
+        if(pool.lastRewardBlocks[_tid] == 0) blockLasted = 0;
+
         uint256 reward = (blockLasted * token.rewardPerBlock * pool.allocPoint) / totalAllocPoint;
         uint256 accRewardPerShare = pool.accRewardsPerShare[_tid] +
             ((reward * ACC_REWARD_PRECISION) / lpSupply);
