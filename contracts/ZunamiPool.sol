@@ -19,6 +19,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
     uint8 public constant POOL_ASSETS = 5;
 
+    bytes32 public constant EMERGENCY_ROLE = keccak256('EMERGENCY_ROLE');
     bytes32 public constant CONTROLLER_ROLE = keccak256('CONTROLLER_ROLE');
     uint256 public constant DEPOSIT_RATIO_MULTIPLIER = 1e18;
     uint256 public constant MIN_LOCK_TIME = 1 days;
@@ -31,6 +32,11 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
     uint256 public totalDeposited;
     bool public launched;
+
+    modifier only2Roles(bytes32[2] memory roles) {
+        _check2Roles(roles, _msgSender());
+        _;
+    }
 
     modifier startedStrategy(uint256 sid) {
         if (sid >= _strategyInfo.length) revert NoStrategies();
@@ -107,7 +113,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         emit UpdatedToken(_tokenIndex, _token, _tokenDecimalMultiplier, oldToken);
     }
 
-    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pause() external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         _pause();
     }
 
@@ -303,7 +309,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256[] memory _withdrawalsPercents,
         uint256 _receiverStrategy,
         uint256[POOL_ASSETS][] memory _minAmounts
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) enabledStrategy(_receiverStrategy) {
+    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) enabledStrategy(_receiverStrategy) {
         if (_strategies.length != _withdrawalsPercents.length) revert IncorrectArguments();
         if (_receiverStrategy >= _strategyInfo.length) revert WrongReceiver();
 
@@ -369,11 +375,17 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         emit EnabledStrategy(address(_strategyInfo[_sid].strategy));
     }
 
-    function disableStrategy(uint256 _sid) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function disableStrategy(uint256 _sid) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         if (_sid >= _strategyInfo.length) revert IncorrectSid();
 
         _strategyInfo[_sid].enabled = false;
 
         emit DisableStrategy(address(_strategyInfo[_sid].strategy));
+    }
+
+    function _check2Roles(bytes32[2] memory roles, address account) internal view virtual {
+        if (!hasRole(roles[0], account) && !hasRole(roles[1], account)) {
+            revert UnauthorizedAccount2Roles(account, roles);
+        }
     }
 }

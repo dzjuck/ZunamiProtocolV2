@@ -20,6 +20,7 @@ interface IPool is IERC20 {
     error WrongReceiver();
     error IncorrectSid();
     error WrongLength();
+    error UnauthorizedAccount2Roles(address account, bytes32[2] roles);
 
     struct StrategyInfo {
         IStrategy strategy;
