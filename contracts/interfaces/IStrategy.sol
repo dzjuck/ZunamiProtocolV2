@@ -12,7 +12,7 @@ interface IStrategy {
         uint256[5] memory minTokenAmounts
     ) external returns (bool);
 
-    function withdrawAll() external;
+    function withdrawAll(uint256[5] memory minTokenAmounts) external;
 
     function totalHoldings() external view returns (uint256);
 

@@ -83,7 +83,9 @@ abstract contract CurveStratBase is ZunamiStratBase {
         success = removingLPTokenAmount >= calcTokenAmount(minTokenAmounts, false);
     }
 
-    function getCurveRemovingTokenIndex() internal pure virtual returns (int128);
+    function getCurveRemovingTokenIndex() internal view virtual returns (int128);
+
+    function getZunamiRemovingTokenIndex() internal view virtual returns (uint256);
 
     function removeLiquidity(
         uint256 amount,
@@ -93,17 +95,17 @@ abstract contract CurveStratBase is ZunamiStratBase {
         uint256 removedAmount = pool.remove_liquidity_one_coin(
             amount,
             curveTokenIndex,
-            convertCurvePoolTokenAmounts(minTokenAmounts)[uint256(int256(curveTokenIndex))]
+            minTokenAmounts[getZunamiRemovingTokenIndex()]
         );
         convertRemovedAmount(removedAmount);
     }
 
-    function removeAllLiquidity() internal virtual override {
+    function removeAllLiquidity(uint256[5] memory minTokenAmounts) internal virtual override {
         int128 curveTokenIndex = getCurveRemovingTokenIndex();
         uint256 removedAmount = pool.remove_liquidity_one_coin(
             poolToken.balanceOf(address(this)),
             curveTokenIndex,
-            0
+            minTokenAmounts[getZunamiRemovingTokenIndex()]
         );
         convertRemovedAmount(removedAmount);
     }

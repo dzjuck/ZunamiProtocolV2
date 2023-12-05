@@ -239,7 +239,7 @@ describe('ZunUSD flow tests', () => {
         );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
-        await expect(zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst));
+        await expect(zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst,[[0,0,0,0,0]]));
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
 
@@ -252,7 +252,7 @@ describe('ZunUSD flow tests', () => {
             (await zunamiPool.strategyInfo(poolDst)).minted
         );
 
-        await expect(zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc));
+        await expect(zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc,[[0,0,0,0,0]]));
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
 

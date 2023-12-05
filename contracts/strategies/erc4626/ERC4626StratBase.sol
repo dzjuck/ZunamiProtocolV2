@@ -87,7 +87,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         vault.redeem(amount, address(this), address(this));
     }
 
-    function removeAllLiquidity() internal virtual override {
+    function removeAllLiquidity(uint256[5] memory) internal virtual override {
         vault.redeem(vault.balanceOf(address(this)), address(this), address(this));
     }
 

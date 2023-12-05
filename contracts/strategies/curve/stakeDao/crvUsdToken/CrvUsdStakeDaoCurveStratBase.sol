@@ -92,6 +92,10 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         return CURVE_POOL_TOKEN_ID_INT;
     }
 
+    function getZunamiRemovingTokenIndex() internal view override returns (uint256) {
+        return zunamiTokenIndex;
+    }
+
     function convertStable(IERC20 fromToken, IERC20 toToken, uint256 fromAmount) internal {
         if (address(fromToken) == address(toToken)) return;
 

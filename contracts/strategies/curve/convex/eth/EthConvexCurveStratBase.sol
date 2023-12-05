@@ -108,6 +108,10 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         return CURVE_POOL_ETH_ID_INT;
     }
 
+    function getZunamiRemovingTokenIndex() internal pure override returns (uint256) {
+        return ZUNAMI_WETH_TOKEN_ID;
+    }
+
     function convertRemovedAmount(uint256 receivedAmount) internal override {
         weth.deposit{ value: receivedAmount }();
     }

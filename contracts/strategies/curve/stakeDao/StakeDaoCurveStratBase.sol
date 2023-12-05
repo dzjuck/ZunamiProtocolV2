@@ -32,9 +32,9 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
         super.removeLiquidity(amount, minTokenAmounts);
     }
 
-    function removeAllLiquidity() internal override {
+    function removeAllLiquidity(uint256[5] memory minTokenAmounts) internal override {
         vault.withdraw(vault.liquidityGauge().balanceOf(address(this)));
-        super.removeAllLiquidity();
+        super.removeAllLiquidity(minTokenAmounts);
     }
 
     function claimCollectedRewards() internal virtual override {

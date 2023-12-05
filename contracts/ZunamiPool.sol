@@ -294,22 +294,24 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     /**
      * @dev dev can transfer funds from few strategy's to one strategy for better APY
      * @param _strategies - array of strategy's, from which funds are withdrawn
-     * @param withdrawalsPercents - A percentage of the funds that should be transferred
+     * @param _withdrawalsPercents - A percentage of the funds that should be transferred
      * @param _receiverStrategy - number strategy, to which funds are deposited
+     * @param _minAmounts - minimum amount of tokens that should be received from each strategy
      */
     function moveFundsBatch(
         uint256[] memory _strategies,
-        uint256[] memory withdrawalsPercents,
-        uint256 _receiverStrategy
+        uint256[] memory _withdrawalsPercents,
+        uint256 _receiverStrategy,
+        uint256[POOL_ASSETS][] memory _minAmounts
     ) external onlyRole(DEFAULT_ADMIN_ROLE) enabledStrategy(_receiverStrategy) {
-        if (_strategies.length != withdrawalsPercents.length) revert IncorrectArguments();
+        if (_strategies.length != _withdrawalsPercents.length) revert IncorrectArguments();
         if (_receiverStrategy >= _strategyInfo.length) revert WrongReceiver();
 
         uint256 sid;
         uint256 zunamiStables;
         for (uint256 i = 0; i < _strategies.length; i++) {
             sid = _strategies[i];
-            zunamiStables += _moveFunds(sid, withdrawalsPercents[i]);
+            zunamiStables += _moveFunds(sid, _withdrawalsPercents[i], _minAmounts[i]);
         }
 
         uint256[POOL_ASSETS] memory tokensRemainder;
@@ -333,20 +335,19 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
     function _moveFunds(
         uint256 sid,
-        uint256 withdrawPercent
+        uint256 withdrawPercent,
+        uint256[POOL_ASSETS] memory minAmounts
     ) private returns (uint256 stableAmount) {
         if (withdrawPercent == 0 || withdrawPercent > FUNDS_DENOMINATOR)
             revert WrongWithdrawPercent();
 
         if (withdrawPercent == FUNDS_DENOMINATOR) {
-            _strategyInfo[sid].strategy.withdrawAll();
+            _strategyInfo[sid].strategy.withdrawAll(minAmounts);
 
             stableAmount = _strategyInfo[sid].minted;
             _strategyInfo[sid].minted = 0;
         } else {
             stableAmount = (_strategyInfo[sid].minted * withdrawPercent) / FUNDS_DENOMINATOR;
-            uint256[POOL_ASSETS] memory minAmounts;
-
             if (
                 !_strategyInfo[sid].strategy.withdraw(
                     address(this),

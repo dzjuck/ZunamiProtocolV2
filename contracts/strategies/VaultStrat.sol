@@ -50,7 +50,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         return true;
     }
 
-    function withdrawAll() external onlyZunamiPool {
+    function withdrawAll(uint256[5] memory) external onlyZunamiPool {
         transferAllTokensTo(address(zunamiPool));
     }
 
