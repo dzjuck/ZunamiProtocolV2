@@ -116,7 +116,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
     }
 
     function addRewardToken(IERC20 _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(isRewardTokenAdded(_token)) revert TokenAlreadyAdded();
+        if(isRewardTokenAdded(address(_token))) revert TokenAlreadyAdded();
 
         uint256 tid = rewardTokenInfo.length;
         rewardTokenInfo.push(
@@ -227,11 +227,12 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
     // Update reward variables of the given pool to be up-to-date.
     function updatePool(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 currentBlock = block.number;
         uint256 lpSupply = pool.token.balanceOf(address(this));
 
         uint256 length = rewardTokenInfo.length;
         for (uint256 tid = 0; tid < length; ++tid) {
+            uint256 currentBlock = block.number;
+
             RewardTokenInfo memory rewardToken = rewardTokenInfo[tid];
             uint256 distributionBlock = rewardToken.distributionBlock;
 
@@ -257,6 +258,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             if(pool.lastRewardBlocks[tid] == 0) pool.lastRewardBlocks[tid] = currentBlock;
 
             uint256 blockLasted = currentBlock - pool.lastRewardBlocks[tid];
+            if(blockLasted > BLOCKS_IN_2_WEEKS) blockLasted = BLOCKS_IN_2_WEEKS;
 
             uint256 reward = (blockLasted * rewardToken.rewardPerBlock * pool.allocPoint) /
                 totalAllocPoint;
@@ -348,7 +350,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function withdrawEmergency(uint256 _pid) external {
+    function withdrawEmergency(uint256 _pid) external nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
         uint256 amountAdjusted = (userPool.amount * getPoolTokenRatio(_pid)) / 1e18;
@@ -366,15 +368,15 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             );
         }
 
-        pool.token.safeTransfer(address(msg.sender), transferAmount);
-        emit EmergencyWithdrawn(msg.sender, _pid, userPool.amount, amountAdjusted);
-        totalAmounts[_pid] -= userPool.amount;
-        userPool.amount = 0;
-
         IERC20Supplied stakingToken = pool.stakingToken;
         if (address(stakingToken) != address(0)) {
             stakingToken.burnFrom(msg.sender, userPool.amount);
         }
+
+        pool.token.safeTransfer(address(msg.sender), transferAmount);
+        emit EmergencyWithdrawn(msg.sender, _pid, userPool.amount, amountAdjusted);
+        totalAmounts[_pid] -= userPool.amount;
+        userPool.amount = 0;
 
         uint256 length = rewardTokenInfo.length;
         for (uint256 tid = 0; tid < length; ++tid) {
@@ -459,10 +461,10 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
         return poolInfo.length > pid && address(poolInfo[pid].token) == address(_token);
     }
 
-    function isRewardTokenAdded(IERC20 _token) public view returns (bool) {
-        uint256 tid = rewardTokenTidByAddress[address(_token)];
+    function isRewardTokenAdded(address _token) public view returns (bool) {
+        uint256 tid = rewardTokenTidByAddress[_token];
         return
-            rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == address(_token);
+            rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == _token;
     }
 
     function getPendingReward(

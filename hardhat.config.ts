@@ -1,11 +1,7 @@
 import '@nomicfoundation/hardhat-toolbox';
 
-import "@typechain/hardhat";
-
 import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
-import 'hardhat-gas-reporter';
-import 'solidity-coverage';
 
 import '@openzeppelin/hardhat-upgrades';
 

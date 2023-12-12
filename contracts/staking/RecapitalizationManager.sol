@@ -21,7 +21,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     uint256 public distributionBlock;
     IStakingRewardDistributor public stakingRewardDistributor;
     IERC20 public immutable zunToken;
-    uint256 accumulationPeriod;
+    uint256 public accumulationPeriod;
 
     event SetRewardDistributor(address rewardDistributorAddr);
     event SetAccumulationPeriod(uint256 accumulationPeriod);
@@ -57,7 +57,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     }
 
     function distributeRewards() external {
-        if (block.number < distributionBlock + ACCUMULATION_PERIOD)
+        if (block.number < distributionBlock + accumulationPeriod)
             revert WrongDistributionBlock(distributionBlock, block.number);
 
         uint256 transferAmount;
@@ -66,10 +66,9 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
             token_ = rewardTokens[i];
             if (address(token_) == address(0)) break;
             transferAmount = token_.balanceOf(address(this));
-            if (transferAmount > 0) {
-                token_.safeTransfer(address(stakingRewardDistributor), transferAmount);
+            if (transferAmount > 0 && stakingRewardDistributor.isRewardTokenAdded(address(token_))) {
+                token_.safeIncreaseAllowance(address(stakingRewardDistributor), transferAmount);
                 uint256 tid = stakingRewardDistributor.rewardTokenTidByAddress(address(token_));
-                //TODO: check TID not ZERO in distributor
                 stakingRewardDistributor.distribute(tid, transferAmount);
             }
         }
@@ -124,7 +123,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         depositedToken.safeTransfer(address(pool), depositedTokenBalance);
 
         uint256[5] memory amounts;
-        amounts[tid] = depositedToken.balanceOf(address(this));
+        amounts[tid] = depositedTokenBalance;
         pool.depositStrategy(sid, amounts);
     }
 }

@@ -115,9 +115,9 @@ describe('StakingRewardDistributor tests', () => {
 
         expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(ethUnits('2000'));
         expect(await REWARD.balanceOf(users[1].address)).to.eq('24997519841269841000000000');
-        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499751984126000000000');
+        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499851190476000000000');
         expect(await REWARD.balanceOf(users[0].address)).to.eq('75002480158730157000000000');
-        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500049603173000000000');
+        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500148809523000000000');
 
         await stakingRewardDistributor.connect(users[1]).claim(tid1);
         await stakingRewardDistributor.connect(users[1]).claim(tid2);
@@ -128,9 +128,9 @@ describe('StakingRewardDistributor tests', () => {
 
         expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(ethUnits('2000'));
         expect(await REWARD.balanceOf(users[0].address)).to.eq('75002480158730157000000000');
-        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500049603173000000000');
+        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500148809523000000000');
         expect(await REWARD.balanceOf(users[1].address)).to.eq('24997519841269841000000000');
-        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499751984126000000000');
+        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499851190476000000000');
 
         await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('500'))
         await stakingRewardDistributor.connect(users[0]).withdraw(pid, ethUnits('500'));
@@ -144,8 +144,8 @@ describe('StakingRewardDistributor tests', () => {
         await stakingRewardDistributor.connect(users[0]).claim(tid1);
         expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq('1500000000000000000000');
         expect(await REWARD.balanceOf(users[0].address)).to.eq('75002480158730157000000000');
-        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500049603173000000000');
+        expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500148809523000000000');
         expect(await REWARD.balanceOf(users[1].address)).to.eq('24997519841269841000000000');
-        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499751984126000000000');
+        expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499851190476000000000');
     });
 });

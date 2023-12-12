@@ -7,4 +7,6 @@ interface IStakingRewardDistributor {
     function distribute(uint256 tid, uint256 amount) external;
 
     function withdrawPoolToken(address token, uint256 amount) external;
+
+    function isRewardTokenAdded(address _token) external view returns (bool);
 }
