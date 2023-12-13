@@ -7,9 +7,9 @@ import { IStrategy } from './IStrategy.sol';
 
 interface IPool is IERC20 {
     error WrongDeposit(uint256 sid, uint256[5] amounts);
-    error NoStrategies();
+    error AbsentStrategy(uint256 sid);
     error NotStartedStrategy(uint256 sid);
-    error NotEnabledStrategy(uint256 sid);
+    error DisabledStrategy(uint256 sid);
     error WrongAmount();
     error WrongWithdrawParams(uint256 sid);
     error WrongRatio();

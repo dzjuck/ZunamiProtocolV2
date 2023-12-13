@@ -75,14 +75,6 @@ abstract contract CurveStratBase is ZunamiStratBase {
         return pool.calc_token_amount(convertCurvePoolTokenAmounts(tokenAmounts), isDeposit);
     }
 
-    function calcRemovingLiquidityAmount(
-        uint256 poolTokenRatio, // multiplied by 1e18
-        uint256[POOL_ASSETS] memory minTokenAmounts
-    ) internal view override returns (bool success, uint256 removingLPTokenAmount) {
-        removingLPTokenAmount = (getLiquidityBalance() * poolTokenRatio) / RATIO_MULTIPLIER;
-        success = removingLPTokenAmount >= calcTokenAmount(minTokenAmounts, false);
-    }
-
     function getCurveRemovingTokenIndex() internal view virtual returns (int128);
 
     function getZunamiRemovingTokenIndex() internal view virtual returns (uint256);

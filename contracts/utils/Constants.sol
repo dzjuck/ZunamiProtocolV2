@@ -13,8 +13,9 @@ library Constants {
     address internal constant FXS_ADDRESS = 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
     address internal constant SPELL_ADDRESS = 0x090185f2135308BaD17527004364eBcC2D37e5F6;
     address internal constant SFRXETH_ADDRESS = 0xac3E018457B222d93114458476f3E3416Abbe38F;
-    address internal constant UZD_ADDRESS = address(0); // Be added after deployment of UZD v2 pool
-    address internal constant ZETH_ADDRESS = address(0); // Be added after deployment of ZETH v2 pool
+    address internal constant zunUSD_ADDRESS = address(0); // Will be added after deployment of zunUSD v2 pool
+    address internal constant zunUSD_CONTROLLER_ADDRESS = address(0); // Will be added after deployment of zunUSD v2 pool controller
+    address internal constant zunETH_ADDRESS = address(0); // Will be added after deployment of zunETH v2 pool
 
     address public constant CHAINLINK_FEED_REGISTRY_ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -26,6 +27,9 @@ library Constants {
 
     address internal constant ETH_frxETH_ADDRESS = 0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577;
     address internal constant ETH_frxETH_LP_ADDRESS = 0xf43211935C781D5ca1a41d2041F397B8A7366C7A;
+
+    address internal constant CRV_FRAX_USDC_POOL_ADDRESS = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
+    address internal constant CRV_FRAX_USDC_POOL_LP_ADDRESS = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
 
     address internal constant SDT_CRVUSD_USDT_VAULT_ADDRESS =
         0x37b24ac19504C0c6FC1ADc8deb5D24f5C4F6A2f2;
@@ -46,4 +50,10 @@ library Constants {
     address internal constant CVX_ETH_stETH_REWARDS_ADDRESS =
         0x6B27D7BC63F1999D14fF9bA900069ee516669ee8;
     uint256 internal constant CVX_ETH_stETH_PID = 177;
+
+    // Will be added after deployment of zunUSD v2 pool and curve pool for zunUSD
+    address internal constant CRV_zunUSD_crvFRAX_ADDRESS = address(0);
+    address internal constant CRV_zunUSD_crvFRAX_LP_ADDRESS = address(0);
+    address internal constant CVX_zunUSD_crvFRAX_REWARDS_ADDRESS = address(0);
+    uint256 internal constant CVX_zunUSD_crvFRAX_PID = 0;
 }

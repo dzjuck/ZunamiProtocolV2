@@ -72,14 +72,6 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         return vault.convertToShares(convertVaultAssetAmounts(tokenAmounts));
     }
 
-    function calcRemovingLiquidityAmount(
-        uint256 poolTokenRatio, // multiplied by 1e18
-        uint256[POOL_ASSETS] memory minTokenAmounts
-    ) internal view override returns (bool success, uint256 removingLPTokenAmount) {
-        removingLPTokenAmount = (getLiquidityBalance() * poolTokenRatio) / RATIO_MULTIPLIER;
-        success = removingLPTokenAmount >= calcTokenAmount(minTokenAmounts, false);
-    }
-
     function removeLiquidity(
         uint256 amount,
         uint256[POOL_ASSETS] memory

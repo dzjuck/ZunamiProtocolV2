@@ -8,7 +8,7 @@ contract ZunETHApsVaultStrat is VaultStrat {
     constructor()
         VaultStrat(
             [
-                IERC20(Constants.ZunETH_ADDRESS),
+                IERC20(Constants.zunETH_ADDRESS),
                 IERC20(address(0)),
                 IERC20(address(0)),
                 IERC20(address(0)),

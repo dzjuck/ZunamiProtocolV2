@@ -49,7 +49,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     function calcTokenAmount(
         uint256[POOL_ASSETS] memory tokenAmounts,
         bool isDeposit
-    ) external view virtual returns (uint256 sharesAmount);
+    ) public view virtual returns (uint256 sharesAmount);
 
     function calcLiquidityValue(uint256 tokenAmount) internal view returns (uint256) {
         return (tokenAmount * getLiquidityTokenPrice()) / PRICE_DENOMINATOR;
@@ -89,18 +89,21 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         uint256[POOL_ASSETS] memory amounts
     ) internal virtual returns (uint256);
 
+    function getLiquidityAmountByRatio(
+        uint256 poolTokenRatio // multiplied by 1e18
+    ) internal view returns (uint256) {
+        require(poolTokenRatio > 0 && poolTokenRatio <= RATIO_MULTIPLIER, 'Wrong PoolToken Ratio');
+        return (getLiquidityBalance() * poolTokenRatio) / RATIO_MULTIPLIER;
+    }
+
     function withdraw(
         address receiver,
         uint256 poolTokenRatio, // multiplied by 1e18
         uint256[POOL_ASSETS] memory tokenAmounts
     ) external virtual onlyZunamiPool returns (bool) {
-        require(poolTokenRatio > 0 && poolTokenRatio <= RATIO_MULTIPLIER, 'Wrong PoolToken Ratio');
-        (bool success, uint256 liquidityAmount) = calcRemovingLiquidityAmount(
-            poolTokenRatio,
-            tokenAmounts
-        );
+        uint256 liquidityAmount = getLiquidityAmountByRatio(poolTokenRatio);
 
-        if (!success) {
+        if (liquidityAmount < calcTokenAmount(tokenAmounts, false)) {
             return false;
         }
 
@@ -116,11 +119,6 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
         return true;
     }
-
-    function calcRemovingLiquidityAmount(
-        uint256 poolTokenRatio, // multiplied by 1e18
-        uint256[POOL_ASSETS] memory tokenAmounts
-    ) internal virtual returns (bool success, uint256 removingLPTokenAmount);
 
     function removeLiquidity(
         uint256 amount,

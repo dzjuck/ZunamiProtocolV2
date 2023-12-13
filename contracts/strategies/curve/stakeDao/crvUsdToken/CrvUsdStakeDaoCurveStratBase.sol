@@ -85,7 +85,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         convertStable(tokens[ZUNAMI_USDT_TOKEN_ID], token, amounts[ZUNAMI_USDT_TOKEN_ID]);
 
         amounts2[CURVE_POOL_TOKEN_ID] = token.balanceOf(address(this));
-        token.safeIncreaseAllowance(address(pool), amounts2[CURVE_POOL_TOKEN_ID]);
+        token.safeIncreaseAllowance(pool, amounts2[CURVE_POOL_TOKEN_ID]);
     }
 
     function getCurveRemovingTokenIndex() internal pure override returns (int128) {
