@@ -4,10 +4,10 @@ pragma solidity ^0.8.22;
 import '../../ZunamiPool.sol';
 import '../../utils/Constants.sol';
 
-contract ZunamiPoolApsUZD is ZunamiPool {
-    constructor() ZunamiPool('Zunami USD APS', 'apsUZD') {
+contract ZunamiPoolApsZunETH is ZunamiPool {
+    constructor() ZunamiPool('Zunami ETH APS', 'apsZunETH') {
         address[] memory tokens = new address[](1);
-        tokens[0] = Constants.UZD_ADDRESS;
+        tokens[0] = Constants.ZUN_ETH_ADDRESS;
 
         uint256[] memory tokenDecimalMultipliers = new uint256[](1);
         tokenDecimalMultipliers[0] = 1;
