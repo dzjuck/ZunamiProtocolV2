@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '../../../../../utils/Constants.sol';
-import './FraxApsConvexCurveStratBase.sol';
+import '../../../../../../utils/Constants.sol';
+import './CrvUsdApsConvexCurveStratBase.sol';
 
-contract ZunUsdFraxApsConvexCurveStrat is FraxApsConvexCurveStratBase {
+contract ZunUsdCrvUsdApsConvexCurveStrat is CrvUsdApsConvexCurveStratBase {
     constructor()
-        FraxApsConvexCurveStratBase(
+    CrvUsdApsConvexCurveStratBase(
             [
                 IERC20(Constants.zunUSD_ADDRESS),
                 IERC20(address(0)),
@@ -15,11 +15,11 @@ contract ZunUsdFraxApsConvexCurveStrat is FraxApsConvexCurveStratBase {
                 IERC20(address(0))
             ],
             [uint256(1), 0, 0, 0, 0],
-            Constants.CRV_zunUSD_crvFRAX_ADDRESS,
-            Constants.CRV_zunUSD_crvFRAX_LP_ADDRESS,
+            Constants.CRV_zunUSD_crvUSD_ADDRESS,
+            Constants.CRV_zunUSD_crvUSD_LP_ADDRESS,
             Constants.CRV_BOOSTER_ADDRESS,
-            Constants.CVX_zunUSD_crvFRAX_REWARDS_ADDRESS,
-            Constants.CVX_zunUSD_crvFRAX_PID,
+            Constants.CVX_zunUSD_crvUSD_REWARDS_ADDRESS,
+            Constants.CVX_zunUSD_crvUSD_PID,
             Constants.zunUSD_CONTROLLER_ADDRESS,
             Constants.zunUSD_ADDRESS
         )
