@@ -3,13 +3,16 @@ import { loadFixture, mine } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumber, utils } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
+import { FakeContract, smock } from '@defi-wonderland/smock';
 
 import {
-    ERC20,
-    ERC20Votes,
-    ZunDistributor,
-    ApproveGauge,
-    TransferGauge,
+  ERC20,
+  ERC20Votes,
+  ZunDistributor,
+  ApproveGauge,
+  TransferGauge,
+  StakingRewardDistributorGauge,
+  StakingRewardDistributor,
 } from '../../typechain-types';
 
 describe('ZunDistributor tests', () => {
@@ -43,6 +46,15 @@ describe('ZunDistributor tests', () => {
             transferGaugeRec.address
         )) as TransferGauge;
 
+        const stakingRewardDistributor = await smock.fake('IStakingRewardDistributor') as FakeContract<IStakingRewardDistributor>;
+
+        const StakingRewardDistributorGaugeFactory = await ethers.getContractFactory('StakingRewardDistributorGauge');
+        const stakingRewardDistributorGauge = (await StakingRewardDistributorGaugeFactory.deploy(
+          ZUN.address,
+          stakingRewardDistributor.address,
+          0
+        )) as StakingRewardDistributorGauge;
+
         const addedGauge = (await TransferGaugeFactory.deploy(
             ZUN.address,
             addedGaugeRec.address
@@ -55,8 +67,8 @@ describe('ZunDistributor tests', () => {
             vlZUN.address,
             dao.address,
             0,
-            [approveGauge.address, transferGauge.address],
-            [parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
+            [approveGauge.address, transferGauge.address, stakingRewardDistributorGauge.address],
+            [parseUnits('1000', 'ether'), parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
         )) as ZunDistributor;
 
         await ZUN.transfer(distributor.address, parseUnits('32000000', 'ether'));
@@ -66,6 +78,7 @@ describe('ZunDistributor tests', () => {
             voter,
             approveGauge,
             transferGauge,
+            stakingRewardDistributorGauge,
             addedGauge,
             approveGaugeRec,
             transferGaugeRec,
@@ -74,6 +87,7 @@ describe('ZunDistributor tests', () => {
             vlZUN,
             distributor,
             dao,
+            stakingRewardDistributor,
         };
     }
 
@@ -198,15 +212,15 @@ describe('ZunDistributor tests', () => {
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('215384615384615384615384', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
         expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('215384615384615384615384', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('215384615384615384615384', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
     });
 
@@ -543,7 +557,7 @@ describe('ZunDistributor tests', () => {
         const periodBlocks = await distributor.VOTING_PERIOD();
         const yearBlocks = await distributor.BLOCKS_IN_YEAR();
 
-        let distrAmount = firstYearValue.mul(periodBlocks).div(yearBlocks).div(2);
+        let distrAmount = firstYearValue.mul(periodBlocks).div(yearBlocks).div(3);
 
         // distribute in cycle
         for (let i = 1; i < 130; i++) {
@@ -566,7 +580,7 @@ describe('ZunDistributor tests', () => {
                 yearValue = firstYearValue
                     .mul(BigNumber.from(650).pow(yearCount))
                     .div(BigNumber.from(1000).pow(yearCount));
-                distrAmount = yearValue.mul(periodBlocks).div(yearBlocks).div(2);
+                distrAmount = yearValue.mul(periodBlocks).div(yearBlocks).div(3);
                 // console.log(i, distrAmount);
             }
         }
@@ -597,11 +611,11 @@ describe('ZunDistributor tests', () => {
         const { voter, approveGauge, transferGauge, addedGauge, distributor, dao } =
             await loadFixture(deployFixture);
 
-        expect(await distributor.gaugesNumber()).to.eq(2);
+        expect(await distributor.gaugesNumber()).to.eq(3);
 
         await distributor.connect(dao).addGauge(addedGauge.address);
 
-        expect(await distributor.gaugesNumber()).to.eq(3);
+        expect(await distributor.gaugesNumber()).to.eq(4);
 
         let gaugeItem = await distributor.gauges(0);
         expect(gaugeItem.addr).to.eq(approveGauge.address);
@@ -609,7 +623,7 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.addr).to.eq(transferGauge.address);
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
-        gaugeItem = await distributor.gauges(2);
+        gaugeItem = await distributor.gauges(3);
         expect(gaugeItem.addr).to.eq(addedGauge.address);
         expect(gaugeItem.finalizedVotes).to.eq(0);
     });
@@ -618,25 +632,25 @@ describe('ZunDistributor tests', () => {
         const { voter, approveGauge, transferGauge, addedGauge, distributor, dao } =
             await loadFixture(deployFixture);
 
-        expect(await distributor.gaugesNumber()).to.eq(2);
+        expect(await distributor.gaugesNumber()).to.eq(3);
 
         await distributor.connect(dao).addGauge(addedGauge.address);
 
-        expect(await distributor.gaugesNumber()).to.eq(3);
+        expect(await distributor.gaugesNumber()).to.eq(4);
 
         await distributor.connect(dao).deleteGauge(0);
 
-        expect(await distributor.gaugesNumber()).to.eq(2);
+        expect(await distributor.gaugesNumber()).to.eq(3);
 
         let gaugeItem = await distributor.gauges(0);
         expect(gaugeItem.addr).to.eq(transferGauge.address);
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
-        gaugeItem = await distributor.gauges(1);
+        gaugeItem = await distributor.gauges(2);
         expect(gaugeItem.addr).to.eq(addedGauge.address);
         expect(gaugeItem.finalizedVotes).to.eq(0);
     });
 
-    it('withdraw stuck token', async () => {
+    it('withdraw stuck token distributor', async () => {
         const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
             await loadFixture(deployFixture);
 
@@ -650,6 +664,24 @@ describe('ZunDistributor tests', () => {
         await distributor.connect(dao).withdrawStuckToken(ZUN.address);
 
         expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
+    });
+
+    it('withdraw stuck token approve gauge', async () => {
+      const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
+        await loadFixture(deployFixture);
+
+      await expect(approveGauge.withdrawStuckToken(ZUN.address)).to.be.revertedWithCustomError(
+        approveGauge,
+        'OwnableUnauthorizedAccount'
+      );
+
+      await ZUN.transfer(approveGauge.address, parseUnits('32000000', 'ether'));
+      expect(await ZUN.balanceOf(approveGauge.address)).to.eq(parseUnits('32000000', 'ether'));
+
+      expect(await ZUN.balanceOf(dao.address)).to.eq(0);
+      await approveGauge.connect(dao).withdrawStuckToken(ZUN.address);
+
+      expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
     });
 
     it('vote/distribute before start block', async () => {

@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '@openzeppelin/contracts/interfaces/IERC4626.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -27,6 +26,7 @@ contract EthERC4626StratBase is ERC4626StratBase {
     ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr) {}
 
     function setNativeConverter(address nativeConverterAddr) external onlyOwner {
+        if(address(nativeConverterAddr) == address(0)) revert ZeroAddress();
         nativeConverter = INativeConverter(nativeConverterAddr);
         emit SetNativeConverter(nativeConverterAddr);
     }
@@ -52,7 +52,7 @@ contract EthERC4626StratBase is ERC4626StratBase {
         amount = amounts[ZUNAMI_FRXETH_TOKEN_ID];
         uint256 wethBalance = amounts[ZUNAMI_WETH_TOKEN_ID];
         if (wethBalance > 0) {
-            IERC20(tokens[ZUNAMI_WETH_TOKEN_ID]).transfer(address(nativeConverter), wethBalance);
+            IERC20(tokens[ZUNAMI_WETH_TOKEN_ID]).safeTransfer(address(nativeConverter), wethBalance);
             amount += nativeConverter.handle(true, wethBalance, 0);
         }
 

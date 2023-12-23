@@ -6,5 +6,5 @@ import '../../ZunamiPoolCompoundController.sol';
 contract ZunamiPooControllerApsZunETH is ZunamiPoolCompoundController {
     constructor(
         address pool
-    ) ZunamiPoolCompoundController(pool, 'Zunami ETH APS LP', 'apsZunETHLP') {}
+    ) ZunamiPoolCompoundController(pool, 'Zunami ETH APS LP', 'lpApsZunETH') {}
 }

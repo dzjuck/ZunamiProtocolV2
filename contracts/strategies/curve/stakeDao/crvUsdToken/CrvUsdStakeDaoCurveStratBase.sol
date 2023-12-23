@@ -42,6 +42,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     }
 
     function setStableConverter(address stableConverterAddr) external onlyOwner {
+        if(address(stableConverterAddr) == address(0)) revert ZeroAddress();
         stableConverter = IStableConverter(stableConverterAddr);
         emit SetStableConverter(stableConverterAddr);
     }

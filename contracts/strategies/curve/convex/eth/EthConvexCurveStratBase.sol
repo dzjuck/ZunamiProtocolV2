@@ -8,6 +8,8 @@ import '../../../../interfaces/IWETH.sol';
 import '../ConvexCurveStratBase.sol';
 
 contract EthConvexCurveStratBase is ConvexCurveStratBase {
+    using SafeERC20 for IERC20;
+
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
@@ -48,6 +50,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     }
 
     function setNativeConverter(address nativeConverterAddr) external onlyOwner {
+        if(address(nativeConverterAddr) == address(0)) revert ZeroAddress();
         nativeConverter = INativeConverter(nativeConverterAddr);
         emit SetNativeConverter(nativeConverterAddr);
     }
@@ -76,7 +79,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         uint256[5] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
         if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
-            IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).transfer(
+            IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).safeTransfer(
                 address(nativeConverter),
                 amounts[ZUNAMI_FRXETH_TOKEN_ID]
             );
@@ -118,9 +121,5 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
 
     function unwrapETH(uint256 amount) internal {
         weth.withdraw(amount);
-    }
-
-    function wrapETH(uint256 amount) internal {
-        weth.deposit{ value: amount }();
     }
 }

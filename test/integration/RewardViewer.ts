@@ -17,10 +17,6 @@ import { parseUnits } from 'ethers/lib/utils';
 import { increaseChainTime } from '../utils/IncreaseChainTime';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
-import { createEthCoins } from '../utils/CreateEthCoins';
-import { mintEthCoins } from '../utils/MintEthCoins';
-import { createPoolAndControllerZunETH } from '../utils/CreatePoolAndControllerZunETH';
-import { getMinAmountZunETH } from '../utils/GetMinAmountZunETH';
 
 describe('Reward Viewer', async () => {
     // We define a fixture to reuse the same setup in every test.

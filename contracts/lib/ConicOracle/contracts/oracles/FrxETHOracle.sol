@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.22;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable2Step.sol';
-import '@openzeppelin/contracts/interfaces/IERC4626.sol';
 
 import '../../interfaces/IOracle.sol';
 
@@ -20,7 +18,7 @@ contract FrxETHOracle is IOracle, Ownable2Step {
         _genericOracle = IOracle(genericOracle);
     }
 
-    function isTokenSupported(address token) public view override returns (bool) {
+    function isTokenSupported(address token) public pure override returns (bool) {
         return token == FRX_ETH_ADDRESS;
     }
 

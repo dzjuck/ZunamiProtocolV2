@@ -12,6 +12,9 @@ import '../interfaces/IWETH.sol';
 contract FraxEthNativeConverter is INativeConverter {
     using SafeERC20 for IERC20;
 
+    error WrongSlippage();
+    error BrokenSlippage();
+
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
     IERC20 public constant frxETH = IERC20(Constants.FRX_ETH_ADDRESS);
 
@@ -64,18 +67,19 @@ contract FraxEthNativeConverter is INativeConverter {
         }
     }
 
-    function valuate(bool buyToken, uint256 amount) public view returns (uint256) {
+    function valuate(bool buyToken, uint256 amount) public view returns (uint256 valuation) {
         if (amount == 0) return 0;
         int128 i = buyToken ? ETH_frxETH_POOL_ETH_ID : ETH_frxETH_POOL_frxETH_ID;
         int128 j = buyToken ? ETH_frxETH_POOL_frxETH_ID : ETH_frxETH_POOL_ETH_ID;
-        return fraxEthPool.get_dy(i, j, amount);
+        valuation = fraxEthPool.get_dy(i, j, amount);
+
+        if(valuation < applySlippage(amount, 0)) revert BrokenSlippage();
     }
 
     function applySlippage(uint256 amount, uint256 slippage) internal pure returns (uint256) {
-        require(slippage <= SLIPPAGE_DENOMINATOR, 'Wrong slippage');
+        if(slippage > SLIPPAGE_DENOMINATOR) revert WrongSlippage();
         if (slippage == 0) slippage = defaultSlippage;
-        uint256 value = (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
-        return value;
+        return (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
     }
 
     function unwrapWETH(uint256 amount) internal {

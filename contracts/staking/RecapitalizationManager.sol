@@ -3,12 +3,12 @@ pragma solidity ^0.8.22;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
 import '../interfaces/IPool.sol';
 import './IStakingRewardDistributor.sol';
 import '../RewardTokenManager.sol';
+import {AccessControl2RolesValuation} from "../AccessControl2RolesValuation.sol";
 
-contract RecapitalizationManager is AccessControl, RewardTokenManager {
+contract RecapitalizationManager is AccessControl2RolesValuation, RewardTokenManager {
     using SafeERC20 for IERC20;
 
     error WrongDistributionBlock(uint256 distributionBlock, uint256 nowBlock);
@@ -16,11 +16,13 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     error ZeroAddress();
     error ZeroParam();
 
+    bytes32 public constant EMERGENCY_ROLE = keccak256('EMERGENCY_ROLE');
     uint256 public constant ACCUMULATION_PERIOD = (14 * 24 * 60 * 60) / 12; // 2 week in blocks
+
+    IERC20 public immutable zunToken;
 
     uint256 public distributionBlock;
     IStakingRewardDistributor public stakingRewardDistributor;
-    IERC20 public immutable zunToken;
     uint256 public accumulationPeriod;
 
     event SetRewardDistributor(address rewardDistributorAddr);
@@ -60,6 +62,8 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         if (block.number < distributionBlock + accumulationPeriod)
             revert WrongDistributionBlock(distributionBlock, block.number);
 
+        distributionBlock = block.number;
+
         uint256 transferAmount;
         IERC20 token_;
         for (uint256 i = 0; i < rewardTokens.length; i++) {
@@ -72,8 +76,6 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
                 stakingRewardDistributor.distribute(tid, transferAmount);
             }
         }
-
-        distributionBlock = block.number;
     }
 
     function recapitalizePoolByRewards(
@@ -81,7 +83,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         IPool pool,
         uint256 sid,
         uint256 tid
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         IERC20 depositedToken = pool.token(tid);
         if (address(depositedToken) == address(0)) revert WrongTid(tid);
 
@@ -98,7 +100,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         IPool pool,
         uint256 sid,
         uint256 tid
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         IERC20 depositedToken = pool.token(tid);
         if (address(depositedToken) == address(0)) revert WrongTid(tid);
 
@@ -110,10 +112,11 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
 
     function capitalizeStakedZunByRewards(
         IRewardManager rewardManager
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         _sellRewards(rewardManager, zunToken);
         uint256 zunTokenBalance = zunToken.balanceOf(address(this));
-        zunToken.safeTransfer(address(stakingRewardDistributor), zunTokenBalance);
+//        zunToken.safeIncreaseAllowance(address(stakingRewardDistributor), zunTokenBalance);
+        stakingRewardDistributor.returnPoolToken(address(zunToken), zunTokenBalance);
 
         distributionBlock = block.number;
     }

@@ -34,7 +34,6 @@ export async function createStrategies(
 
     // Init all strategies
     for (const strategyName of strategyNames) {
-        console.log(strategyName);
         const factory = await ethers.getContractFactory(strategyName);
         const strategy = await deployStrategy(factory, tokens, tokensDecimals);
 

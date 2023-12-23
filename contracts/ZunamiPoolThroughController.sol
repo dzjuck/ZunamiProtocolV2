@@ -3,8 +3,6 @@ pragma solidity ^0.8.22;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
 
 import './ZunamiPoolControllerBase.sol';
 
@@ -28,10 +26,10 @@ contract ZunamiPoolThroughController is ZunamiPoolControllerBase {
 
     constructor(address pool_) ZunamiPoolControllerBase(pool_) {
         rewardCollector = msg.sender;
-        _grantRole(ISSUER_ROLE, msg.sender);
     }
 
     function changeRewardCollector(address _rewardCollector) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_rewardCollector == address(0)) revert ZeroAddress();
         emit RewardCollectorChanged(rewardCollector, _rewardCollector);
         rewardCollector = _rewardCollector;
     }

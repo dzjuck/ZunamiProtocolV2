@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
@@ -21,13 +20,13 @@ contract ZunamiVotingToken is IERC20Supplied, ERC20, AccessControl, ERC20Permit,
         _mint(to, amount);
     }
 
-    function burn(uint256 value) public onlyRole(ISSUER_ROLE) {
-        _burn(_msgSender(), value);
+    function burn(uint256 amount) public onlyRole(ISSUER_ROLE) {
+        _burn(_msgSender(), amount);
     }
 
-    function burnFrom(address account, uint256 value) public onlyRole(ISSUER_ROLE) {
-        _spendAllowance(account, _msgSender(), value);
-        _burn(_msgSender(), value);
+    function burnFrom(address account, uint256 amount) public onlyRole(ISSUER_ROLE) {
+        _spendAllowance(account, _msgSender(), amount);
+        _burn(account, amount);
     }
 
     // The following functions are overrides required by Solidity.

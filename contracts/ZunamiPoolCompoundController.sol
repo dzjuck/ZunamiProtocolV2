@@ -3,32 +3,31 @@ pragma solidity ^0.8.22;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
-import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
-import './interfaces/IPool.sol';
 import './interfaces/IRewardManager.sol';
 import './ZunamiPoolControllerBase.sol';
 
-contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControllerBase {
+contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     using SafeERC20 for IERC20;
 
     error WrongFee();
+    error WrongTokenId(uint256 tid);
     error FeeMustBeWithdrawn();
+    error ZeroFeeTokenAddress();
 
     uint256 public constant PRICE_MULTIPLIER = 1e18;
     uint256 public constant FEE_DENOMINATOR = 1000;
     uint256 public constant MAX_FEE = 300; // 30%
+    uint256 public constant MINIMUM_LIQUIDITY = 1e3;
+    address public constant MINIMUM_LIQUIDITY_LOCKER = 0x000000000000000000000000000000000000dEaD;
 
     uint256 public managementFeePercent = 100; // 10%
 
     uint256 public feeTokenId;
     address public feeDistributor;
 
-    uint256 public collectedManagementFee = 0;
+    uint256 public collectedManagementFee;
 
     IRewardManager public rewardManager;
 
@@ -66,6 +65,7 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     }
 
     function setFeeTokenId(uint256 _tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_tokenId >= pool.tokens().length) revert WrongTokenId(_tokenId);
         if (collectedManagementFee != 0) revert FeeMustBeWithdrawn();
 
         feeTokenId = _tokenId;
@@ -79,15 +79,19 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
 
     function claimManagementFee() external nonReentrant {
         IERC20 feeToken_ = IERC20(pool.tokens()[feeTokenId]);
+        if(address(feeToken_) == address(0)) revert ZeroFeeTokenAddress();
+
         uint256 collectedManagementFee_ = collectedManagementFee;
         uint256 feeTokenBalance = feeToken_.balanceOf(address(this));
         uint256 transferBalance = collectedManagementFee_ > feeTokenBalance
             ? feeTokenBalance
             : collectedManagementFee_;
+
+        collectedManagementFee -= transferBalance;
+
         if (transferBalance > 0) {
             feeToken_.safeTransfer(feeDistributor, transferBalance);
         }
-        collectedManagementFee = 0;
 
         emit ClaimedManagementFee(address(feeToken_), transferBalance);
     }
@@ -95,9 +99,11 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
     function autoCompoundAll() public whenNotPaused nonReentrant {
         claimPoolRewards(address(this));
 
-        sellRewards();
+        if(sellRewards() == 0) return;
 
         IERC20 feeToken = pool.tokens()[feeTokenId];
+        if(address(feeToken) == address(0)) revert ZeroFeeTokenAddress();
+
         uint256[POOL_ASSETS] memory amounts;
         amounts[feeTokenId] = feeToken.balanceOf(address(this)) - collectedManagementFee;
         feeToken.safeTransfer(address(pool), amounts[feeTokenId]);
@@ -107,8 +113,11 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
         emit AutoCompoundedAll(depositedValue);
     }
 
-    function sellRewards() internal virtual {
-        uint256 received = _sellRewards(rewardManager, pool.tokens()[feeTokenId]);
+    function sellRewards() internal virtual returns(uint256 received) {
+        IERC20 feeToken = pool.tokens()[feeTokenId];
+        if(address(feeToken) == address(0)) revert ZeroFeeTokenAddress();
+
+        received = _sellRewards(rewardManager, feeToken);
         collectedManagementFee += calcManagementFee(received);
     }
 
@@ -132,13 +141,16 @@ contract ZunamiPoolCompoundController is ERC20, ERC20Permit, ZunamiPoolControlle
 
         uint256 assets = depositDefaultPool(amounts, address(this));
 
+        uint256 locked = 0;
         if (totalSupply() == 0) {
             shares = assets;
+            locked = MINIMUM_LIQUIDITY;
+            _mint(MINIMUM_LIQUIDITY_LOCKER, MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             shares = (totalSupply() * assets) / stableBefore;
         }
 
-        _mint(receiver, shares);
+        _mint(receiver, shares - locked);
         emit Deposited(receiver, assets, shares, defaultDepositSid);
     }
 

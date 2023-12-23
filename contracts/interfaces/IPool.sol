@@ -14,13 +14,14 @@ interface IPool is IERC20 {
     error WrongWithdrawParams(uint256 sid);
     error WrongRatio();
     error ZeroAddress();
+    error ZeroTokenAddress(uint256 index);
+    error ZeroTokenDecimalMultiplier(uint256 index);
     error DuplicatedStrategy();
     error IncorrectArguments();
     error WrongWithdrawPercent();
     error WrongReceiver();
     error IncorrectSid();
     error WrongLength();
-    error UnauthorizedAccount2Roles(address account, bytes32[2] roles);
 
     struct StrategyInfo {
         IStrategy strategy;

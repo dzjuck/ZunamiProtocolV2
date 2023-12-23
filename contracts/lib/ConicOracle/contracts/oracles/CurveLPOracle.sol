@@ -4,15 +4,11 @@ pragma solidity ^0.8.22;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable2Step.sol';
 
-import '../../libraries/Types.sol';
-import '../../libraries/ScaledMath.sol';
 import '../../libraries/ScaledMath.sol';
 import '../../libraries/CurvePoolUtils.sol';
 import '../../interfaces/IOracle.sol';
-import '../../interfaces/vendor/ICurveFactory.sol';
 import '../../interfaces/vendor/ICurvePoolV0.sol';
 import '../../interfaces/vendor/ICurvePoolV1.sol';
-import '../../interfaces/vendor/ICurveMetaRegistry.sol';
 import '../../interfaces/ICurveRegistryCache.sol';
 
 contract CurveLPOracle is IOracle, Ownable2Step {
@@ -20,7 +16,6 @@ contract CurveLPOracle is IOracle, Ownable2Step {
 
     event ImbalanceThresholdUpdated(address indexed token, uint256 threshold);
 
-    uint256 internal constant _DEFAULT_IMBALANCE_THRESHOLD = 0.02e18;
     uint256 internal constant _MAX_IMBALANCE_THRESHOLD = 0.1e18;
     mapping(address => uint256) public imbalanceThresholds;
 

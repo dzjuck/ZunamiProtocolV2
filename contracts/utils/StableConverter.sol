@@ -13,6 +13,8 @@ contract StableConverter is IStableConverter {
 
     error WrongFromStable(address stable);
     error WrongToStable(address stable);
+    error WrongSlippage();
+    error BrokenSlippage();
 
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
     uint256 public constant DEFAULT_SLIPPAGE = 30; // 0.3%
@@ -70,12 +72,17 @@ contract StableConverter is IStableConverter {
         to_.safeTransfer(address(msg.sender), to_.balanceOf(address(this)));
     }
 
-    function valuate(address from, address to, uint256 amount) public view returns (uint256) {
+    function valuate(address from, address to, uint256 amount) public view returns (uint256 valuation) {
         if (!isStableSupported(from)) revert WrongFromStable(from);
         if (!isStableSupported(to)) revert WrongToStable(to);
 
         if (amount == 0) return 0;
-        return curve3Pool.get_dy(curve3PoolStableIndex[from], curve3PoolStableIndex[to], amount);
+        valuation = curve3Pool.get_dy(curve3PoolStableIndex[from], curve3PoolStableIndex[to], amount);
+        if(valuation < applySlippage(
+            amount,
+            0,
+            curve3PoolStableDecimals[to] - curve3PoolStableDecimals[from]
+        )) revert BrokenSlippage();
     }
 
     function applySlippage(
@@ -83,7 +90,7 @@ contract StableConverter is IStableConverter {
         uint256 slippage,
         int8 decimalsDiff
     ) internal pure returns (uint256) {
-        require(slippage <= SLIPPAGE_DENOMINATOR, 'Wrong slippage');
+        if(slippage > SLIPPAGE_DENOMINATOR) revert WrongSlippage();
         if (slippage == 0) slippage = DEFAULT_SLIPPAGE;
         uint256 value = (amount * (SLIPPAGE_DENOMINATOR - slippage));
         if (decimalsDiff < 0) {

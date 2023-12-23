@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../../interfaces/ICurvePool2.sol';
 import '../ZunamiStratBase.sol';
-import { IOracle } from '../../lib/ConicOracle/interfaces/IOracle.sol';
 
 abstract contract CurveStratBase is ZunamiStratBase {
     using SafeERC20 for IERC20;

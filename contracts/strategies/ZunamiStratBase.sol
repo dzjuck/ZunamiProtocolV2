@@ -133,13 +133,13 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
     function claimCollectedRewards() internal virtual;
 
-    function withdrawAll(uint256[5] memory minTokenAmounts) external virtual onlyZunamiPool {
+    function withdrawAll(uint256[POOL_ASSETS] memory minTokenAmounts) external virtual onlyZunamiPool {
         removeAllLiquidity(minTokenAmounts);
 
-        transferTokensOut(convertTokensToDynamic(tokens), _msgSender(), fillArrayN(0, 5));
+        transferTokensOut(convertTokensToDynamic(tokens), _msgSender(), fillArrayN(0, POOL_ASSETS));
     }
 
-    function removeAllLiquidity(uint256[5] memory minTokenAmounts) internal virtual;
+    function removeAllLiquidity(uint256[POOL_ASSETS] memory minTokenAmounts) internal virtual;
 
     function transferTokensOut(
         IERC20[] memory transferringTokens,

@@ -16,6 +16,8 @@ contract GenericOracle is IOracle, Ownable2Step {
     constructor() Ownable(msg.sender) {}
 
     function initialize(address curveLpOracle, address chainlinkOracle) external onlyOwner {
+        require(address(curveLpOracle) != address(0), 'curveLpOracle zero address');
+        require(address(chainlinkOracle) != address(0), 'chainlinkOracle zero address');
         require(address(_curveLpOracle) == address(0), 'already initialized');
         _chainlinkOracle = IOracle(chainlinkOracle);
         _curveLpOracle = IOracle(curveLpOracle);

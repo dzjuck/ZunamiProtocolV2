@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../ZunamiStratBase.sol';
-import { IOracle } from '../../lib/ConicOracle/interfaces/IOracle.sol';
 
 abstract contract ERC4626StratBase is ZunamiStratBase {
     using SafeERC20 for IERC20;
@@ -20,6 +19,8 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         address vaultAddr,
         address vaultAssetAddr
     ) ZunamiStratBase(tokens_, tokenDecimalsMultipliers_) {
+        if(address(vaultAddr) == address(0)) revert ZeroAddress();
+        if(address(vaultAssetAddr) == address(0)) revert ZeroAddress();
         vault = IERC4626(vaultAddr);
         vaultAsset = IERC20(vaultAssetAddr);
     }

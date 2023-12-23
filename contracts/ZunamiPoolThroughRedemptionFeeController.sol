@@ -3,8 +3,6 @@ pragma solidity ^0.8.22;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol';
 
 import './ZunamiPoolThroughController.sol';
 
@@ -44,16 +42,18 @@ contract ZunamiPoolThroughRedemptionFeeController is ZunamiPoolThroughController
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
     ) internal virtual override {
+        IERC20(address(pool)).safeTransferFrom(user, address(this), shares);
+
         uint256 nominalFee = _calcFee(msg.sender, shares);
-        if (nominalFee > 0) {
-            IERC20(pool).safeTransfer(feeDistributor, nominalFee);
+        if (nominalFee > 0 && feeDistributor != address(0)) {
+            IERC20(address(pool)).safeTransfer(feeDistributor, nominalFee);
             shares -= nominalFee;
         }
-        super.withdrawPool(user, shares, minTokenAmounts, receiver);
+
+        withdrawDefaultPool(shares, minTokenAmounts, receiver);
     }
 
     function _calcFee(address caller, uint256 value) internal view returns (uint256 nominalFee) {
-        nominalFee = 0;
         uint256 withdrawFee_ = withdrawFee;
         if (withdrawFee_ > 0 && !hasRole(ISSUER_ROLE, caller)) {
             nominalFee = (value * withdrawFee_) / FEE_DENOMINATOR;

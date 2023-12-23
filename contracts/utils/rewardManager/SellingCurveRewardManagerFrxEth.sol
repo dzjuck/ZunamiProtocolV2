@@ -16,7 +16,6 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
 
     error WrongFeeToken(address feeToken);
 
-    uint256 public constant TOKEN_PRICE_MULTIPLIER = 1e18;
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
 
     uint256 public constant CURVE_WETH_REWARD_POOL_WETH_ID = 0;
@@ -118,8 +117,8 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 answer, , uint256 updatedAt, ) = oracle.latestRoundData();
             require(block.timestamp - updatedAt <= STALE_DELAY, 'Oracle stale');
 
-            wethAmountByOracle = uint256(answer) * amount * TOKEN_PRICE_MULTIPLIER / oracle
-                .decimals();
+            wethAmountByOracle = uint256(answer) * amount / (10 ** oracle
+                .decimals());
         } else {
             AggregatorV2V3Interface rewardOracle = AggregatorV2V3Interface(
                 rewardUsdChainlinkOracles[reward]
@@ -133,14 +132,15 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             require(block.timestamp - ethUpdatedAt <= STALE_DELAY, 'Oracle eth stale');
 
             wethAmountByOracle =
-                (uint256(rewardAnswer) * amount * TOKEN_PRICE_MULTIPLIER) /
+                (uint256(rewardAnswer) * amount) /
                 uint256(ethAnswer);
         }
 
         uint256 wethAmountByOracleWithSlippage = (wethAmountByOracle *
             (SLIPPAGE_DENOMINATOR - defaultSlippage)) / SLIPPAGE_DENOMINATOR;
+
         require(
-            wethAmount >= wethAmountByOracleWithSlippage / TOKEN_PRICE_MULTIPLIER,
+            wethAmount >= wethAmountByOracleWithSlippage,
             'Wrong slippage'
         );
     }

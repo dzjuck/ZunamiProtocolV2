@@ -1,6 +1,5 @@
 import { ethers, upgrades } from 'hardhat';
 import { loadFixture, mine } from '@nomicfoundation/hardhat-network-helpers';
-import { BigNumber, utils } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 

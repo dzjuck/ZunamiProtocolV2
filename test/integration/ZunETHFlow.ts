@@ -18,8 +18,7 @@ import { mintEthCoins } from '../utils/MintEthCoins';
 const ETH_stETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 
 describe('ZunETH flow tests', () => {
-    // const strategyNames = ['stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat', 'ZunETHVaultStrat'];
-    const strategyNames = ['sfrxETHERC4626Strat', 'ZunETHVaultStrat'];
+    const strategyNames = ['sfrxETHERC4626Strat', 'ZunETHVaultStrat', 'stEthEthConvexCurveStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default

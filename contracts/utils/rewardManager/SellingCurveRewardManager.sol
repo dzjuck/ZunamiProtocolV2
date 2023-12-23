@@ -135,10 +135,10 @@ contract SellingCurveRewardManager is IRewardManager {
         AggregatorV2V3Interface oracle = AggregatorV2V3Interface(rewardUsdChainlinkOracles[reward]);
         (, int256 answer, , , ) = oracle.latestRoundData();
 
-        // reward decimals 18 + oracle decimals 2 (8 - 6)
         uint256 feeTokenAmountByOracleWithSlippage = ((uint256(answer) * amount) *
             (SLIPPAGE_DENOMINATOR - defaultSlippage)) / SLIPPAGE_DENOMINATOR;
 
+        // reward decimals 18 + oracle decimals 2 (8 - 6)
         require(feeTokenAmount >= feeTokenAmountByOracleWithSlippage / 1e20, 'Wrong slippage');
     }
 }

@@ -6,7 +6,6 @@ import { expect } from 'chai';
 
 import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 
-import { increaseChainTime } from '../utils/IncreaseChainTime';
 import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
@@ -18,6 +17,7 @@ import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 import { ZunamiPool, ZunamiPoolCompoundController } from '../../typechain-types';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+const MINIMUM_LIQUIDITY = 1e3;
 
 import * as addrs from '../address.json';
 
@@ -219,7 +219,11 @@ describe('ZunUSD flow APS tests', () => {
             ).to.emit(zunamiPoolAps, 'Deposited');
         }
 
-        // await increaseChainTime(3600 * 24 * 7);
+        expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
+
+        await zunamiPoolControllerAps.autoCompoundAll();
+
+        expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
 
         // "0xD533a949740bb3306d119CC777fa900bA034cd52", // CRV
         // "0xF977814e90dA44bFA03b6295A0616a897441aceC", // CRV Vault
@@ -233,7 +237,7 @@ describe('ZunUSD flow APS tests', () => {
 
         await zunamiPool.transfer(
             stableConverterAps.address,
-            ethers.utils.parseUnits('20000', 'ether')
+            ethers.utils.parseUnits('20000', 'ether').sub(MINIMUM_LIQUIDITY)
         );
 
         await zunamiPoolControllerAps.autoCompoundAll();

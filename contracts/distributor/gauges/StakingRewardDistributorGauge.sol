@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '../../staking/IStakingRewardDistributor.sol';
+import "../../interfaces/IGauge.sol";
 
-contract StakingRewardDistributorGauge is Ownable2Step {
+contract StakingRewardDistributorGauge is IGauge {
     using SafeERC20 for ERC20;
 
     IStakingRewardDistributor public immutable REWARD_DISTRIBUTOR;
@@ -14,11 +14,10 @@ contract StakingRewardDistributorGauge is Ownable2Step {
     uint256 public immutable TID;
 
     constructor(
-        address _owner,
         address _token,
         address _rewardDistributor,
         uint256 _tid
-    ) Ownable(_owner) {
+    ) {
         require(_token != address(0), 'Zero token address');
         TOKEN = ERC20(_token);
 

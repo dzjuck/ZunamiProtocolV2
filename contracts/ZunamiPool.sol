@@ -5,16 +5,16 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
+import "./AccessControl2RolesValuation.sol";
 
 /**
  *
  * @title Zunami Protocol v2
  *
  */
-contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
+contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
     using SafeERC20 for IERC20;
 
     uint8 public constant POOL_ASSETS = 5;
@@ -24,6 +24,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     uint256 public constant DEPOSIT_RATIO_MULTIPLIER = 1e18;
     uint256 public constant MIN_LOCK_TIME = 1 days;
     uint256 public constant FUNDS_DENOMINATOR = 1e18;
+    uint256 public constant MINIMUM_LIQUIDITY = 1e3;
+    address public constant MINIMUM_LIQUIDITY_LOCKER = 0x000000000000000000000000000000000000dEaD;
 
     StrategyInfo[] private _strategyInfo;
 
@@ -33,25 +35,21 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     uint256 public totalDeposited;
     bool public launched;
 
-    modifier only2Roles(bytes32[2] memory roles) {
-        _check2Roles(roles, _msgSender());
-        _;
-    }
-
-    modifier startedStrategy(uint256 sid) {
-        if (sid >= _strategyInfo.length) revert NoStrategies();
-        if (block.timestamp < _strategyInfo[sid].startTime) revert NotStartedStrategy(sid);
-        _;
-    }
-
-    modifier enabledStrategy(uint256 sid) {
-        if (sid >= _strategyInfo.length || !_strategyInfo[sid].enabled)
-            revert NotEnabledStrategy(sid);
-        _;
-    }
-
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function _checkStrategyExisted(uint256 sid) internal view {
+        if (sid >= _strategyInfo.length) revert AbsentStrategy(sid);
+    }
+
+    function _checkStrategyStarted(uint256 sid) internal view {
+        if (block.timestamp < _strategyInfo[sid].startTime) revert NotStartedStrategy(sid);
+    }
+
+    function _checkStrategyEnabled(uint256 sid) internal view {
+        if (!_strategyInfo[sid].enabled)
+            revert DisabledStrategy(sid);
     }
 
     function _decimalsOffset() internal view virtual returns (uint8) {
@@ -76,17 +74,19 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
     function _setTokens(
         address[] memory tokens_,
-        uint256[] memory _tokenDecimalMultipliers
+        uint256[] memory decimalMultipliers_
     ) internal {
-        if (tokens_.length != _tokenDecimalMultipliers.length || tokens_.length > POOL_ASSETS)
+        if (tokens_.length != decimalMultipliers_.length || tokens_.length > POOL_ASSETS)
             revert WrongLength();
 
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (i < tokens_.length) {
                 address oldToken = address(_tokens[i]);
+                if (tokens_[i] == address(0)) revert ZeroTokenAddress(i);
+                if (decimalMultipliers_[i] == 0) revert ZeroTokenDecimalMultiplier(i);
                 _tokens[i] = IERC20(tokens_[i]);
-                _decimalsMultipliers[i] = _tokenDecimalMultipliers[i];
-                emit UpdatedToken(i, tokens_[i], _tokenDecimalMultipliers[i], oldToken);
+                _decimalsMultipliers[i] = decimalMultipliers_[i];
+                emit UpdatedToken(i, tokens_[i], decimalMultipliers_[i], oldToken);
             } else {
                 emit UpdatedToken(i, address(0), 0, address(_tokens[i]));
                 delete _tokens[i];
@@ -107,6 +107,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         address _token,
         uint256 _tokenDecimalMultiplier
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_token == address(0)) revert ZeroTokenAddress(_tokenIndex);
+        if (_tokenDecimalMultiplier == 0) revert ZeroTokenDecimalMultiplier(_tokenIndex);
         address oldToken = address(_tokens[_tokenIndex]);
         _tokens[_tokenIndex] = IERC20(_token);
         _decimalsMultipliers[_tokenIndex] = _tokenDecimalMultiplier;
@@ -157,11 +159,13 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     )
         external
         whenNotPaused
-        enabledStrategy(sid)
-        startedStrategy(sid)
         onlyRole(CONTROLLER_ROLE)
         returns (uint256)
     {
+        _checkStrategyExisted(sid);
+        _checkStrategyStarted(sid);
+        _checkStrategyEnabled(sid);
+
         if (receiver == address(0)) {
             receiver = _msgSender();
         }
@@ -179,11 +183,12 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     )
         external
         whenNotPaused
-        enabledStrategy(sid)
-        startedStrategy(sid)
         onlyRole(CONTROLLER_ROLE)
         returns (uint256)
     {
+        _checkStrategyExisted(sid);
+        _checkStrategyStarted(sid);
+
         return doDepositStrategy(sid, amounts);
     }
 
@@ -211,14 +216,17 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256 holdingsBefore,
         uint256 sid
     ) internal returns (uint256 minted) {
+        uint256 locked = 0;
         if (totalSupply() == 0) {
             minted = depositedValue;
+            locked = MINIMUM_LIQUIDITY;
+            _mint(MINIMUM_LIQUIDITY_LOCKER, MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             minted =
                 ((totalSupply() + 10 ** _decimalsOffset()) * depositedValue) /
                 (holdingsBefore + 1);
         }
-        _mint(receiver, minted);
+        _mint(receiver, minted - locked);
         _strategyInfo[sid].minted += minted;
 
         totalDeposited += depositedValue;
@@ -231,7 +239,11 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256 amount,
         uint256[POOL_ASSETS] memory tokenAmounts,
         address receiver
-    ) external whenNotPaused enabledStrategy(sid) startedStrategy(sid) onlyRole(CONTROLLER_ROLE) {
+    ) external whenNotPaused onlyRole(CONTROLLER_ROLE) {
+        _checkStrategyExisted(sid);
+        _checkStrategyStarted(sid);
+        _checkStrategyEnabled(sid);
+
         IStrategy strategy = _strategyInfo[sid].strategy;
         address controllerAddr = _msgSender();
 
@@ -309,9 +321,12 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256[] memory _withdrawalsPercents,
         uint256 _receiverStrategy,
         uint256[POOL_ASSETS][] memory _minAmounts
-    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) enabledStrategy(_receiverStrategy) {
+    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         if (_strategies.length != _withdrawalsPercents.length) revert IncorrectArguments();
         if (_receiverStrategy >= _strategyInfo.length) revert WrongReceiver();
+
+        _checkStrategyExisted(_receiverStrategy);
+        _checkStrategyEnabled(_receiverStrategy);
 
         uint256 sid;
         uint256 zunamiStables;
@@ -319,6 +334,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
             sid = _strategies[i];
             zunamiStables += _moveFunds(sid, _withdrawalsPercents[i], _minAmounts[i]);
         }
+        _strategyInfo[_receiverStrategy].minted += zunamiStables;
 
         uint256[POOL_ASSETS] memory tokensRemainder;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
@@ -333,8 +349,6 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
             }
         }
 
-        _strategyInfo[_receiverStrategy].minted += zunamiStables;
-
         if (_strategyInfo[_receiverStrategy].strategy.deposit(tokensRemainder) == 0)
             revert WrongDeposit(_receiverStrategy, tokensRemainder);
     }
@@ -348,20 +362,20 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
             revert WrongWithdrawPercent();
 
         if (withdrawPercent == FUNDS_DENOMINATOR) {
-            _strategyInfo[sid].strategy.withdrawAll(minAmounts);
-
             stableAmount = _strategyInfo[sid].minted;
             _strategyInfo[sid].minted = 0;
+            _strategyInfo[sid].strategy.withdrawAll(minAmounts);
         } else {
             stableAmount = (_strategyInfo[sid].minted * withdrawPercent) / FUNDS_DENOMINATOR;
+            _strategyInfo[sid].minted -= stableAmount;
+
             if (
                 !_strategyInfo[sid].strategy.withdraw(
                     address(this),
-                    calcRatioSafe(stableAmount, _strategyInfo[sid].minted),
+                    withdrawPercent,
                     minAmounts
                 )
             ) revert WrongWithdrawParams(sid);
-            _strategyInfo[sid].minted -= stableAmount;
         }
 
         return stableAmount;
@@ -381,11 +395,5 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         _strategyInfo[_sid].enabled = false;
 
         emit DisableStrategy(address(_strategyInfo[_sid].strategy));
-    }
-
-    function _check2Roles(bytes32[2] memory roles, address account) internal view virtual {
-        if (!hasRole(roles[0], account) && !hasRole(roles[1], account)) {
-            revert UnauthorizedAccount2Roles(account, roles);
-        }
     }
 }

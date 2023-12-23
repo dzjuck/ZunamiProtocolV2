@@ -26,7 +26,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         tokenDecimalsMultipliers = tokenDecimalsMultipliers_;
     }
 
-    function deposit(uint256[POOL_ASSETS] memory amounts) external returns (uint256) {
+    function deposit(uint256[POOL_ASSETS] calldata amounts) external view returns (uint256) {
         uint256 depositedAmount;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (amounts[i] > 0) {

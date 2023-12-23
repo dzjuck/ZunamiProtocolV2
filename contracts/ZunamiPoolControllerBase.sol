@@ -26,7 +26,7 @@ abstract contract ZunamiPoolControllerBase is
     uint256 public defaultDepositSid;
     uint256 public defaultWithdrawSid;
 
-    IPool public pool;
+    IPool public immutable pool;
 
     event SetDefaultDepositSid(uint256 sid);
     event SetDefaultWithdrawSid(uint256 sid);
@@ -76,9 +76,11 @@ abstract contract ZunamiPoolControllerBase is
             receiver = _msgSender();
         }
 
+        IERC20[5] memory tokens = pool.tokens();
         for (uint256 i = 0; i < amounts.length; i++) {
-            if (amounts[i] > 0) {
-                IERC20(pool.tokens()[i]).safeTransferFrom(_msgSender(), address(pool), amounts[i]);
+            IERC20 token = tokens[i];
+            if (address(token) != address(0) && amounts[i] > 0) {
+                IERC20(tokens[i]).safeTransferFrom(_msgSender(), address(pool), amounts[i]);
             }
         }
 

@@ -62,6 +62,7 @@ contract FraxApsConvexCurveStratBase is ConvexCurveStratBase {
     }
 
     function setStableConverter(address stableConverterAddr) external onlyOwner {
+        if(address(stableConverterAddr) == address(0)) revert ZeroAddress();
         stableConverter = IStableConverter(stableConverterAddr);
         emit SetStableConverter(stableConverterAddr);
     }

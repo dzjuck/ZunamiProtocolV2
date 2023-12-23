@@ -37,8 +37,8 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
     uint256 public gaugesNumber;
     mapping(uint256 => Gauge) public gauges;
 
-    ERC20Votes public voteToken;
-    ERC20 public token;
+    ERC20Votes public immutable voteToken;
+    ERC20 public immutable token;
 
     uint256 public votingThreshold; // in tokens
 
@@ -46,7 +46,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
     uint256 public lastDistributionBlock;
     uint256 public lastFinalizeBlock;
 
-    event VoteCasted(address voter, uint256 totalVotes);
+    event VoteCast(address voter, uint256 totalVotes);
     event Distributed(uint256 totalDistributed);
     event GaugeAdded(address gauge);
     event GaugeDeleted(uint256 gaugeId);
@@ -175,7 +175,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         }
         usedVotes[borderBlock][voter] += totalVotes;
 
-        emit VoteCasted(voter, totalVotes);
+        emit VoteCast(voter, totalVotes);
     }
 
     function distribute()
@@ -188,6 +188,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         if (!_isPeriodPassed(lastDistributionBlock)) {
             revert DistributionAlreadyHappened();
         }
+        lastDistributionBlock = block.number;
 
         if (_isPeriodPassed(lastFinalizeBlock)) {
             _finalizeVotingPeriod();
@@ -205,7 +206,6 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
             totalDistributed += amount;
         }
 
-        lastDistributionBlock = block.number;
         emit Distributed(totalDistributed);
     }
 

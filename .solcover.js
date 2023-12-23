@@ -1,5 +1,12 @@
 module.exports = {
-    skipFiles: ['interfaces/', 'mock/'],
+    skipFiles: [
+        'interfaces/',
+        'test/',
+        'dao/',
+        'configs/',
+        'view/',
+        'lib/ConicOracle/interfaces/',
+    ],
     mocha: {
         grep: '@skip-on-coverage',
         invert: true,

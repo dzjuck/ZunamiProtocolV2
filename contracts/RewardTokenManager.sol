@@ -9,6 +9,7 @@ abstract contract RewardTokenManager {
     using SafeERC20 for IERC20;
 
     error WrongRewardTokens(IERC20[] rewardTokens);
+    error ZeroTokenAddress(uint256 index);
 
     IERC20[] public rewardTokens;
 
@@ -16,6 +17,10 @@ abstract contract RewardTokenManager {
 
     function _setRewardTokens(IERC20[] memory rewardTokens_) internal virtual {
         if (rewardTokens_.length == 0) revert WrongRewardTokens(rewardTokens_);
+
+        for (uint256 i = 0; i < rewardTokens_.length; i++) {
+            if (address(rewardTokens_[i]) == address(0)) revert ZeroTokenAddress(i);
+        }
 
         rewardTokens = rewardTokens_;
         emit SetRewardTokens(rewardTokens);
