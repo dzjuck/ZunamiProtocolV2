@@ -21,7 +21,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
 
     bytes32 public constant EMERGENCY_ROLE = keccak256('EMERGENCY_ROLE');
     bytes32 public constant CONTROLLER_ROLE = keccak256('CONTROLLER_ROLE');
-    uint256 public constant DEPOSIT_RATIO_MULTIPLIER = 1e18;
+    uint256 public constant RATIO_MULTIPLIER = 1e18;
     uint256 public constant MIN_LOCK_TIME = 1 days;
     uint256 public constant FUNDS_DENOMINATOR = 1e18;
     uint256 public constant MINIMUM_LIQUIDITY = 1e3;
@@ -102,19 +102,6 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         _setTokens(tokens_, _tokenDecimalMultipliers);
     }
 
-    function replaceToken(
-        uint256 _tokenIndex,
-        address _token,
-        uint256 _tokenDecimalMultiplier
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_token == address(0)) revert ZeroTokenAddress(_tokenIndex);
-        if (_tokenDecimalMultiplier == 0) revert ZeroTokenDecimalMultiplier(_tokenIndex);
-        address oldToken = address(_tokens[_tokenIndex]);
-        _tokens[_tokenIndex] = IERC20(_token);
-        _decimalsMultipliers[_tokenIndex] = _tokenDecimalMultiplier;
-        emit UpdatedToken(_tokenIndex, _token, _tokenDecimalMultiplier, oldToken);
-    }
-
     function pause() external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         _pause();
     }
@@ -170,11 +157,9 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
             receiver = _msgSender();
         }
 
-        uint256 holdingsBefore = totalHoldings();
-
         uint256 depositedValue = doDepositStrategy(sid, amounts);
 
-        return processSuccessfulDeposit(receiver, depositedValue, amounts, holdingsBefore, sid);
+        return processSuccessfulDeposit(receiver, depositedValue, amounts, sid);
     }
 
     function depositStrategy(
@@ -213,7 +198,6 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         address receiver,
         uint256 depositedValue,
         uint256[POOL_ASSETS] memory depositedTokens,
-        uint256 holdingsBefore,
         uint256 sid
     ) internal returns (uint256 minted) {
         uint256 locked = 0;
@@ -224,7 +208,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         } else {
             minted =
                 ((totalSupply() + 10 ** _decimalsOffset()) * depositedValue) /
-                (holdingsBefore + 1);
+                (totalDeposited + 1);
         }
         _mint(receiver, minted - locked);
         _strategyInfo[sid].minted += minted;
@@ -279,8 +263,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         uint256 outAmount,
         uint256 strategyDeposited
     ) internal pure returns (uint256 ratio) {
-        ratio = (outAmount * DEPOSIT_RATIO_MULTIPLIER) / strategyDeposited;
-        if (ratio == 0 || ratio > DEPOSIT_RATIO_MULTIPLIER) revert WrongRatio();
+        ratio = (outAmount * RATIO_MULTIPLIER) / strategyDeposited;
+        if (ratio == 0 || ratio > RATIO_MULTIPLIER) revert WrongRatio();
     }
 
     /**

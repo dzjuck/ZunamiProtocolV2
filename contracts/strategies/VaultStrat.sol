@@ -17,6 +17,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
 
     IERC20[POOL_ASSETS] public tokens;
     uint256[POOL_ASSETS] public tokenDecimalsMultipliers;
+    uint256[POOL_ASSETS] public depositedTokens;
 
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
@@ -26,11 +27,12 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         tokenDecimalsMultipliers = tokenDecimalsMultipliers_;
     }
 
-    function deposit(uint256[POOL_ASSETS] calldata amounts) external view returns (uint256) {
+    function deposit(uint256[POOL_ASSETS] calldata amounts) external returns (uint256) {
         uint256 depositedAmount;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (amounts[i] > 0) {
                 depositedAmount += amounts[i] * tokenDecimalsMultipliers[i];
+                depositedTokens[i] += amounts[i];
             }
         }
 
@@ -42,7 +44,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         uint256 userDepositRatio,
         uint256[POOL_ASSETS] memory
     ) external onlyZunamiPool returns (bool) {
-        if (userDepositRatio == 0 || userDepositRatio > PRICE_DENOMINATOR)
+        if (userDepositRatio == 0 || userDepositRatio > RATIO_MULTIPLIER)
             revert WrongRatio(userDepositRatio);
 
         transferPortionTokensTo(receiver, userDepositRatio);
@@ -51,7 +53,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
     }
 
     function withdrawAll(uint256[5] memory) external onlyZunamiPool {
-        transferAllTokensTo(address(zunamiPool));
+        transferPortionTokensTo(address(zunamiPool), RATIO_MULTIPLIER);
     }
 
     function totalHoldings() external view returns (uint256) {
@@ -59,7 +61,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             IERC20 token = tokens[i];
             if (address(token) == address(0)) break;
-            tokensHoldings += token.balanceOf(address(this)) * tokenDecimalsMultipliers[i];
+            tokensHoldings += depositedTokens[i] * tokenDecimalsMultipliers[i];
         }
         return tokensHoldings;
     }
@@ -78,30 +80,18 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         return amount;
     }
 
-    function transferAllTokensTo(address receiver) internal {
-        uint256 tokenStratBalance;
-        IERC20 token_;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            token_ = tokens[i];
-            if (address(token_) == address(0)) break;
-            tokenStratBalance = token_.balanceOf(address(this));
-            if (tokenStratBalance > 0) {
-                token_.safeTransfer(receiver, tokenStratBalance);
-            }
-        }
-    }
-
-    function transferPortionTokensTo(address withdrawer, uint256 userDepositRatio) internal {
+    function transferPortionTokensTo(address receiver, uint256 userDepositRatio) internal {
         uint256 transferAmountOut;
         IERC20 token_;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             token_ = tokens[i];
             if (address(token_) == address(0)) break;
-            transferAmountOut =
-                (token_.balanceOf(address(this)) * userDepositRatio) /
-                RATIO_MULTIPLIER;
+            transferAmountOut = userDepositRatio == RATIO_MULTIPLIER ?
+                depositedTokens[i] :
+                (depositedTokens[i] * userDepositRatio) / RATIO_MULTIPLIER;
             if (transferAmountOut > 0) {
-                token_.safeTransfer(withdrawer, transferAmountOut);
+                depositedTokens[i] -= transferAmountOut;
+                token_.safeTransfer(receiver, transferAmountOut);
             }
         }
     }

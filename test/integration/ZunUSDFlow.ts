@@ -20,8 +20,8 @@ const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
 describe('ZunUSD flow tests', () => {
     const strategyNames = [
-        'UsdcCrvUsdStakeDaoCurve',
         'UsdtCrvUsdStakeDaoCurve',
+        'UsdcCrvUsdStakeDaoCurve',
         'ZunUSDVaultStrat',
     ];
 
@@ -105,28 +105,33 @@ describe('ZunUSD flow tests', () => {
             await zunamiPoolController.setDefaultDepositSid(poolId);
             await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
-            for (const user of [admin, alice, bob]) {
+            for (let i = 0; i < 2; i++) {
+              for (const user of [admin, alice, bob]) {
                 const daiBefore = await dai.balanceOf(user.getAddress());
                 const usdcBefore = await usdc.balanceOf(user.getAddress());
                 const usdtBefore = await usdt.balanceOf(user.getAddress());
                 const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
-
                 await expect(
-                    zunamiPoolController
-                        .connect(user)
-                        .deposit(getMinAmountZunUSD('1000'), await user.getAddress())
+                  zunamiPoolController
+                    .connect(user)
+                    .deposit(getMinAmountZunUSD('1000'), await user.getAddress())
                 ).to.emit(zunamiPool, 'Deposited');
 
                 expect(await dai.balanceOf(user.getAddress())).to.lt(daiBefore);
                 expect(await usdc.balanceOf(user.getAddress())).to.lt(usdcBefore);
                 expect(await usdt.balanceOf(user.getAddress())).to.lt(usdtBefore);
-                expect(await zunamiPool.balanceOf(user.getAddress())).to.gt(zStableBefore);
+                const stableDiff = (await zunamiPool.balanceOf(user.getAddress())).sub(zStableBefore);
+                expect(stableDiff).to.gt(0);
+                expect(stableDiff).to.gt(
+                  ethers.utils.parseUnits('2997', 'ether')
+                );
+              }
             }
         }
     });
 
     it('should withdraw assets', async () => {
-        const { alice, bob, zunamiPool, zunamiPoolController, strategies } = await loadFixture(
+        const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies } = await loadFixture(
             deployFixture
         );
 
@@ -135,7 +140,9 @@ describe('ZunUSD flow tests', () => {
             await zunamiPoolController.setDefaultDepositSid(poolId);
             await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
-            for (const user of [alice, bob]) {
+            for (const user of [admin, alice, bob]) {
+                const stableBefore = await zunamiPool.balanceOf(user.getAddress());
+
                 await expect(
                     zunamiPoolController
                         .connect(user)
@@ -143,14 +150,19 @@ describe('ZunUSD flow tests', () => {
                 ).to.emit(zunamiPool, 'Deposited');
 
                 let stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
-                expect(stableAmount).to.gt(0);
+
+                const stableDiff = stableAmount.sub(stableBefore);
+                expect(stableDiff).to.gt(0);
+                expect(stableDiff).to.gt(
+                  ethers.utils.parseUnits('2997', 'ether')
+                );
 
                 await zunamiPool.connect(user).approve(zunamiPoolController.address, stableAmount);
 
                 await expect(
-                    zunamiPoolController
-                        .connect(user)
-                        .withdraw(stableAmount, [0, 0, 0, 0, 0], user.getAddress())
+                  zunamiPoolController
+                    .connect(user)
+                    .withdraw(stableAmount, [0, 0, 0, 0, 0], user.getAddress())
                 ).to.emit(zunamiPool, 'Withdrawn');
                 stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
                 expect(stableAmount).to.eq(0);

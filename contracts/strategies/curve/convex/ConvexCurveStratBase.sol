@@ -35,22 +35,19 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
 
     function removeLiquidity(
         uint256 amount,
-        uint256[5] memory minTokenAmounts
+        uint256[5] memory minTokenAmounts,
+        bool removeAll
     ) internal virtual override {
-        cvxRewards.withdrawAndUnwrap(amount, false);
-        super.removeLiquidity(amount, minTokenAmounts);
-    }
+        if (removeAll) {
+            cvxRewards.withdrawAllAndUnwrap(true);
+        } else {
+            cvxRewards.withdrawAndUnwrap(amount, false);
+        }
 
-    function removeAllLiquidity(uint256[5] memory minTokenAmounts) internal virtual override {
-        cvxRewards.withdrawAllAndUnwrap(true);
-        super.removeAllLiquidity(minTokenAmounts);
+        super.removeLiquidity(amount, minTokenAmounts, removeAll);
     }
 
     function claimCollectedRewards() internal virtual override {
         cvxRewards.getReward();
-    }
-
-    function getLiquidityBalance() internal view virtual override returns (uint256) {
-        return cvxRewards.balanceOf(address(this));
     }
 }

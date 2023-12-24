@@ -13,6 +13,8 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
     IERC4626 public immutable vault;
     IERC20 public immutable vaultAsset;
 
+    uint256 public depositedAssets;
+
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
@@ -27,10 +29,6 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
 
     function getLiquidityTokenPrice() internal view virtual override returns (uint256) {
         return (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(1e18)) / 1e18;
-    }
-
-    function getLiquidityBalance() internal view virtual override returns (uint256) {
-        return vault.balanceOf(address(this));
     }
 
     function checkDepositSuccessful(
@@ -56,9 +54,10 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
 
     function depositLiquidity(
         uint256[POOL_ASSETS] memory amounts
-    ) internal override returns (uint256 poolTokenAmount) {
+    ) internal override returns (uint256) {
         uint256 amount = convertAndApproveTokens(address(vault), amounts);
-        poolTokenAmount = vault.deposit(amount, address(this));
+        depositedAssets += amount;
+        return vault.deposit(amount, address(this));
     }
 
     function convertAndApproveTokens(
@@ -75,18 +74,18 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
 
     function removeLiquidity(
         uint256 amount,
-        uint256[POOL_ASSETS] memory
+        uint256[POOL_ASSETS] memory,
+        bool
     ) internal virtual override {
         vault.redeem(amount, address(this), address(this));
     }
 
-    function removeAllLiquidity(uint256[5] memory) internal virtual override {
-        vault.redeem(vault.balanceOf(address(this)), address(this), address(this));
-    }
-
-    function claimCollectedRewards() internal override {
-        // TODO: decide how take rebased yield
-        // 1/ track deposited amount
-        // 2/ on withdraw - compare with deposited and remove rebased part
+    function claimRewards(address receiver, IERC20[] memory) public override onlyZunamiPool {
+        uint256 redeemableAssets = vault.previewRedeem(depositedLiquidity);
+        if(redeemableAssets > depositedAssets) {
+            uint256 withdrawAssets = redeemableAssets - depositedAssets;
+            uint256 withdrawnShares = vault.withdraw(withdrawAssets, receiver, address(this));
+            depositedLiquidity -= withdrawnShares;
+        }
     }
 }

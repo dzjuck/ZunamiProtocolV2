@@ -20,6 +20,8 @@ chai.use(smock.matchers);
 const MIN_LOCK_TIME = duration.seconds(86405);
 const MINIMUM_LIQUIDITY = 1e3;
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+
 export const bn = (num: string | number) => new BigNumber(num);
 export const decify = (value: any, decimals: any) =>
   bn(value).times(bn(10).pow(decimals)).integerValue();
@@ -80,6 +82,11 @@ describe('ZunamiPool', () => {
     await zunamiPool.deployed();
     expect(zunamiPool.address).to.properAddress;
 
+    await expect(
+      zunamiPool.setTokens([dai.address, usdc.address, usdt.address], [1, 1e12])
+    ).to.be.revertedWithCustomError(zunamiPool,
+      `WrongLength`);
+
     await zunamiPool.setTokens([dai.address, usdc.address, usdt.address], [1, 1e12, 1e12]);
   });
 
@@ -87,6 +94,9 @@ describe('ZunamiPool', () => {
     await expect((await zunamiPool.tokens())[0]).to.be.equal(dai.address);
     await expect((await zunamiPool.tokens())[1]).to.be.equal(usdc.address);
     await expect((await zunamiPool.tokens())[2]).to.be.equal(usdt.address);
+    await expect((await zunamiPool.token(0))).to.be.equal(dai.address);
+    await expect((await zunamiPool.token(1))).to.be.equal(usdc.address);
+    await expect((await zunamiPool.token(2))).to.be.equal(usdt.address);
     await expect((await zunamiPool.tokenDecimalsMultipliers())[0]).to.be.equal(1);
     await expect((await zunamiPool.tokenDecimalsMultipliers())[1]).to.be.equal(10 ** 12);
     await expect((await zunamiPool.tokenDecimalsMultipliers())[2]).to.be.equal(10 ** 12);
@@ -138,7 +148,7 @@ describe('ZunamiPool', () => {
 
     await transferTokensToZunamiPool([depositedValue, depositedValue, depositedValue, 0, 0]);
     await strategy3.deposit.whenCalledWith(tokenBalances).returns(depositedValueToken);
-    await zunamiPool.deposit(2, tokenBalances, admin.address);
+    await zunamiPool.deposit(2, tokenBalances, ADDRESS_ZERO);
 
     const totalHoldings = strategyHoldings1
       .plus(strategyHoldings2)
@@ -276,16 +286,13 @@ describe('ZunamiPool', () => {
     const newDepositedValue = tokenify(50);
     await strategy.deposit.whenCalledWith(tokenBalances).returns(newDepositedValue.toFixed());
 
-    const totalSupply = bn((await zunamiPool.totalSupply()).toString());
-
-    const extraHoldings = tokenify(10);
-    const enlargedStrategyHoldings = depositedValue.plus(newDepositedValue).plus(extraHoldings);
-    await setTotalHoldings(strategy, enlargedStrategyHoldings.toFixed());
     await zunamiPool.deposit(sid, tokenBalances, admin.address);
+
+    const totalSupply = bn((await zunamiPool.totalSupply()).toString());
 
     const lpSharesExtra = totalSupply
       .multipliedBy(newDepositedValue)
-      .dividedToIntegerBy(enlargedStrategyHoldings)
+      .dividedToIntegerBy((await zunamiPool.totalDeposited()).toString())
       .toFixed();
     const lpSharesTotal = bn(lpShares).plus(lpSharesExtra);
     expect(await zunamiPool.totalSupply()).to.be.equal(lpSharesTotal.toFixed());

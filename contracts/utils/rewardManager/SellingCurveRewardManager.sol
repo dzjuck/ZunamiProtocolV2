@@ -63,7 +63,7 @@ contract SellingCurveRewardManager is IRewardManager {
         ] = 0x8c110B94C5f1d347fAcF5E1E938AB2db60E3c9a8; // https://data.chain.link/ethereum/mainnet/crypto-usd/spell-usd
     }
 
-    function handle(address reward, uint256 amount, address feeToken) public {
+    function handle(address reward, uint256 amount, address receivingToken) public {
         if (amount == 0) return;
 
         ICurveExchangePool rewardEthPool = ICurveExchangePool(rewardEthCurvePools[reward]);
@@ -89,13 +89,13 @@ contract SellingCurveRewardManager is IRewardManager {
         uint256 usdtAmount = usdt.balanceOf(address(this));
         checkSlippage(reward, amount, usdtAmount);
 
-        if (feeToken != Constants.USDT_ADDRESS) {
+        if (receivingToken != Constants.USDT_ADDRESS) {
             usdt.safeTransfer(address(stableConverter), usdtAmount);
-            stableConverter.handle(Constants.USDT_ADDRESS, feeToken, usdtAmount, 0);
+            stableConverter.handle(Constants.USDT_ADDRESS, receivingToken, usdtAmount, 0);
         }
 
-        uint256 feeTokenAmount = IERC20(feeToken).balanceOf(address(this));
-        IERC20(feeToken).safeTransfer(address(msg.sender), feeTokenAmount);
+        uint256 feeTokenAmount = IERC20(receivingToken).balanceOf(address(this));
+        IERC20(receivingToken).safeTransfer(address(msg.sender), feeTokenAmount);
     }
 
     function getExchangeIndexes(address reward) internal pure returns (uint256, uint256) {

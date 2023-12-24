@@ -9,8 +9,6 @@ contract ZunamiPoolOwnable is Ownable2Step {
     error ZeroAddress();
     error MustHaveOwner();
 
-    uint256 public constant PRICE_DENOMINATOR = 1e18;
-
     IPool public zunamiPool;
 
     event ZunamiPoolSet(address zunamiPoolAddr);

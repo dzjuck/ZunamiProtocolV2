@@ -13,6 +13,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
     uint8 public constant POOL_ASSETS = 5;
     uint256 public constant RATIO_MULTIPLIER = 1e18;
+    uint256 public constant PRICE_DENOMINATOR = 1e18;
 
     uint256 public constant DEPOSIT_DENOMINATOR = 10000;
 
@@ -21,6 +22,8 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     IERC20[POOL_ASSETS] public tokens;
     uint256[POOL_ASSETS] public tokenDecimalsMultipliers;
     IOracle public oracle;
+
+    uint256 public depositedLiquidity;
 
     event MinDepositAmountUpdated(uint256 oldAmount, uint256 newAmount);
     event PriceOracleSet(address oracleAddr);
@@ -58,27 +61,21 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     function getLiquidityTokenPrice() internal view virtual returns (uint256);
 
     function totalHoldings() public view virtual returns (uint256) {
-        uint256 poolHoldings = calcLiquidityValue(getLiquidityBalance());
-
-        IERC20 token_;
-        uint256 tokensHoldings;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            token_ = tokens[i];
-            if (address(token_) == address(0)) break;
-            tokensHoldings += token_.balanceOf(address(this)) * tokenDecimalsMultipliers[i];
-        }
-
-        return tokensHoldings + poolHoldings;
+        return calcLiquidityValue(getLiquidityBalance());
     }
 
-    function getLiquidityBalance() internal view virtual returns (uint256);
+    function getLiquidityBalance() internal view virtual returns (uint256){
+        return depositedLiquidity;
+    }
 
     function deposit(uint256[POOL_ASSETS] memory amounts) external returns (uint256) {
         if (!checkDepositSuccessful(amounts)) {
             return 0;
         }
 
-        return calcLiquidityValue(depositLiquidity(amounts));
+        uint256 liquidity = depositLiquidity(amounts);
+        depositedLiquidity += liquidity;
+        return calcLiquidityValue(liquidity);
     }
 
     function checkDepositSuccessful(
@@ -113,7 +110,8 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
             prevBalances[i] = tokens[i].balanceOf(address(this));
         }
 
-        removeLiquidity(liquidityAmount, tokenAmounts);
+        depositedLiquidity -= liquidityAmount;
+        removeLiquidity(liquidityAmount, tokenAmounts, false);
 
         transferTokensOut(convertTokensToDynamic(tokens), receiver, prevBalances);
 
@@ -122,24 +120,22 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
 
     function removeLiquidity(
         uint256 amount,
-        uint256[POOL_ASSETS] memory minTokenAmounts
+        uint256[POOL_ASSETS] memory minTokenAmounts,
+        bool removeAll
     ) internal virtual;
 
-    function claimRewards(address receiver, IERC20[] memory rewardTokens) public onlyZunamiPool {
+    function claimRewards(address receiver, IERC20[] memory rewardTokens) public virtual onlyZunamiPool {
         claimCollectedRewards();
-
         transferTokensOut(rewardTokens, receiver, fillArrayN(0, rewardTokens.length));
     }
 
-    function claimCollectedRewards() internal virtual;
+    function claimCollectedRewards() internal virtual {}
 
     function withdrawAll(uint256[POOL_ASSETS] memory minTokenAmounts) external virtual onlyZunamiPool {
-        removeAllLiquidity(minTokenAmounts);
-
+        removeLiquidity(depositedLiquidity, minTokenAmounts, true);
+        depositedLiquidity = 0;
         transferTokensOut(convertTokensToDynamic(tokens), _msgSender(), fillArrayN(0, POOL_ASSETS));
     }
-
-    function removeAllLiquidity(uint256[POOL_ASSETS] memory minTokenAmounts) internal virtual;
 
     function transferTokensOut(
         IERC20[] memory transferringTokens,
@@ -159,11 +155,11 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
     }
 
     function convertTokensToDynamic(
-        IERC20[POOL_ASSETS] memory convertingtokens
+        IERC20[POOL_ASSETS] memory _tokens
     ) internal pure returns (IERC20[] memory tokesDynamic) {
         tokesDynamic = new IERC20[](POOL_ASSETS);
-        for (uint256 i = 0; i < convertingtokens.length; i++) {
-            tokesDynamic[i] = convertingtokens[i];
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            tokesDynamic[i] = _tokens[i];
         }
     }
 

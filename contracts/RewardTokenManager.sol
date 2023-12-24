@@ -53,8 +53,7 @@ abstract contract RewardTokenManager {
             _sellToken(rewardManager, rewardToken_, rewardBalances[i], address(feeToken));
         }
 
-        uint256 feeTokenBalanceAfter = feeToken.balanceOf(address(this));
-        return feeTokenBalanceAfter - feeTokenBalanceBefore;
+        return feeToken.balanceOf(address(this)) - feeTokenBalanceBefore;
     }
 
     function _sellToken(
