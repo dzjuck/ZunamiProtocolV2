@@ -4,7 +4,7 @@ const {BigNumber} = require("ethers");
 async function main() {
     console.log('Start deploy');
 
-    const userAddress = '0xaeE0Cbb0F1b484F60b5B197f232BA104505B56c2';
+    const userAddress = '';
 
     const tokens = ['0xdC30b3bdE2734A0Bc55AF01B38943ef04aaCB423','0x2d691C2492e056ADCAE7cA317569af25910fC4cb', '0x8aaB454dFD2d3b483791698367fFEa8Cf3352Ee2'];
 

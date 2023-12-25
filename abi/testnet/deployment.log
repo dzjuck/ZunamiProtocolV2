@@ -15,3 +15,13 @@ ZunamiPoolController: 0x3694Db838a8cAf3b1c234529bB1b447bd849F357
 VaultStrat strategy deployed to: 0x1e21bF8b74568371B9C781850414B3485D7D02F3
 Added VaultStrat pool to ZunamiPool
 Set zunami pool address 0x83287Da602f0C32f6C9B09E2F1b2951767ebF239 in VaultStrat strategy
+
+
+Deploy zunUSD APS pool:
+ZunamiPool: 0x24Df9D9BB4CDD19F0Fb99c8C08631778e4DC18F0
+ZunamiPool tokens set: [ '0x83287Da602f0C32f6C9B09E2F1b2951767ebF239' ] [ 1 ]
+Deploy zunUSD aps compound pool controller:
+ZunamiPoolController: 0x1C4e36edBa364406f181fe9B3a4E6FC023DED0bc Zunami USD Aps LP Test zunUSDAPSLPTEST
+VaultStrat strategy deployed to: 0x628Dd59C14CE012C0E2A8AF410cB2767b542B9EB
+Added VaultStrat pool to ZunamiPool
+Set zunami pool address 0x24Df9D9BB4CDD19F0Fb99c8C08631778e4DC18F0 in VaultStrat strategy
