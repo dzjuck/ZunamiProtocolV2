@@ -192,7 +192,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
     ) external onlyRole(RECAPITALIZATION_ROLE) {
         uint256 pid = poolPidByAddress[token];
         PoolInfo memory poolInfo_ = poolInfo[pid];
-        if (amount >= recapitalizedAmounts[pid]) revert WrongAmount();
+        if (amount > recapitalizedAmounts[pid]) revert WrongAmount();
         recapitalizedAmounts[pid] -= amount;
         poolInfo_.token.safeTransferFrom(msg.sender, address(this), amount);
     }
