@@ -9,7 +9,8 @@ import { FakeContract, smock } from '@defi-wonderland/smock';
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 import {
-  IPool,
+  IERC20,
+  IPool, IRewardManager,
 } from '../../typechain-types';
 
 chai.should(); // if you like should syntax
@@ -41,7 +42,7 @@ describe('ZunamiPoolCompoundController', () => {
   let carol: SignerWithAddress;
   let rosa: SignerWithAddress;
 
-  let zunamiPool: MockContract<IPool>;
+  let zunamiPool: FakeContract<IPool>;
   let zunamiController: Contract;
   let rewardTokens: Contract[];
   let dai: Contract;
@@ -153,7 +154,7 @@ describe('ZunamiPoolCompoundController', () => {
 
     const amount = tokenify(300);
     const minted = amount.minus(MINIMUM_LIQUIDITY);
-    await zunamiPool.tokens.returns([dai.address, usdc.address, usdt.address, ethers.constants.AddressZero, ethers.constants.AddressZero]);
+    await zunamiPool.token.returns(dai.address);
     await zunamiPool.deposit.whenCalledWith(sid, tokenBalances, zunamiController.address).returns(amount.toFixed());
     await zunamiPool.balanceOf.whenCalledWith(zunamiController.address).returns(0);
     await zunamiController.deposit(tokenBalances, bob.address);
@@ -175,7 +176,7 @@ describe('ZunamiPoolCompoundController', () => {
       await zunamiController.setDefaultDepositSid(sid);
 
       const deposited = tokenify(300);
-      await zunamiPool.tokens.returns([dai.address, usdc.address, usdt.address, ethers.constants.AddressZero, ethers.constants.AddressZero]);
+      await zunamiPool.token.returns(dai.address);
       await zunamiPool.deposit.whenCalledWith(sid, tokenBalances, zunamiController.address).returns(deposited.toFixed());
       await zunamiPool.balanceOf.whenCalledWith(zunamiController.address).returns(0);
       await zunamiController.deposit(tokenBalances, admin.address);
@@ -187,7 +188,7 @@ describe('ZunamiPoolCompoundController', () => {
       await zunamiController.setDefaultWithdrawSid(sid);
 
       const amount = tokenify(100).toFixed();
-      await zunamiPool.tokens.returns([dai.address, usdc.address, usdt.address, ethers.constants.AddressZero, ethers.constants.AddressZero]);
+      await zunamiPool.token.returns(dai.address);
       await zunamiPool.transferFrom.whenCalledWith(admin.address, zunamiController.address, amount).returns(true);
       await zunamiPool.balanceOf.whenCalledWith(zunamiController.address).returns(deposited.toFixed());
 
@@ -226,9 +227,26 @@ describe('ZunamiPoolCompoundController', () => {
     expect(await zunamiController.paused()).to.be.equal(false);
   });
 
-  it('should be compounded rewards', async () => {
+  it('should be do nothing on compounding if rewards are empty', async () => {
     await expect(await zunamiController.feeDistributor()).to.be.equal(admin.address);
 
+    await expect(
+      zunamiController.connect(bob).autoCompoundAll()
+    ).to.be.revertedWithCustomError(zunamiController,
+      `ZeroFeeTokenAddress`);
+
+    const rewardManager = await smock.fake('IRewardManager') as FakeContract<IRewardManager>;
+    await zunamiController.connect(admin).setRewardManager(rewardManager.address);
+
+    await zunamiPool.token.returns(dai.address);
+    await zunamiController.connect(bob).autoCompoundAll();
+
+    zunamiPool.claimRewards.atCall(0).should.be.calledWith(zunamiController.address, [rewardTokens[0].address, rewardTokens[1].address, rewardTokens[2].address]);
+    zunamiPool.deposit.should.have.callCount(0);
+  });
+
+  it('should be compounded rewards', async () => {
+    await expect(await zunamiController.feeDistributor()).to.be.equal(admin.address);
 
     let tokenBalances = await allowTokensToZunamiController([100, 100, 100, 0, 0]);
 
@@ -237,14 +255,150 @@ describe('ZunamiPoolCompoundController', () => {
     await zunamiPool.strategyCount.returns(sid + 1);
     await zunamiController.setDefaultDepositSid(sid);
 
+    const daiFake = await smock.fake('IERC20') as FakeContract<IERC20>;
+
     const deposited = tokenify(300);
-    await zunamiPool.tokens.returns([dai.address, usdc.address, usdt.address, ethers.constants.AddressZero, ethers.constants.AddressZero]);
+    await zunamiPool.token.returns(daiFake.address);
     await zunamiPool.deposit.whenCalledWith(sid, tokenBalances, zunamiController.address).returns(deposited.toFixed());
     await zunamiPool.balanceOf.whenCalledWith(zunamiController.address).returns(0);
+    await daiFake.transferFrom.whenCalledWith(admin.address, zunamiPool.address, tokenify(100).toFixed()).returns(true);
     await zunamiController.deposit(tokenBalances, admin.address);
 
     expect(await zunamiController.balanceOf(admin.address)).to.be.equal(deposited.minus(MINIMUM_LIQUIDITY).toFixed());
 
+    for (let i = 0; i < rewardTokens.length; i++) {
+      await rewardTokens[i].transfer(zunamiController.address, tokenify(100).toFixed());
+    }
+
+    await expect(
+      zunamiController.connect(bob).autoCompoundAll()
+    ).to.be.revertedWithCustomError(zunamiController,
+      `ZeroRewardManager`);
+
+    const rewardManager = await smock.fake('IRewardManager') as FakeContract<IRewardManager>;
+
+    await zunamiController.connect(admin).setRewardManager(rewardManager.address);
+    await daiFake.balanceOf.returnsAtCall(1, tokenify(150).toFixed());
+    await daiFake.transfer.whenCalledWith(zunamiPool.address, tokenify(150 - 150 * 0.1).toFixed()).returns(true);
     await zunamiController.connect(bob).autoCompoundAll();
+
+    expect(await zunamiController.collectedManagementFee()).to.be.equal(tokenify(150 * 0.1).toFixed());
+
+    zunamiPool.claimRewards.atCall(0).should.be.calledWith(zunamiController.address, [rewardTokens[0].address, rewardTokens[1].address, rewardTokens[2].address]);
+    for (let i = 0; i < rewardTokens.length; i++) {
+      rewardManager.handle.atCall(i).should.be.calledWith(rewardTokens[i].address, tokenify(100).toFixed(), daiFake.address);
+    }
+    zunamiPool.deposit.should.have.callCount(2);
+
+    await daiFake.balanceOf.returns(tokenify(150 * 0.1).toFixed());
+    await daiFake.transfer.whenCalledWith(admin.address, tokenify(150 * 0.1).toFixed()).returns(true);
+
+    await expect(
+      zunamiController.setFeeTokenId(1)
+    ).to.be.revertedWithCustomError(zunamiController,
+      `FeeMustBeWithdrawn`);
+
+    await expect(
+      zunamiController.claimManagementFee()
+    ).to.be.emit(zunamiController, `ClaimedManagementFee`).withArgs(daiFake.address, tokenify(150 * 0.1).toFixed());
+  });
+
+  it('should be set fee token', async () => {
+    await expect(await zunamiController.feeTokenId()).to.be.equal(0);
+
+    await expect(
+      zunamiController.setFeeTokenId(3)
+    ).to.be.revertedWithCustomError(zunamiController,
+      `WrongTokenId`);
+
+    await expect(
+      zunamiController.setFeeTokenId(5 + 1)
+    ).to.be.revertedWithCustomError(zunamiController,
+      `WrongTokenId`);
+
+    await zunamiPool.token.whenCalledWith(3).returns(usdt.address);
+    await zunamiController.setFeeTokenId(3);
+
+    await expect(await zunamiController.feeTokenId()).to.be.equal(3);
+  });
+
+  it('should be set fee distributor', async () => {
+    await expect(await zunamiController.feeDistributor()).to.be.equal(admin.address);
+
+    await expect(
+      zunamiController.connect(bob).setFeeDistributor(bob.address)
+    ).to.be.revertedWithCustomError(zunamiController,
+      `AccessControlUnauthorizedAccount`);
+
+    await expect(
+      zunamiController.connect(admin).setFeeDistributor(ADDRESS_ZERO)
+    ).to.be.revertedWithCustomError(zunamiController,
+      `ZeroAddress`);
+
+    await zunamiController.connect(admin).setFeeDistributor(bob.address);
+
+    await expect(await zunamiController.feeDistributor()).to.be.equal(bob.address);
+  });
+
+  it('should be set management fee', async () => {
+    await expect(await zunamiController.managementFeePercent()).to.be.equal(100);
+
+    await zunamiPool.token.whenCalledWith(0).returns(dai.address);
+
+    await expect(
+      zunamiController.setManagementFeePercent(301)
+    ).to.be.revertedWithCustomError(zunamiController,
+      `WrongFee`);
+
+    const rewardManager = await smock.fake('IRewardManager') as FakeContract<IRewardManager>;
+    await zunamiController.connect(admin).setRewardManager(rewardManager.address);
+
+    await zunamiController.setManagementFeePercent(50);
+
+    await expect(await zunamiController.managementFeePercent()).to.be.equal(50);
+  });
+
+  it('should be calculate compound controller token price', async () => {
+    // zero supply should revert
+    await expect(
+      zunamiController.tokenPrice()
+    ).to.be.reverted;
+
+    let tokenBalances = await allowTokensToZunamiController([100, 100, 100, 0, 0]);
+
+    const sid = 1;
+
+    await zunamiPool.strategyCount.returns(sid + 1);
+    await zunamiController.setDefaultDepositSid(sid);
+
+    const amount = tokenify(300);
+    const minted = amount.minus(MINIMUM_LIQUIDITY);
+    await zunamiPool.token.returns(dai.address);
+    await zunamiPool.deposit.whenCalledWith(sid, tokenBalances, zunamiController.address).returns(amount.toFixed());
+    await zunamiPool.balanceOf.whenCalledWith(zunamiController.address).returns(0);
+    await zunamiController.deposit(tokenBalances, bob.address);
+
+    expect(await zunamiController.balanceOf(bob.address)).to.be.equal(minted.toFixed());
+
+    // total supply == deposited amount
+    await zunamiPool.totalDeposited.returns(amount.toFixed());
+
+    await expect(
+      await zunamiController.tokenPrice()
+    ).to.be.equal(tokenify(1).toFixed());
+
+    // total supply == deposited amount * 2
+    await zunamiPool.totalDeposited.returns(amount.dividedBy(2).toFixed());
+
+    await expect(
+      await zunamiController.tokenPrice()
+    ).to.be.equal(tokenify(1).dividedBy(2).toFixed());
+
+    // total supply * 2 == deposited amount
+    await zunamiPool.totalDeposited.returns(amount.multipliedBy(2).toFixed());
+
+    await expect(
+      await zunamiController.tokenPrice()
+    ).to.be.equal(tokenify(1).multipliedBy(2).toFixed());
   });
 });

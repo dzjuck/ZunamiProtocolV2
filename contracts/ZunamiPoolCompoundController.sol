@@ -13,6 +13,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
 
     error WrongFee();
     error WrongTokenId(uint256 tid);
+    error ZeroTokenById(uint256 tid);
     error FeeMustBeWithdrawn();
     error ZeroFeeTokenAddress();
 
@@ -32,7 +33,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     IRewardManager public rewardManager;
 
     event ManagementFeePercentSet(uint256 oldManagementFee, uint256 newManagementFee);
-    event FeeDistributorChanged(address oldFeeDistributor, address newFeeDistributor);
+    event FeeDistributorSet(address oldFeeDistributor, address newFeeDistributor);
     event SetFeeTokenId(uint256 tid);
     event SetRewardManager(address rewardManager);
     event ClaimedManagementFee(address feeToken, uint256 feeValue);
@@ -65,20 +66,22 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     }
 
     function setFeeTokenId(uint256 _tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_tokenId >= pool.tokens().length) revert WrongTokenId(_tokenId);
+        if (_tokenId >= pool.tokens().length ||
+            address(pool.token(_tokenId)) == address(0)) revert WrongTokenId(_tokenId);
         if (collectedManagementFee != 0) revert FeeMustBeWithdrawn();
 
         feeTokenId = _tokenId;
         emit SetFeeTokenId(_tokenId);
     }
 
-    function changeFeeDistributor(address _feeDistributor) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        emit FeeDistributorChanged(feeDistributor, _feeDistributor);
+    function setFeeDistributor(address _feeDistributor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_feeDistributor == address(0)) revert ZeroAddress();
+        emit FeeDistributorSet(feeDistributor, _feeDistributor);
         feeDistributor = _feeDistributor;
     }
 
     function claimManagementFee() external nonReentrant {
-        IERC20 feeToken_ = IERC20(pool.tokens()[feeTokenId]);
+        IERC20 feeToken_ = IERC20(pool.token(feeTokenId));
         if(address(feeToken_) == address(0)) revert ZeroFeeTokenAddress();
 
         uint256 collectedManagementFee_ = collectedManagementFee;
@@ -99,13 +102,14 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     function autoCompoundAll() public whenNotPaused nonReentrant {
         claimPoolRewards(address(this));
 
-        if(sellRewards() == 0) return;
-
-        IERC20 feeToken = pool.tokens()[feeTokenId];
+        IERC20 feeToken = pool.token(feeTokenId);
         if(address(feeToken) == address(0)) revert ZeroFeeTokenAddress();
 
+        uint256 received = sellRewards(feeToken);
+        if(received == 0) return;
+
         uint256[POOL_ASSETS] memory amounts;
-        amounts[feeTokenId] = feeToken.balanceOf(address(this)) - collectedManagementFee;
+        amounts[feeTokenId] = received;
         feeToken.safeTransfer(address(pool), amounts[feeTokenId]);
 
         uint256 depositedValue = pool.deposit(defaultDepositSid, amounts, address(this));
@@ -113,12 +117,10 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
         emit AutoCompoundedAll(depositedValue);
     }
 
-    function sellRewards() internal virtual returns(uint256 received) {
-        IERC20 feeToken = pool.tokens()[feeTokenId];
-        if(address(feeToken) == address(0)) revert ZeroFeeTokenAddress();
-
-        received = _sellRewards(rewardManager, feeToken);
+    function sellRewards(IERC20 feeToken) internal virtual returns(uint256) {
+        uint256 received = _sellRewards(rewardManager, feeToken);
         collectedManagementFee += calcManagementFee(received);
+        return received - collectedManagementFee;
     }
 
     function calcManagementFee(uint256 amount) internal view returns (uint256) {
@@ -126,7 +128,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     }
 
     function tokenPrice() public view returns (uint256) {
-        return calcTokenPrice(pool.totalHoldings(), totalSupply());
+        return calcTokenPrice(pool.totalDeposited(), totalSupply());
     }
 
     function calcTokenPrice(uint256 _holdings, uint256 _tokens) public pure returns (uint256) {

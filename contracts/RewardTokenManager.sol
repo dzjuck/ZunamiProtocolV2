@@ -9,6 +9,7 @@ abstract contract RewardTokenManager {
     using SafeERC20 for IERC20;
 
     error WrongRewardTokens(IERC20[] rewardTokens);
+    error ZeroRewardManager();
     error ZeroTokenAddress(uint256 index);
 
     IERC20[] public rewardTokens;
@@ -30,6 +31,8 @@ abstract contract RewardTokenManager {
         IRewardManager rewardManager,
         IERC20 feeToken
     ) internal returns (uint256) {
+        if(address(rewardManager) == address(0)) revert ZeroRewardManager();
+
         uint256 rewardsLength_ = rewardTokens.length;
         uint256[] memory rewardBalances = new uint256[](rewardsLength_);
         bool allRewardsEmpty = true;

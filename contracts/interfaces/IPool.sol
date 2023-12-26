@@ -65,6 +65,8 @@ interface IPool is IERC20 {
 
     function totalHoldings() external view returns (uint256);
 
+    function totalDeposited() external view returns (uint256);
+
     function strategyCount() external view returns (uint256);
 
     function deposit(
