@@ -9,7 +9,7 @@ async function main() {
     console.log('Deploy zunUSD APS pool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPool');
     const zunamiPool = await ZunamiPool.deploy('Zunami USD Aps Test', 'zunUSDAPSTEST');
-    // const zunamiPool = await Zunami.attach(''); // test
+    // const zunamiPool = await ZunamiPool.attach('');
     await zunamiPool.deployed();
     console.log('ZunamiPool:', zunamiPool.address);
 
@@ -27,6 +27,9 @@ async function main() {
     const zunamiPoolController = await ZunamiPoolCompoundController.deploy(zunamiPool.address, 'Zunami USD Aps LP Test', 'zunUSDAPSLPTEST');
     await zunamiPoolController.deployed();
     console.log('ZunamiPoolController:', zunamiPoolController.address, await zunamiPoolController.name(), await zunamiPoolController.symbol());
+
+    await zunamiPool.grantRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address);
+    console.log('ZunamiPoolController granted CONTROLLER_ROLE:', await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address));
 
     const stratName = 'VaultStrat';
     const VaultStratFactory = await ethers.getContractFactory(stratName);
