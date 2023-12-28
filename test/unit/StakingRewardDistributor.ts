@@ -114,6 +114,63 @@ describe('StakingRewardDistributor tests', () => {
         };
     }
 
+    it('add pool when two reward tokens exist', async () => {
+        const { stakingRewardDistributor, REWARD, REWARD2, ZUN, vlZUN } = await loadFixture(
+            deployFixture
+        );
+
+        // add reward tokens
+        const tid1 = 0;
+        await stakingRewardDistributor.addRewardToken(REWARD.address);
+        const tid2 = 1;
+        await stakingRewardDistributor.addRewardToken(REWARD2.address);
+
+        const pid = 0;
+        await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true);
+
+        expect(await stakingRewardDistributor.poolCount()).to.eq(1);
+
+        const [poolInfo] = await stakingRewardDistributor.getAllPools();
+        expect(poolInfo.token).to.eq(ZUN.address);
+        expect(poolInfo.stakingToken).to.eq(vlZUN.address);
+        expect(poolInfo.allocPoint).to.eq(100);
+        expect(poolInfo.accRewardsPerShare.length).to.eq(2);
+        expect(poolInfo.lastRewardBlocks.length).to.eq(2);
+    });
+
+    it('the new added reward token takes into account in the pool', async () => {
+        const { stakingRewardDistributor, REWARD, REWARD2, ZUN, vlZUN } = await loadFixture(
+            deployFixture
+        );
+
+        // deploy test ERC20 token
+        const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
+        const REWARD3 = (await ERC20TokenFactory.deploy(18)) as ERC20;
+
+        // add reward tokens
+        const tid1 = 0;
+        await stakingRewardDistributor.addRewardToken(REWARD.address);
+        const tid2 = 1;
+        await stakingRewardDistributor.addRewardToken(REWARD2.address);
+
+        // add a pool
+        const pid = 0;
+        await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true);
+
+        // add the new reward token
+        const tid3 = 2;
+        await stakingRewardDistributor.addRewardToken(REWARD3.address);
+
+        // check that the new added reward token takes into account in the pool
+        const [poolInfo] = await stakingRewardDistributor.getAllPools();
+        expect(poolInfo.token).to.eq(ZUN.address);
+        expect(poolInfo.stakingToken).to.eq(vlZUN.address);
+        expect(poolInfo.allocPoint).to.eq(100);
+        expect(poolInfo.accRewardsPerShare.length).to.eq(3);
+        expect(poolInfo.lastRewardBlocks.length).to.eq(3);
+        expect(await stakingRewardDistributor.poolCount()).to.eq(1);
+    });
+
     it('reallocate single pool', async () => {
         const fixture = await loadFixture(deployFixture);
 
@@ -694,8 +751,7 @@ describe('StakingRewardDistributor tests', () => {
         expect(await stakingRewardDistributor.recapitalizedAmounts(pid)).to.eq(ethUnits(0));
     });
 
-    // TODO: exception araised because of a bug with reward token addition after pool
-    it.skip('withdraw ajusted amount of tokens because of recapitalization', async () => {
+    it('withdraw ajusted amount of tokens because of recapitalization', async () => {
         const fixture = await loadFixture(deployFixture);
 
         const depositAmount1 = 1000;

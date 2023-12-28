@@ -131,6 +131,12 @@ contract StakingRewardDistributor is
         );
         rewardTokenTidByAddress[address(_token)] = tid;
 
+        uint256 length = poolInfo.length;
+        for (uint256 pid; pid < length; ++pid) {
+            poolInfo[pid].lastRewardBlocks.push(0);
+            poolInfo[pid].accRewardsPerShare.push(0);
+        }
+
         emit RewardTokenAdded(address(_token), tid);
     }
 
