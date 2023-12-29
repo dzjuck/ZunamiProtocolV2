@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '../../../../../../utils/Constants.sol';
+import '../../../../../utils/Constants.sol';
 import './FraxApsConvexCurveStratBase.sol';
 
 contract ZunUsdFraxApsConvexCurveStrat is FraxApsConvexCurveStratBase {

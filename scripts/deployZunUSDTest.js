@@ -45,7 +45,10 @@ async function main() {
     console.log('ZunamiPoolController:', zunamiPoolController.address);
 
     await zunamiPool.grantRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address);
-    console.log('ZunamiPoolController granted CONTROLLER_ROLE:', await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address));
+    console.log(
+        'ZunamiPoolController granted CONTROLLER_ROLE:',
+        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    );
 
     const stratName = 'VaultStrat';
     const VaultStratFactory = await ethers.getContractFactory(stratName);

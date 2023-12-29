@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '../interfaces/IPool.sol';
 import './IStakingRewardDistributor.sol';
 import '../RewardTokenManager.sol';
-import {AccessControl2RolesValuation} from "../AccessControl2RolesValuation.sol";
+import { AccessControl2RolesValuation } from '../AccessControl2RolesValuation.sol';
 
 contract RecapitalizationManager is AccessControl2RolesValuation, RewardTokenManager {
     using SafeERC20 for IERC20;
@@ -70,7 +70,9 @@ contract RecapitalizationManager is AccessControl2RolesValuation, RewardTokenMan
             token_ = rewardTokens[i];
             if (address(token_) == address(0)) break;
             transferAmount = token_.balanceOf(address(this));
-            if (transferAmount > 0 && stakingRewardDistributor.isRewardTokenAdded(address(token_))) {
+            if (
+                transferAmount > 0 && stakingRewardDistributor.isRewardTokenAdded(address(token_))
+            ) {
                 token_.safeIncreaseAllowance(address(stakingRewardDistributor), transferAmount);
                 uint256 tid = stakingRewardDistributor.rewardTokenTidByAddress(address(token_));
                 stakingRewardDistributor.distribute(tid, transferAmount);
@@ -115,7 +117,7 @@ contract RecapitalizationManager is AccessControl2RolesValuation, RewardTokenMan
     ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         _sellRewards(rewardManager, zunToken);
         uint256 zunTokenBalance = zunToken.balanceOf(address(this));
-//        zunToken.safeIncreaseAllowance(address(stakingRewardDistributor), zunTokenBalance);
+        //        zunToken.safeIncreaseAllowance(address(stakingRewardDistributor), zunTokenBalance);
         stakingRewardDistributor.returnPoolToken(address(zunToken), zunTokenBalance);
 
         distributionBlock = block.number;

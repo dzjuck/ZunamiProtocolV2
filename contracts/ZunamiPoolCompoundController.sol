@@ -66,8 +66,8 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     }
 
     function setFeeTokenId(uint256 _tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_tokenId >= pool.tokens().length ||
-            address(pool.token(_tokenId)) == address(0)) revert WrongTokenId(_tokenId);
+        if (_tokenId >= pool.tokens().length || address(pool.token(_tokenId)) == address(0))
+            revert WrongTokenId(_tokenId);
         if (collectedManagementFee != 0) revert FeeMustBeWithdrawn();
 
         feeTokenId = _tokenId;
@@ -82,7 +82,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
 
     function claimManagementFee() external nonReentrant {
         IERC20 feeToken_ = IERC20(pool.token(feeTokenId));
-        if(address(feeToken_) == address(0)) revert ZeroFeeTokenAddress();
+        if (address(feeToken_) == address(0)) revert ZeroFeeTokenAddress();
 
         uint256 collectedManagementFee_ = collectedManagementFee;
         uint256 feeTokenBalance = feeToken_.balanceOf(address(this));
@@ -103,10 +103,10 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
         claimPoolRewards(address(this));
 
         IERC20 feeToken = pool.token(feeTokenId);
-        if(address(feeToken) == address(0)) revert ZeroFeeTokenAddress();
+        if (address(feeToken) == address(0)) revert ZeroFeeTokenAddress();
 
         uint256 received = sellRewards(feeToken);
-        if(received == 0) return;
+        if (received == 0) return;
 
         uint256[POOL_ASSETS] memory amounts;
         amounts[feeTokenId] = received;
@@ -117,7 +117,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
         emit AutoCompoundedAll(depositedValue);
     }
 
-    function sellRewards(IERC20 feeToken) internal virtual returns(uint256) {
+    function sellRewards(IERC20 feeToken) internal virtual returns (uint256) {
         uint256 received = _sellRewards(rewardManager, feeToken);
         collectedManagementFee += calcManagementFee(received);
         return received - collectedManagementFee;

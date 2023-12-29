@@ -96,25 +96,25 @@ describe('ZunETH flow tests', () => {
             await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
             for (let i = 0; i < 2; i++) {
-              for (const user of [admin, alice, bob]) {
-                const wEthBefore = await wEth.balanceOf(user.getAddress());
-                const frxEthBefore = await frxEth.balanceOf(user.getAddress());
-                const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
+                for (const user of [admin, alice, bob]) {
+                    const wEthBefore = await wEth.balanceOf(user.getAddress());
+                    const frxEthBefore = await frxEth.balanceOf(user.getAddress());
+                    const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
 
-                await expect(
-                  zunamiPoolController
-                    .connect(user)
-                    .deposit(getMinAmountZunETH('10'), await user.getAddress())
-                ).to.emit(zunamiPool, 'Deposited');
+                    await expect(
+                        zunamiPoolController
+                            .connect(user)
+                            .deposit(getMinAmountZunETH('10'), await user.getAddress())
+                    ).to.emit(zunamiPool, 'Deposited');
 
-                expect(await wEth.balanceOf(user.getAddress())).to.lt(wEthBefore);
-                expect(await frxEth.balanceOf(user.getAddress())).to.lt(frxEthBefore);
-                const stableDiff = (await zunamiPool.balanceOf(user.getAddress())).sub(zStableBefore);
-                expect(stableDiff).to.gt(0);
-                expect(stableDiff).to.gt(
-                  '1999999999900000000'
-                );
-              }
+                    expect(await wEth.balanceOf(user.getAddress())).to.lt(wEthBefore);
+                    expect(await frxEth.balanceOf(user.getAddress())).to.lt(frxEthBefore);
+                    const stableDiff = (await zunamiPool.balanceOf(user.getAddress())).sub(
+                        zStableBefore
+                    );
+                    expect(stableDiff).to.gt(0);
+                    expect(stableDiff).to.gt('1999999999900000000');
+                }
             }
         }
     });
@@ -142,9 +142,7 @@ describe('ZunETH flow tests', () => {
 
                 const stableDiff = stableAmount.sub(stableBefore);
                 expect(stableDiff).to.gt(0);
-                expect(stableDiff).to.gt(
-                  '1999999999900000000'
-                );
+                expect(stableDiff).to.gt('1999999999900000000');
 
                 await zunamiPool.connect(user).approve(zunamiPoolController.address, stableAmount);
 
@@ -240,7 +238,9 @@ describe('ZunETH flow tests', () => {
         );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
-        await expect(zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst, [[0,0,0,0,0]]));
+        await expect(
+            zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst, [[0, 0, 0, 0, 0]])
+        );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
 
@@ -253,7 +253,9 @@ describe('ZunETH flow tests', () => {
             (await zunamiPool.strategyInfo(poolDst)).minted
         );
 
-        await expect(zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc,[[0,0,0,0,0]]));
+        await expect(
+            zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc, [[0, 0, 0, 0, 0]])
+        );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
 

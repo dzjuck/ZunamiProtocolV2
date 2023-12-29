@@ -10,17 +10,21 @@ async function main() {
     await zunamiPool.deployed();
     console.log('ZunamiPool:', zunamiPool.address);
 
-    const ZunamiPoolController = await ethers.getContractFactory(
-        'ZunamiPoolThroughController'
-    );
+    const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolThroughController');
 
     const zunamiPoolController = await ZunamiPoolController.attach(controllerAddr);
     await zunamiPoolController.deployed();
     console.log('ZunamiPoolController:', zunamiPoolController.address);
 
-    const tx = await zunamiPool.grantRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address);
+    const tx = await zunamiPool.grantRole(
+        await zunamiPool.CONTROLLER_ROLE(),
+        zunamiPoolController.address
+    );
     await tx.wait();
-    console.log('ZunamiPoolController granted CONTROLLER_ROLE:', await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address));
+    console.log(
+        'ZunamiPoolController granted CONTROLLER_ROLE:',
+        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    );
 }
 
 main()

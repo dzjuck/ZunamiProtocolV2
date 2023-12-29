@@ -28,8 +28,10 @@ library Constants {
     address internal constant ETH_frxETH_ADDRESS = 0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577;
     address internal constant ETH_frxETH_LP_ADDRESS = 0xf43211935C781D5ca1a41d2041F397B8A7366C7A;
 
-    address internal constant CRV_FRAX_USDC_POOL_ADDRESS = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
-    address internal constant CRV_FRAX_USDC_POOL_LP_ADDRESS = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
+    address internal constant CRV_FRAX_USDC_POOL_ADDRESS =
+        0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
+    address internal constant CRV_FRAX_USDC_POOL_LP_ADDRESS =
+        0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
 
     address internal constant SDT_CRVUSD_USDT_VAULT_ADDRESS =
         0x37b24ac19504C0c6FC1ADc8deb5D24f5C4F6A2f2;

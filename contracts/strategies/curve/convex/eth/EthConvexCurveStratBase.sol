@@ -50,7 +50,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     }
 
     function setNativeConverter(address nativeConverterAddr) external onlyOwner {
-        if(address(nativeConverterAddr) == address(0)) revert ZeroAddress();
+        if (address(nativeConverterAddr) == address(0)) revert ZeroAddress();
         nativeConverter = INativeConverter(nativeConverterAddr);
         emit SetNativeConverter(nativeConverterAddr);
     }

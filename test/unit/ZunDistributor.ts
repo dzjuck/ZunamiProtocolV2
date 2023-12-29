@@ -6,13 +6,13 @@ import { expect } from 'chai';
 import { FakeContract, smock } from '@defi-wonderland/smock';
 
 import {
-  ERC20,
-  ERC20Votes,
-  ZunDistributor,
-  ApproveGauge,
-  TransferGauge,
-  StakingRewardDistributorGauge,
-  StakingRewardDistributor,
+    ERC20,
+    ERC20Votes,
+    ZunDistributor,
+    ApproveGauge,
+    TransferGauge,
+    StakingRewardDistributorGauge,
+    StakingRewardDistributor,
 } from '../../typechain-types';
 
 describe('ZunDistributor tests', () => {
@@ -46,13 +46,17 @@ describe('ZunDistributor tests', () => {
             transferGaugeRec.address
         )) as TransferGauge;
 
-        const stakingRewardDistributor = await smock.fake('IStakingRewardDistributor') as FakeContract<IStakingRewardDistributor>;
+        const stakingRewardDistributor = (await smock.fake(
+            'IStakingRewardDistributor'
+        )) as FakeContract<IStakingRewardDistributor>;
 
-        const StakingRewardDistributorGaugeFactory = await ethers.getContractFactory('StakingRewardDistributorGauge');
+        const StakingRewardDistributorGaugeFactory = await ethers.getContractFactory(
+            'StakingRewardDistributorGauge'
+        );
         const stakingRewardDistributorGauge = (await StakingRewardDistributorGaugeFactory.deploy(
-          ZUN.address,
-          stakingRewardDistributor.address,
-          0
+            ZUN.address,
+            stakingRewardDistributor.address,
+            0
         )) as StakingRewardDistributorGauge;
 
         const addedGauge = (await TransferGaugeFactory.deploy(
@@ -667,21 +671,21 @@ describe('ZunDistributor tests', () => {
     });
 
     it('withdraw stuck token approve gauge', async () => {
-      const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
-        await loadFixture(deployFixture);
+        const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
+            await loadFixture(deployFixture);
 
-      await expect(approveGauge.withdrawStuckToken(ZUN.address)).to.be.revertedWithCustomError(
-        approveGauge,
-        'OwnableUnauthorizedAccount'
-      );
+        await expect(approveGauge.withdrawStuckToken(ZUN.address)).to.be.revertedWithCustomError(
+            approveGauge,
+            'OwnableUnauthorizedAccount'
+        );
 
-      await ZUN.transfer(approveGauge.address, parseUnits('32000000', 'ether'));
-      expect(await ZUN.balanceOf(approveGauge.address)).to.eq(parseUnits('32000000', 'ether'));
+        await ZUN.transfer(approveGauge.address, parseUnits('32000000', 'ether'));
+        expect(await ZUN.balanceOf(approveGauge.address)).to.eq(parseUnits('32000000', 'ether'));
 
-      expect(await ZUN.balanceOf(dao.address)).to.eq(0);
-      await approveGauge.connect(dao).withdrawStuckToken(ZUN.address);
+        expect(await ZUN.balanceOf(dao.address)).to.eq(0);
+        await approveGauge.connect(dao).withdrawStuckToken(ZUN.address);
 
-      expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
+        expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
     });
 
     it('vote/distribute before start block', async () => {

@@ -31,7 +31,7 @@ abstract contract RewardTokenManager {
         IRewardManager rewardManager,
         IERC20 feeToken
     ) internal returns (uint256) {
-        if(address(rewardManager) == address(0)) revert ZeroRewardManager();
+        if (address(rewardManager) == address(0)) revert ZeroRewardManager();
 
         uint256 rewardsLength_ = rewardTokens.length;
         uint256[] memory rewardBalances = new uint256[](rewardsLength_);

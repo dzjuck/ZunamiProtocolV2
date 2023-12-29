@@ -7,7 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
-import "./AccessControl2RolesValuation.sol";
+import './AccessControl2RolesValuation.sol';
 
 /**
  *
@@ -48,8 +48,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
     }
 
     function _checkStrategyEnabled(uint256 sid) internal view {
-        if (!_strategyInfo[sid].enabled)
-            revert DisabledStrategy(sid);
+        if (!_strategyInfo[sid].enabled) revert DisabledStrategy(sid);
     }
 
     function _decimalsOffset() internal view virtual returns (uint8) {
@@ -72,10 +71,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         return _decimalsMultipliers;
     }
 
-    function _setTokens(
-        address[] memory tokens_,
-        uint256[] memory decimalMultipliers_
-    ) internal {
+    function _setTokens(address[] memory tokens_, uint256[] memory decimalMultipliers_) internal {
         if (tokens_.length != decimalMultipliers_.length || tokens_.length > POOL_ASSETS)
             revert WrongLength();
 
@@ -143,12 +139,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         uint256 sid,
         uint256[POOL_ASSETS] memory amounts,
         address receiver
-    )
-        external
-        whenNotPaused
-        onlyRole(CONTROLLER_ROLE)
-        returns (uint256)
-    {
+    ) external whenNotPaused onlyRole(CONTROLLER_ROLE) returns (uint256) {
         _checkStrategyExisted(sid);
         _checkStrategyStarted(sid);
         _checkStrategyEnabled(sid);
@@ -165,12 +156,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
     function depositStrategy(
         uint256 sid,
         uint256[POOL_ASSETS] memory amounts
-    )
-        external
-        whenNotPaused
-        onlyRole(CONTROLLER_ROLE)
-        returns (uint256)
-    {
+    ) external whenNotPaused onlyRole(CONTROLLER_ROLE) returns (uint256) {
         _checkStrategyExisted(sid);
         _checkStrategyStarted(sid);
 
@@ -353,13 +339,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
             stableAmount = (_strategyInfo[sid].minted * withdrawPercent) / FUNDS_DENOMINATOR;
             _strategyInfo[sid].minted -= stableAmount;
 
-            if (
-                !_strategyInfo[sid].strategy.withdraw(
-                    address(this),
-                    withdrawPercent,
-                    minAmounts
-                )
-            ) revert WrongWithdrawParams(sid);
+            if (!_strategyInfo[sid].strategy.withdraw(address(this), withdrawPercent, minAmounts))
+                revert WrongWithdrawParams(sid);
         }
 
         return stableAmount;
@@ -373,7 +354,9 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         emit EnabledStrategy(address(_strategyInfo[_sid].strategy));
     }
 
-    function disableStrategy(uint256 _sid) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
+    function disableStrategy(
+        uint256 _sid
+    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
         if (_sid >= _strategyInfo.length) revert IncorrectSid();
 
         _strategyInfo[_sid].enabled = false;

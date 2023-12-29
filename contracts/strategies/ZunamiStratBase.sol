@@ -64,7 +64,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         return calcLiquidityValue(getLiquidityBalance());
     }
 
-    function getLiquidityBalance() internal view virtual returns (uint256){
+    function getLiquidityBalance() internal view virtual returns (uint256) {
         return depositedLiquidity;
     }
 
@@ -124,14 +124,19 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         bool removeAll
     ) internal virtual;
 
-    function claimRewards(address receiver, IERC20[] memory rewardTokens) public virtual onlyZunamiPool {
+    function claimRewards(
+        address receiver,
+        IERC20[] memory rewardTokens
+    ) public virtual onlyZunamiPool {
         claimCollectedRewards();
         transferTokensOut(rewardTokens, receiver, fillArrayN(0, rewardTokens.length));
     }
 
     function claimCollectedRewards() internal virtual {}
 
-    function withdrawAll(uint256[POOL_ASSETS] memory minTokenAmounts) external virtual onlyZunamiPool {
+    function withdrawAll(
+        uint256[POOL_ASSETS] memory minTokenAmounts
+    ) external virtual onlyZunamiPool {
         removeLiquidity(depositedLiquidity, minTokenAmounts, true);
         depositedLiquidity = 0;
         transferTokensOut(convertTokensToDynamic(tokens), _msgSender(), fillArrayN(0, POOL_ASSETS));

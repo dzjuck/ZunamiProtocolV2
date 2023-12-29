@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '../../../../../../utils/Constants.sol';
-import "../../../../../../interfaces/IController.sol";
-import '../../../../../../interfaces/IStableConverter.sol';
-import '../../../ConvexCurveStratBase.sol';
+import '../../../../../utils/Constants.sol';
+import '../../../../../interfaces/IController.sol';
+import '../../../../../interfaces/IStableConverter.sol';
+import '../../ConvexCurveStratBase.sol';
 
 contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
     using SafeERC20 for IERC20;
@@ -16,7 +16,6 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
 
     uint128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID = 1;
     int128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID_INT = int128(CRVUSD_TOKEN_POOL_CRVUSD_ID);
-
 
     IController public immutable zunamiController;
     IERC20 public immutable zunamiStable;
@@ -61,7 +60,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
     }
 
     function setStableConverter(address stableConverterAddr) external onlyOwner {
-        if(address(stableConverterAddr) == address(0)) revert ZeroAddress();
+        if (address(stableConverterAddr) == address(0)) revert ZeroAddress();
         stableConverter = IStableConverter(stableConverterAddr);
         emit SetStableConverter(stableConverterAddr);
     }
@@ -69,10 +68,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
     function convertCurvePoolTokenAmounts(
         uint256[5] memory amounts
     ) internal pure override returns (uint256[2] memory amounts2) {
-        return [
-            amounts[ZUNAMI_ZUNUSD_TOKEN_ID],
-            0
-        ];
+        return [amounts[ZUNAMI_ZUNUSD_TOKEN_ID], 0];
     }
 
     function convertAndApproveTokens(
@@ -116,7 +112,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
         IERC20 usdc = IERC20(Constants.USDC_ADDRESS);
 
         usdc.safeIncreaseAllowance(address(zunamiController), usdcAmount);
-        uint256 zunStableAmount = zunamiController.deposit([0,usdcAmount,0,0,0], address(this));
+        uint256 zunStableAmount = zunamiController.deposit([0, usdcAmount, 0, 0, 0], address(this));
 
         uint256[2] memory amounts2;
         amounts2[CRVUSD_TOKEN_POOL_TOKEN_ID] = zunStableAmount;
@@ -124,7 +120,6 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
 
         uint256 poolTokenAmount = depositCurve(amounts2);
         depositBooster(poolTokenAmount);
-
     }
 
     function deflate(uint256 ratioOfCrvLps, uint256 minDeflateAmount) external onlyOwner {
@@ -139,11 +134,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
         );
 
         zunamiStable.safeIncreaseAllowance(address(zunamiController), tokenAmount);
-        zunamiController.withdraw(
-            tokenAmount,
-            [uint256(0), 0, 0, 0, 0],
-            address(this)
-        );
+        zunamiController.withdraw(tokenAmount, [uint256(0), 0, 0, 0, 0], address(this));
 
         IERC20 dai = IERC20(Constants.DAI_ADDRESS);
         IERC20 usdc = IERC20(Constants.USDC_ADDRESS);

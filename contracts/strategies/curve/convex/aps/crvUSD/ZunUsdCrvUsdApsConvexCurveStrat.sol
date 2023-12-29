@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import '../../../../../../utils/Constants.sol';
+import '../../../../../utils/Constants.sol';
 import './CrvUsdApsConvexCurveStratBase.sol';
 
 contract ZunUsdCrvUsdApsConvexCurveStrat is CrvUsdApsConvexCurveStratBase {
     constructor()
-    CrvUsdApsConvexCurveStratBase(
+        CrvUsdApsConvexCurveStratBase(
             [
                 IERC20(Constants.zunUSD_ADDRESS),
                 IERC20(address(0)),

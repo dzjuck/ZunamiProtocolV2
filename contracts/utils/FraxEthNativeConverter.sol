@@ -73,11 +73,11 @@ contract FraxEthNativeConverter is INativeConverter {
         int128 j = buyToken ? ETH_frxETH_POOL_frxETH_ID : ETH_frxETH_POOL_ETH_ID;
         valuation = fraxEthPool.get_dy(i, j, amount);
 
-        if(valuation < applySlippage(amount, 0)) revert BrokenSlippage();
+        if (valuation < applySlippage(amount, 0)) revert BrokenSlippage();
     }
 
     function applySlippage(uint256 amount, uint256 slippage) internal pure returns (uint256) {
-        if(slippage > SLIPPAGE_DENOMINATOR) revert WrongSlippage();
+        if (slippage > SLIPPAGE_DENOMINATOR) revert WrongSlippage();
         if (slippage == 0) slippage = defaultSlippage;
         return (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
     }

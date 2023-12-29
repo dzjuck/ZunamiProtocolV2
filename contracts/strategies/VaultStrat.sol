@@ -86,9 +86,9 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             token_ = tokens[i];
             if (address(token_) == address(0)) break;
-            transferAmountOut = userDepositRatio == RATIO_MULTIPLIER ?
-                depositedTokens[i] :
-                (depositedTokens[i] * userDepositRatio) / RATIO_MULTIPLIER;
+            transferAmountOut = userDepositRatio == RATIO_MULTIPLIER
+                ? depositedTokens[i]
+                : (depositedTokens[i] * userDepositRatio) / RATIO_MULTIPLIER;
             if (transferAmountOut > 0) {
                 depositedTokens[i] -= transferAmountOut;
                 token_.safeTransfer(receiver, transferAmountOut);

@@ -21,8 +21,8 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         address vaultAddr,
         address vaultAssetAddr
     ) ZunamiStratBase(tokens_, tokenDecimalsMultipliers_) {
-        if(address(vaultAddr) == address(0)) revert ZeroAddress();
-        if(address(vaultAssetAddr) == address(0)) revert ZeroAddress();
+        if (address(vaultAddr) == address(0)) revert ZeroAddress();
+        if (address(vaultAssetAddr) == address(0)) revert ZeroAddress();
         vault = IERC4626(vaultAddr);
         vaultAsset = IERC20(vaultAssetAddr);
     }
@@ -82,7 +82,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
 
     function claimRewards(address receiver, IERC20[] memory) public override onlyZunamiPool {
         uint256 redeemableAssets = vault.previewRedeem(depositedLiquidity);
-        if(redeemableAssets > depositedAssets) {
+        if (redeemableAssets > depositedAssets) {
             uint256 withdrawAssets = redeemableAssets - depositedAssets;
             uint256 withdrawnShares = vault.withdraw(withdrawAssets, receiver, address(this));
             depositedLiquidity -= withdrawnShares;

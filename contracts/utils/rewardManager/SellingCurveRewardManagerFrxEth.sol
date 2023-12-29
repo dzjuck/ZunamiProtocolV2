@@ -117,8 +117,7 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 answer, , uint256 updatedAt, ) = oracle.latestRoundData();
             require(block.timestamp - updatedAt <= STALE_DELAY, 'Oracle stale');
 
-            wethAmountByOracle = uint256(answer) * amount / (10 ** oracle
-                .decimals());
+            wethAmountByOracle = (uint256(answer) * amount) / (10 ** oracle.decimals());
         } else {
             AggregatorV2V3Interface rewardOracle = AggregatorV2V3Interface(
                 rewardUsdChainlinkOracles[reward]
@@ -131,17 +130,12 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
             (, int256 ethAnswer, , uint256 ethUpdatedAt, ) = ethOracle.latestRoundData();
             require(block.timestamp - ethUpdatedAt <= STALE_DELAY, 'Oracle eth stale');
 
-            wethAmountByOracle =
-                (uint256(rewardAnswer) * amount) /
-                uint256(ethAnswer);
+            wethAmountByOracle = (uint256(rewardAnswer) * amount) / uint256(ethAnswer);
         }
 
         uint256 wethAmountByOracleWithSlippage = (wethAmountByOracle *
             (SLIPPAGE_DENOMINATOR - defaultSlippage)) / SLIPPAGE_DENOMINATOR;
 
-        require(
-            wethAmount >= wethAmountByOracleWithSlippage,
-            'Wrong slippage'
-        );
+        require(wethAmount >= wethAmountByOracleWithSlippage, 'Wrong slippage');
     }
 }

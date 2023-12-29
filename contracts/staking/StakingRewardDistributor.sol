@@ -3,14 +3,19 @@ pragma solidity ^0.8.20;
 
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
 import './IERC20Supplied.sol';
 import './IStakingRewardDistributor.sol';
 
-contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract StakingRewardDistributor is
+    IStakingRewardDistributor,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     using SafeERC20 for IERC20;
 
     error WrongAmount();
@@ -105,7 +110,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE)  {}
+    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function version() public pure returns (uint256) {
         return 1;
@@ -118,7 +123,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
     }
 
     function addRewardToken(IERC20 _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(isRewardTokenAdded(address(_token))) revert TokenAlreadyAdded();
+        if (isRewardTokenAdded(address(_token))) revert TokenAlreadyAdded();
 
         uint256 tid = rewardTokenInfo.length;
         rewardTokenInfo.push(
@@ -136,7 +141,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
         IERC20Supplied _stakingToken,
         bool _withUpdate
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(isPoolAdded(_token)) revert TokenAlreadyAdded();
+        if (isPoolAdded(_token)) revert TokenAlreadyAdded();
 
         if (_withUpdate) {
             updateAllPools();
@@ -215,7 +220,9 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             reward.distributionBlock = block.number;
             reward.rewardPerBlock = amount / BLOCKS_IN_2_WEEKS;
         } else {
-            uint256 remainDistributionBlocks = reward.distributionBlock + BLOCKS_IN_2_WEEKS - block.number;
+            uint256 remainDistributionBlocks = reward.distributionBlock +
+                BLOCKS_IN_2_WEEKS -
+                block.number;
 
             reward.rewardPerBlock =
                 (amount + (remainDistributionBlocks * reward.rewardPerBlock)) /
@@ -251,7 +258,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             uint256 distributionBlock = rewardToken.distributionBlock;
 
             // distribution hasn't started yet
-            if(distributionBlock == 0) continue;
+            if (distributionBlock == 0) continue;
 
             // distribution has ended, set last reward block to end block to distribute all
             if (currentBlock > distributionBlock + BLOCKS_IN_2_WEEKS) {
@@ -269,10 +276,10 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
                 continue;
             }
 
-            if(pool.lastRewardBlocks[tid] == 0) pool.lastRewardBlocks[tid] = currentBlock;
+            if (pool.lastRewardBlocks[tid] == 0) pool.lastRewardBlocks[tid] = currentBlock;
 
             uint256 blockLasted = currentBlock - pool.lastRewardBlocks[tid];
-            if(blockLasted > BLOCKS_IN_2_WEEKS) blockLasted = BLOCKS_IN_2_WEEKS;
+            if (blockLasted > BLOCKS_IN_2_WEEKS) blockLasted = BLOCKS_IN_2_WEEKS;
 
             uint256 reward = (blockLasted * rewardToken.rewardPerBlock * pool.allocPoint) /
                 totalAllocPoint;
@@ -354,7 +361,11 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
     }
 
     // Safe rewardToken transfer function.
-    function _safeRewardTransfer(IERC20 rewardToken, address _to, uint256 _amount) internal returns(uint256 transferred){
+    function _safeRewardTransfer(
+        IERC20 rewardToken,
+        address _to,
+        uint256 _amount
+    ) internal returns (uint256 transferred) {
         uint256 balance = rewardToken.balanceOf(address(this));
         transferred = _amount;
         if (transferred > balance) {
@@ -376,10 +387,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
                 (amountAdjusted * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
                 PERCENT_DENOMINATOR;
 
-            poolInfo[_pid].token.safeTransfer(
-                earlyExitReceiver,
-                amountAdjusted - transferAmount
-            );
+            poolInfo[_pid].token.safeTransfer(earlyExitReceiver, amountAdjusted - transferAmount);
         }
 
         IERC20Supplied stakingToken = pool.stakingToken;
@@ -416,7 +424,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
 
     // Withdraw tokens from rewardToken staking.
     function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
-        if(userPoolInfo[_pid][msg.sender].amount < _amount) revert WrongAmount();
+        if (userPoolInfo[_pid][msg.sender].amount < _amount) revert WrongAmount();
 
         updatePool(_pid);
         uint256 rewardTokenInfoLength = rewardTokenInfo.length;
@@ -478,8 +486,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
 
     function isRewardTokenAdded(address _token) public view returns (bool) {
         uint256 tid = rewardTokenTidByAddress[_token];
-        return
-            rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == _token;
+        return rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == _token;
     }
 
     function getPendingReward(
@@ -501,7 +508,7 @@ contract StakingRewardDistributor is IStakingRewardDistributor, UUPSUpgradeable,
             return 0;
         }
         uint256 blockLasted = currentBlock - pool.lastRewardBlocks[_tid];
-        if(pool.lastRewardBlocks[_tid] == 0) blockLasted = 0;
+        if (pool.lastRewardBlocks[_tid] == 0) blockLasted = 0;
 
         uint256 reward = (blockLasted * token.rewardPerBlock * pool.allocPoint) / totalAllocPoint;
         uint256 accRewardPerShare = pool.accRewardsPerShare[_tid] +

@@ -106,34 +106,33 @@ describe('ZunUSD flow tests', () => {
             await zunamiPoolController.setDefaultWithdrawSid(poolId);
 
             for (let i = 0; i < 2; i++) {
-              for (const user of [admin, alice, bob]) {
-                const daiBefore = await dai.balanceOf(user.getAddress());
-                const usdcBefore = await usdc.balanceOf(user.getAddress());
-                const usdtBefore = await usdt.balanceOf(user.getAddress());
-                const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
-                await expect(
-                  zunamiPoolController
-                    .connect(user)
-                    .deposit(getMinAmountZunUSD('1000'), await user.getAddress())
-                ).to.emit(zunamiPool, 'Deposited');
+                for (const user of [admin, alice, bob]) {
+                    const daiBefore = await dai.balanceOf(user.getAddress());
+                    const usdcBefore = await usdc.balanceOf(user.getAddress());
+                    const usdtBefore = await usdt.balanceOf(user.getAddress());
+                    const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
+                    await expect(
+                        zunamiPoolController
+                            .connect(user)
+                            .deposit(getMinAmountZunUSD('1000'), await user.getAddress())
+                    ).to.emit(zunamiPool, 'Deposited');
 
-                expect(await dai.balanceOf(user.getAddress())).to.lt(daiBefore);
-                expect(await usdc.balanceOf(user.getAddress())).to.lt(usdcBefore);
-                expect(await usdt.balanceOf(user.getAddress())).to.lt(usdtBefore);
-                const stableDiff = (await zunamiPool.balanceOf(user.getAddress())).sub(zStableBefore);
-                expect(stableDiff).to.gt(0);
-                expect(stableDiff).to.gt(
-                  ethers.utils.parseUnits('2997', 'ether')
-                );
-              }
+                    expect(await dai.balanceOf(user.getAddress())).to.lt(daiBefore);
+                    expect(await usdc.balanceOf(user.getAddress())).to.lt(usdcBefore);
+                    expect(await usdt.balanceOf(user.getAddress())).to.lt(usdtBefore);
+                    const stableDiff = (await zunamiPool.balanceOf(user.getAddress())).sub(
+                        zStableBefore
+                    );
+                    expect(stableDiff).to.gt(0);
+                    expect(stableDiff).to.gt(ethers.utils.parseUnits('2997', 'ether'));
+                }
             }
         }
     });
 
     it('should withdraw assets', async () => {
-        const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies } = await loadFixture(
-            deployFixture
-        );
+        const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies } =
+            await loadFixture(deployFixture);
 
         for (let poolId = 0; poolId < strategies.length; poolId++) {
             await zunamiPool.addStrategy(strategies[poolId].address);
@@ -153,16 +152,14 @@ describe('ZunUSD flow tests', () => {
 
                 const stableDiff = stableAmount.sub(stableBefore);
                 expect(stableDiff).to.gt(0);
-                expect(stableDiff).to.gt(
-                  ethers.utils.parseUnits('2997', 'ether')
-                );
+                expect(stableDiff).to.gt(ethers.utils.parseUnits('2997', 'ether'));
 
                 await zunamiPool.connect(user).approve(zunamiPoolController.address, stableAmount);
 
                 await expect(
-                  zunamiPoolController
-                    .connect(user)
-                    .withdraw(stableAmount, [0, 0, 0, 0, 0], user.getAddress())
+                    zunamiPoolController
+                        .connect(user)
+                        .withdraw(stableAmount, [0, 0, 0, 0, 0], user.getAddress())
                 ).to.emit(zunamiPool, 'Withdrawn');
                 stableAmount = BigNumber.from(await zunamiPool.balanceOf(user.getAddress()));
                 expect(stableAmount).to.eq(0);
@@ -251,7 +248,9 @@ describe('ZunUSD flow tests', () => {
         );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
-        await expect(zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst,[[0,0,0,0,0]]));
+        await expect(
+            zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst, [[0, 0, 0, 0, 0]])
+        );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
 
@@ -264,7 +263,9 @@ describe('ZunUSD flow tests', () => {
             (await zunamiPool.strategyInfo(poolDst)).minted
         );
 
-        await expect(zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc,[[0,0,0,0,0]]));
+        await expect(
+            zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc, [[0, 0, 0, 0, 0]])
+        );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
         await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
 
