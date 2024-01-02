@@ -9,9 +9,11 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 import './IERC20Supplied.sol';
 import './IStakingRewardDistributor.sol';
+import './IERC20UpdateCallback.sol';
 
 contract StakingRewardDistributor is
     IStakingRewardDistributor,
+    IERC20UpdateCallback,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable
@@ -21,6 +23,7 @@ contract StakingRewardDistributor is
     error WrongAmount();
     error TokenAlreadyAdded();
     error ZeroAddress();
+    error WrongStakingToken();
 
     // Create a new role identifier for the distributor role
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256('DISTRIBUTOR_ROLE');
@@ -72,6 +75,8 @@ contract StakingRewardDistributor is
     PoolInfo[] public poolInfo;
     // Pid of each pool by its address
     mapping(address => uint256) public poolPidByAddress;
+    // Pid of each pool by its staking address
+    mapping(address => uint256) public poolPidByStakingAddress;
     // Info of each user that stakes tokens.
     mapping(uint256 => mapping(address => UserPoolInfo)) public userPoolInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
@@ -179,7 +184,46 @@ contract StakingRewardDistributor is
         );
         poolPidByAddress[address(_token)] = pid;
 
+        if (address(_stakingToken) != address(0)) {
+            poolPidByStakingAddress[address(_stakingToken)] = pid;
+            _stakingToken.setUpdateCallback(address(this));
+        }
+
         emit PoolAdded(address(_token), pid, _allocPoint);
+    }
+
+    function onERC20Update(address from, address to, uint256 value) external override {
+        if (
+            from != address(0) && to != address(0) && from != address(this) && to != address(this)
+        ) {
+            uint256 pid = poolPidByStakingAddress[msg.sender];
+            PoolInfo memory pool = poolInfo[pid];
+            if (msg.sender != address(pool.stakingToken)) revert WrongStakingToken();
+
+            updatePool(pid);
+
+            uint256 rewardTokenInfoLength = rewardTokenInfo.length;
+            for (uint256 tid; tid < rewardTokenInfoLength; ++tid) {
+                accrueReward(tid, pid);
+            }
+
+            UserPoolInfo storage userPoolFrom = userPoolInfo[pid][from];
+            UserPoolInfo storage userPoolTo = userPoolInfo[pid][to];
+
+            unchecked {
+                userPoolFrom.amount -= value;
+                userPoolTo.amount += value;
+            }
+
+            for (uint256 tid; tid < rewardTokenInfoLength; ++tid) {
+                userPoolFrom.accruedRewards[tid] = calcReward(tid, pool, userPoolFrom);
+                emit Withdrawn(from, pid, value, value);
+
+                userPoolTo.accruedRewards[tid] = calcReward(tid, pool, userPoolTo);
+                userPoolTo.depositedBlock = block.number;
+                emit Deposited(to, pid, value);
+            }
+        }
     }
 
     function getPoolTokenRatio(uint256 pid) public view returns (uint256) {

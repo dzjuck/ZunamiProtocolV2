@@ -651,6 +651,55 @@ describe('StakingRewardDistributor tests', () => {
         expect(totalAmountsAfter).to.eq(totalAmountsBefore.sub(ethUnits(depositAmount1)));
     });
 
+    it('update staking balance by moving staking token', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        const { pid, tid1, tid2 } = await depositByTwoUsersState(
+            depositAmount1,
+            depositAmount2,
+            fixture
+        );
+        const { stakingRewardDistributor, ZUN, vlZUN, users, earlyExitReceiver } = fixture;
+
+        // check balances before withdraw
+        expect(await vlZUN.balanceOf(users[0].address)).to.eq(ethUnits(depositAmount1));
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(ethUnits(0));
+        expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(ethUnits(0));
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(
+            ethUnits(depositAmount1 + depositAmount2)
+        );
+        const totalAmountsBefore = await stakingRewardDistributor.totalAmounts(pid);
+
+        const transferAmount = ethUnits(depositAmount1);
+        await vlZUN.connect(users[0]).transfer(users[2].address, transferAmount);
+
+        expect(await stakingRewardDistributor.totalAmounts(pid)).to.eq(totalAmountsBefore);
+        expect((await stakingRewardDistributor.userPoolInfo(pid, users[0].address)).amount).to.eq(
+            0
+        );
+        expect(await vlZUN.balanceOf(users[0].address)).to.eq(0);
+        expect((await stakingRewardDistributor.userPoolInfo(pid, users[2].address)).amount).to.eq(
+            transferAmount
+        );
+        expect(await vlZUN.balanceOf(users[2].address)).to.eq(transferAmount);
+
+        await vlZUN.connect(users[2]).transfer(users[1].address, transferAmount);
+
+        expect(await stakingRewardDistributor.totalAmounts(pid)).to.eq(totalAmountsBefore);
+        expect((await stakingRewardDistributor.userPoolInfo(pid, users[2].address)).amount).to.eq(
+            0
+        );
+        expect(await vlZUN.balanceOf(users[2].address)).to.eq(0);
+        expect((await stakingRewardDistributor.userPoolInfo(pid, users[1].address)).amount).to.eq(
+            transferAmount.add(ethUnits(depositAmount2))
+        );
+        expect(await vlZUN.balanceOf(users[1].address)).to.eq(
+            transferAmount.add(ethUnits(depositAmount2))
+        );
+    });
+
     it('withdraw stuck tokens', async () => {
         const { stakingRewardDistributor, users, admin } = await loadFixture(deployFixture);
 

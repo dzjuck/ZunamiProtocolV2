@@ -11,11 +11,13 @@ async function main() {
     const tokenAddresses = ['', '', ''];
 
     const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
-    const tokens = await Promise.all(tokenAddresses.map(async (tokenAddress) => {
-        const token = await ERC20TokenFactory.attach(tokenAddress);
-        await token.deployed();
-        return token;
-    }));
+    const tokens = await Promise.all(
+        tokenAddresses.map(async (tokenAddress) => {
+            const token = await ERC20TokenFactory.attach(tokenAddress);
+            await token.deployed();
+            return token;
+        })
+    );
 
     const ZunamiPool = await ethers.getContractFactory('ZunamiPool');
     const zunamiPool = await ZunamiPool.attach(poolAddr);
@@ -28,24 +30,23 @@ async function main() {
     await zunamiPoolController.deployed();
     console.log('ZunamiPoolController:', zunamiPoolController.address);
 
-    await Promise.allSettled(tokens.map(async (token) => {
-        const balance = await token.balanceOf(admin.address);
-        console.log('Token: ', token.address, balance.toString());
+    await Promise.allSettled(
+        tokens.map(async (token) => {
+            const balance = await token.balanceOf(admin.address);
+            console.log('Token: ', token.address, balance.toString());
 
-        const txi = await token.approve(zunamiPoolController.address, balance);
-        await txi.wait();
-    }));
+            const txi = await token.approve(zunamiPoolController.address, balance);
+            await txi.wait();
+        })
+    );
 
     const tx = await zunamiPoolController.deposit(
-        ['100000000000000000000', "100000000", "100000000", 0, 0],
-        admin.address,
+        ['100000000000000000000', '100000000', '100000000', 0, 0],
+        admin.address
     );
     await tx.wait();
 
-    console.log(
-        'Deposited: ',
-        (await zunamiPool.balanceOf(admin.address)).toString(),
-    );
+    console.log('Deposited: ', (await zunamiPool.balanceOf(admin.address)).toString());
 }
 
 main()

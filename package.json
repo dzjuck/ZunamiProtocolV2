@@ -26,7 +26,6 @@
   },
   "homepage": "https://zunami.io",
   "devDependencies": {
-    "@chainlink/contracts": "^0.8.0",
     "@defi-wonderland/smock": "^2.3.5",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
