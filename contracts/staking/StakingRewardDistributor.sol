@@ -24,6 +24,7 @@ contract StakingRewardDistributor is
     error TokenAlreadyAdded();
     error ZeroAddress();
     error WrongStakingToken();
+    error WrongPoolId();
 
     // Create a new role identifier for the distributor role
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256('DISTRIBUTOR_ROLE');
@@ -342,6 +343,7 @@ contract StakingRewardDistributor is
 
     // Deposit tokens to staking for reward token allocation.
     function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
+        if (_pid >= poolInfo.length) revert WrongPoolId();
         updatePool(_pid);
 
         uint256 length = rewardTokenInfo.length;

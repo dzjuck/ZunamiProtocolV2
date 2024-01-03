@@ -114,6 +114,72 @@ describe('StakingRewardDistributor tests', () => {
         };
     }
 
+    it('add pools', async () => {
+        const { stakingRewardDistributor, REWARD, REWARD2, ZUN, vlZUN } = await loadFixture(
+            deployFixture
+        );
+
+        // deploy test ERC20 token
+        const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
+        const POOLTOKEN1 = (await ERC20TokenFactory.deploy(18)) as ERC20;
+        const POOLTOKEN2 = (await ERC20TokenFactory.deploy(18)) as ERC20;
+
+        // add the first pool
+        const pid1 = 0;
+        await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true);
+        await expect(
+            stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true)
+        ).to.be.revertedWithCustomError(stakingRewardDistributor, 'TokenAlreadyAdded')
+
+        // add the second pool
+        const pid2 = 1;
+        await stakingRewardDistributor.addPool(50, POOLTOKEN1.address, vlZUN.address, true);
+
+        // add reward tokens
+        const tid1 = 0;
+        await stakingRewardDistributor.addRewardToken(REWARD.address);
+        const tid2 = 1;
+        await stakingRewardDistributor.addRewardToken(REWARD2.address);
+
+        // add the third pool
+        const pid3 = 2;
+        await stakingRewardDistributor.addPool(30, POOLTOKEN2.address, vlZUN.address, true);
+
+        expect(await stakingRewardDistributor.poolCount()).to.eq(3);
+        expect(await stakingRewardDistributor.totalAllocPoint()).to.eq(180);
+    });
+
+    it('add pool with zero allocation', async () => {
+        const { stakingRewardDistributor, ZUN, vlZUN, users } = await loadFixture(
+            deployFixture
+        );
+
+        // deploy test ERC20 token
+        const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
+        const POOLTOKEN1 = (await ERC20TokenFactory.deploy(18)) as ERC20;
+
+        // add 2 pools
+        const pid1 = 0;
+        await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true);
+        const pid2 = 1;
+        await stakingRewardDistributor.addPool(0, POOLTOKEN1.address, vlZUN.address, true);
+
+        const amount = ethUnits(1000);
+
+        // deposit tokens to the pool with zero allocation
+        await POOLTOKEN1.transfer(users[0].address, amount);
+        await POOLTOKEN1.connect(users[0]).approve(stakingRewardDistributor.address, amount);
+        await stakingRewardDistributor.connect(users[0]).deposit(pid2, amount);
+        expect(await vlZUN.balanceOf(users[0].address)).to.eq(amount);
+
+        // withdraw tokens
+        await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, amount);
+        await stakingRewardDistributor.connect(users[0]).withdraw(pid2, amount);
+        expect(await vlZUN.balanceOf(users[0].address)).to.eq(0);
+
+        expect(await stakingRewardDistributor.totalAllocPoint()).to.eq(100);
+    });
+
     it('add pool when two reward tokens exist', async () => {
         const { stakingRewardDistributor, REWARD, REWARD2, ZUN, vlZUN } = await loadFixture(
             deployFixture
@@ -171,6 +237,68 @@ describe('StakingRewardDistributor tests', () => {
         expect(await stakingRewardDistributor.poolCount()).to.eq(1);
     });
 
+    it('add and deposit to the second pool for rewards', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        // deploy test ERC20 token
+        const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
+        const POOLTOKEN = (await ERC20TokenFactory.deploy(18)) as ERC20;
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        const { pid, tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, vlZUN, REWARD, users } = fixture;
+
+        // first distribution of REWARD
+        const firstDistributionAmount1 = ethUnits('1000000');
+        await REWARD.approve(stakingRewardDistributor.address, firstDistributionAmount1);
+        await stakingRewardDistributor.distribute(tid1, firstDistributionAmount1);
+
+        await mine(BLOCKS_IN_1_DAYS);
+
+        // check pending rewards for single pool
+        const rewardTokenInfo1 = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        const reward1 = rewardTokenInfo1.rewardPerBlock.mul(BLOCKS_IN_1_DAYS);
+        const accRewardPerShare1 = reward1
+            .mul(ACC_REWARD_PRECISION)
+            .div(ethUnits(depositAmount1 + depositAmount2));
+        const accruedRewards1 = ethUnits(depositAmount1)
+            .mul(accRewardPerShare1)
+            .div(ACC_REWARD_PRECISION);
+        expect(
+            await stakingRewardDistributor.getPendingReward(tid1, pid, users[0].address)
+        ).to.eq(accruedRewards1);
+
+        // add the second pool
+        const pid1 = 1;
+        await stakingRewardDistributor.addPool(200, POOLTOKEN.address, vlZUN.address, true);
+
+        // deposit to the second pool
+        const secondPoolDepositAmount = ethUnits(depositAmount1);
+        await POOLTOKEN.transfer(users[0].address, secondPoolDepositAmount);
+        await POOLTOKEN.connect(users[0]).approve(stakingRewardDistributor.address, secondPoolDepositAmount);
+        await stakingRewardDistributor.connect(users[0]).deposit(pid1, secondPoolDepositAmount);
+        expect(await vlZUN.balanceOf(users[0].address)).to.eq(secondPoolDepositAmount.add(ethUnits(depositAmount1)));
+
+        await mine(BLOCKS_IN_1_DAYS);
+
+        // check pending rewards for two pools with 100 and 200 allocation points
+        const rewardTokenInfo2 = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        const reward2 = rewardTokenInfo2.rewardPerBlock
+            .mul(BLOCKS_IN_1_DAYS)
+            .mul(200)
+            .div(100 + 200);
+        const accRewardPerShare2 = reward2
+            .mul(ACC_REWARD_PRECISION)
+            .div(secondPoolDepositAmount);
+        const accruedRewards2 = secondPoolDepositAmount
+            .mul(accRewardPerShare2)
+            .div(ACC_REWARD_PRECISION);
+        expect(
+            await stakingRewardDistributor.getPendingReward(tid1, pid1, users[0].address)
+        ).to.eq(accruedRewards2);
+    });
+
     it('reallocate single pool', async () => {
         const fixture = await loadFixture(deployFixture);
 
@@ -194,6 +322,17 @@ describe('StakingRewardDistributor tests', () => {
         expect(totalAllocPointAfter).to.be.eq(20);
     });
 
+    it('deposit to the nonexistent pool', async () => {
+        const {
+            stakingRewardDistributor,
+            users,
+        } = await loadFixture(deployFixture);
+
+        await expect(
+            stakingRewardDistributor.connect(users[0]).deposit(0, ethUnits('1000'))
+        ).to.be.revertedWithCustomError(stakingRewardDistributor, 'WrongPoolId');
+    });
+
     it('should deposit ZUN tokens and get vlZUN', async () => {
         const {
             stakingRewardDistributor,
@@ -205,9 +344,6 @@ describe('StakingRewardDistributor tests', () => {
             users,
             earlyExitReceiver,
         } = await loadFixture(deployFixture);
-
-        // TODO: try to deposit without any pool
-        // await stakingRewardDistributor.connect(users[0]).deposit(0, ethUnits('1000'));
 
         const pid = 0;
         await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, false);
@@ -232,9 +368,6 @@ describe('StakingRewardDistributor tests', () => {
         await stakingRewardDistributor.connect(users[1]).deposit(pid, ethUnits('2000'));
         expect(await vlZUN.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
         expect(await vlZUN.balanceOf(users[1].address)).to.eq(ethUnits('2000'));
-
-        // TODO: try to deposit 0 ZUN
-        // await stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('0'));
     });
 
     it('reward tokens distribution', async () => {
@@ -340,8 +473,45 @@ describe('StakingRewardDistributor tests', () => {
         expect(poolInfo.lastRewardBlocks[tid1]).to.be.eq(secondDistributionBlock);
     });
 
-    it.skip('second distribution after 2 weeks - edge case', async () => {
-        // TODO
+    it('second distribution after 2 weeks - edge case', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, REWARD } = fixture;
+
+        // first distribution
+        const firstDistributionAmount = ethUnits('10000000');
+        await REWARD.approve(stakingRewardDistributor.address, firstDistributionAmount);
+        await stakingRewardDistributor.distribute(tid1, firstDistributionAmount);
+        const firstDistributionBlock = await ethers.provider.getBlockNumber();
+        const firstRewardPerShare = firstDistributionAmount.div(BLOCKS_IN_2_WEEKS);
+
+        await mine(BLOCKS_IN_2_WEEKS);
+
+        // second distribution after a week
+        const secondDistributionAmount = ethUnits('20000000');
+        await REWARD.approve(stakingRewardDistributor.address, secondDistributionAmount);
+        await stakingRewardDistributor.distribute(tid1, secondDistributionAmount);
+        const secondDistributionBlock = await ethers.provider.getBlockNumber();
+
+        // check rewards info
+        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        expect(rewardTokenInfo.rewardPerBlock).to.be.eq(
+            secondDistributionAmount.div(BLOCKS_IN_2_WEEKS)
+        );
+        expect(rewardTokenInfo.distributionBlock).to.be.eq(secondDistributionBlock);
+
+        // check pool info
+        const [poolInfo] = await stakingRewardDistributor.getAllPools();
+        expect(poolInfo.accRewardsPerShare[tid1]).to.be.eq(
+            firstRewardPerShare
+                .mul(BLOCKS_IN_2_WEEKS +4)
+                .mul(ACC_REWARD_PRECISION)
+                .div(ethUnits(depositAmount1 + depositAmount2))
+        );
+        expect(poolInfo.lastRewardBlocks[tid1]).to.be.eq(secondDistributionBlock);
     });
 
     it('second distribution after 3 weeks', async () => {
@@ -388,10 +558,6 @@ describe('StakingRewardDistributor tests', () => {
             firstAccRewardPerShare.add(secondAccRewardPerShare)
         );
         expect(poolInfo.lastRewardBlocks[tid1]).to.be.eq(secondDistributionBlock);
-    });
-
-    it.skip('second distribution after more then 4 weeks', async () => {
-        // TODO
     });
 
     it('second distribution after 3 weeks for two rewards', async () => {
@@ -535,9 +701,6 @@ describe('StakingRewardDistributor tests', () => {
             .mul(accRewardPerShare)
             .div(ACC_REWARD_PRECISION);
         expect(total).to.eq(accruedRewards);
-
-        // TODO check the rounding error
-        // expect(reward).to.eq(distributionAmount);
     });
 
     it('withdraw ZUN tokens immediately after deposit', async () => {
