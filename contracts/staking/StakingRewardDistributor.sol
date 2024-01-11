@@ -90,7 +90,7 @@ contract StakingRewardDistributor is
 
     event RewardTokenAdded(address indexed token, uint256 indexed tid);
     event PoolAdded(address indexed token, uint256 indexed pid, uint256 allocPoint);
-    event Claimed(address indexed user, uint256 amount);
+    event Claimed(address indexed user, uint256 indexed tid, uint256 amount);
     event Deposited(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdrawn(
         address indexed user,
@@ -391,7 +391,27 @@ contract StakingRewardDistributor is
             claimable = _safeRewardTransfer(rewardTokenInfo[_tid].token, msg.sender, claimable);
         }
         claimedRewards[_tid][msg.sender] += claimable;
-        emit Claimed(msg.sender, claimable);
+        emit Claimed(msg.sender, _tid, claimable);
+    }
+
+    function claimAll() external nonReentrant {
+        uint256 i;
+        for (i; i < poolInfo.length; ++i) {
+            updatePool(i);
+            UserPoolInfo storage userPool = userPoolInfo[i][msg.sender];
+            for (uint256 tid; tid < rewardTokenInfo.length; ++tid) {
+                accrueReward(tid, i);
+                userPool.accruedRewards[tid] = calcReward(tid, poolInfo[i], userPool);
+            }
+        }
+        for (uint256 tid; tid < rewardTokenInfo.length; ++tid) {
+            uint256 claimable = rewards[tid][msg.sender] - claimedRewards[tid][msg.sender];
+            if (claimable > 0) {
+                claimable = _safeRewardTransfer(rewardTokenInfo[tid].token, msg.sender, claimable);
+            }
+            claimedRewards[tid][msg.sender] += claimable;
+            emit Claimed(msg.sender, tid, claimable);
+        }
     }
 
     function accrueReward(uint256 tid, uint256 _pid) internal {

@@ -1092,11 +1092,9 @@ describe('StakingRewardDistributor tests', () => {
         expect(await REWARD.balanceOf(users[0].address)).to.eq('75002480158730157000000000');
         expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500148809523000000000');
 
-        await stakingRewardDistributor.connect(users[1]).claim(tid1);
-        await stakingRewardDistributor.connect(users[1]).claim(tid2);
+        await stakingRewardDistributor.connect(users[1]).claimAll();
 
-        await stakingRewardDistributor.connect(users[0]).claim(tid1);
-        await stakingRewardDistributor.connect(users[0]).claim(tid2);
+        await stakingRewardDistributor.connect(users[0]).claimAll();
 
         expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(ethUnits('2000'));
         expect(await REWARD.balanceOf(users[0].address)).to.eq('75002480158730157000000000');
