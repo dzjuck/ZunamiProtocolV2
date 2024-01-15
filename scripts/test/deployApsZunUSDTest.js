@@ -4,7 +4,7 @@ const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
     console.log('Start deploy');
 
-    const zunUsdAddress = '0x83287Da602f0C32f6C9B09E2F1b2951767ebF239';
+    const zunUsdAddress = '';
 
     console.log('Deploy zunUSD APS pool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPool');

@@ -1,0 +1,316 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x748C4D2b68DA2ad9F20Dc021700589FC18D8BA75",
+      "txHash": "0x69e9804aa571a919e2fe60408afaafaa478d2e65728448069cbebb19f879d43f",
+      "kind": "uups"
+    },
+    {
+      "address": "0x2ffCC661011beC72e1A9524E12060983E74D14ce",
+      "txHash": "0x84f7b941b12b2dc0f383c812e5d0322fb816e5b3bf6de8b2b26b3b5f6d6f476a",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "9a4eef5b1dc7747cad86583a37fcd9cd116875f23acbe9aedc5704c4c40b8ca4": {
+      "address": "0x8629e87b6A2bb29c9d5C132C9dae4306A442759D",
+      "txHash": "0x99f7a5d8f2360383414c71e8697a2e2ba94bbd2ee5e04266c4268990b84d4a4d",
+      "layout": {
+        "solcVersion": "0.8.22",
+        "storage": [
+          {
+            "label": "rewardTokenInfo",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_struct(RewardTokenInfo)26601_storage)dyn_storage",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:64"
+          },
+          {
+            "label": "rewardTokenTidByAddress",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:65"
+          },
+          {
+            "label": "rewards",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:69"
+          },
+          {
+            "label": "claimedRewards",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:73"
+          },
+          {
+            "label": "poolInfo",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_array(t_struct(PoolInfo)26593_storage)dyn_storage",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:76"
+          },
+          {
+            "label": "poolPidByAddress",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:78"
+          },
+          {
+            "label": "poolPidByStakingAddress",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:80"
+          },
+          {
+            "label": "userPoolInfo",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserPoolInfo)26578_storage))",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:82"
+          },
+          {
+            "label": "totalAllocPoint",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_uint256",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:84"
+          },
+          {
+            "label": "totalAmounts",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:86"
+          },
+          {
+            "label": "recapitalizedAmounts",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:87"
+          },
+          {
+            "label": "earlyExitReceiver",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_address",
+            "contract": "StakingRewardDistributor",
+            "src": "contracts/staking/StakingRewardDistributor.sol:89"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(PoolInfo)26593_storage)dyn_storage": {
+            "label": "struct StakingRewardDistributor.PoolInfo[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(RewardTokenInfo)26601_storage)dyn_storage": {
+            "label": "struct StakingRewardDistributor.RewardTokenInfo[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)8011": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20Supplied)25945": {
+            "label": "contract IERC20Supplied",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_struct(UserPoolInfo)26578_storage)": {
+            "label": "mapping(address => struct StakingRewardDistributor.UserPoolInfo)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserPoolInfo)26578_storage))": {
+            "label": "mapping(uint256 => mapping(address => struct StakingRewardDistributor.UserPoolInfo))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(uint256 => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(PoolInfo)26593_storage": {
+            "label": "struct StakingRewardDistributor.PoolInfo",
+            "members": [
+              {
+                "label": "token",
+                "type": "t_contract(IERC20)8011",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "stakingToken",
+                "type": "t_contract(IERC20Supplied)25945",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "allocPoint",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "accRewardsPerShare",
+                "type": "t_array(t_uint256)dyn_storage",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "lastRewardBlocks",
+                "type": "t_array(t_uint256)dyn_storage",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(RewardTokenInfo)26601_storage": {
+            "label": "struct StakingRewardDistributor.RewardTokenInfo",
+            "members": [
+              {
+                "label": "token",
+                "type": "t_contract(IERC20)8011",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "rewardPerBlock",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "distributionBlock",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(UserPoolInfo)26578_storage": {
+            "label": "struct StakingRewardDistributor.UserPoolInfo",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "accruedRewards",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "depositedBlock",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)25_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)25_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

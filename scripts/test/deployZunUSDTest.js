@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 
-const { createAndInitConicOracles } = require('./utils/CreateAndInitConicOracles');
+const { createAndInitConicOracles } = require('../utils/CreateAndInitConicOracles');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
