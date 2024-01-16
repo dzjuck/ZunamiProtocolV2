@@ -25,7 +25,7 @@ contract EthERC4626StratBase is ERC4626StratBase {
         address vaultAssetAddr
     ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr) {}
 
-    function setNativeConverter(address nativeConverterAddr) external onlyOwner {
+    function setNativeConverter(address nativeConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(nativeConverterAddr) == address(0)) revert ZeroAddress();
         nativeConverter = INativeConverter(nativeConverterAddr);
         emit SetNativeConverter(nativeConverterAddr);
@@ -38,7 +38,7 @@ contract EthERC4626StratBase is ERC4626StratBase {
     }
 
     function convertVaultAssetAmounts(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal view override returns (uint256 amount) {
         return
             amounts[ZUNAMI_FRXETH_TOKEN_ID] +

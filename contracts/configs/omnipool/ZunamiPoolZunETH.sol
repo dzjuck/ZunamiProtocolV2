@@ -9,11 +9,11 @@ contract ZunamiPoolZunETH is ZunamiPool {
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
     constructor() ZunamiPool('Zunami ETH', 'zunETH') {
-        address[] memory tokens = new address[](2);
+        address[POOL_ASSETS] memory tokens;
         tokens[ZUNAMI_WETH_TOKEN_ID] = Constants.WETH_ADDRESS;
         tokens[ZUNAMI_FRXETH_TOKEN_ID] = Constants.FRX_ETH_ADDRESS;
 
-        uint256[] memory tokenDecimalMultipliers = new uint256[](2);
+        uint256[POOL_ASSETS] memory tokenDecimalMultipliers;
         tokenDecimalMultipliers[ZUNAMI_WETH_TOKEN_ID] = 1;
         tokenDecimalMultipliers[ZUNAMI_FRXETH_TOKEN_ID] = 1;
 

@@ -1,4 +1,4 @@
-const { ethers, upgrades} = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
@@ -12,10 +12,16 @@ async function main() {
     const apsLPAddress = '';
 
     console.log('Deploy Staking Reward Distributor LP:');
-    const StakingRewardDistributorFactory = await ethers.getContractFactory('StakingRewardDistributor');
-    const stakingRewardDistributor = await upgrades.deployProxy(StakingRewardDistributorFactory, [], {
-        kind: 'uups',
-    });
+    const StakingRewardDistributorFactory = await ethers.getContractFactory(
+        'StakingRewardDistributor'
+    );
+    const stakingRewardDistributor = await upgrades.deployProxy(
+        StakingRewardDistributorFactory,
+        [],
+        {
+            kind: 'uups',
+        }
+    );
 
     await stakingRewardDistributor.deployed();
     console.log('Staking Reward Distributor LP:', stakingRewardDistributor.address);

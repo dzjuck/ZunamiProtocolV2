@@ -5,21 +5,21 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Pausable.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 import './interfaces/IStrategy.sol';
 import './interfaces/IPool.sol';
-import './AccessControl2RolesValuation.sol';
 
 /**
  *
  * @title Zunami Protocol v2
  *
  */
-contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
+contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     using SafeERC20 for IERC20;
 
     uint8 public constant POOL_ASSETS = 5;
 
-    bytes32 public constant EMERGENCY_ROLE = keccak256('EMERGENCY_ROLE');
+    bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN_ROLE');
     bytes32 public constant CONTROLLER_ROLE = keccak256('CONTROLLER_ROLE');
     uint256 public constant RATIO_MULTIPLIER = 1e18;
     uint256 public constant MIN_LOCK_TIME = 1 days;
@@ -33,10 +33,13 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
     uint256[POOL_ASSETS] private _decimalsMultipliers;
 
     uint256 public totalDeposited;
+    uint256 public extraGains;
+    uint256 public extraGainsMintedBlock;
     bool public launched;
 
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(EMERGENCY_ADMIN_ROLE, msg.sender);
     }
 
     function _checkStrategyExisted(uint256 sid) internal view {
@@ -71,34 +74,33 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         return _decimalsMultipliers;
     }
 
-    function _setTokens(address[] memory tokens_, uint256[] memory decimalMultipliers_) internal {
-        if (tokens_.length != decimalMultipliers_.length || tokens_.length > POOL_ASSETS)
-            revert WrongLength();
-
+    function _setTokens(
+        address[POOL_ASSETS] memory tokens_,
+        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_
+    ) internal {
+        bool otherZeros = false;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            if (i < tokens_.length) {
-                address oldToken = address(_tokens[i]);
-                if (tokens_[i] == address(0)) revert ZeroTokenAddress(i);
-                if (decimalMultipliers_[i] == 0) revert ZeroTokenDecimalMultiplier(i);
-                _tokens[i] = IERC20(tokens_[i]);
-                _decimalsMultipliers[i] = decimalMultipliers_[i];
-                emit UpdatedToken(i, tokens_[i], decimalMultipliers_[i], oldToken);
-            } else {
-                emit UpdatedToken(i, address(0), 0, address(_tokens[i]));
-                delete _tokens[i];
-                delete _decimalsMultipliers[i];
-            }
+            if (otherZeros && address(tokens_[i]) != address(0)) revert WrongTokens();
+            if (address(tokens_[i]) == address(0)) otherZeros = true;
+            if (
+                (address(tokens_[i]) != address(0) && tokenDecimalsMultipliers_[i] == 0) ||
+                (address(tokens_[i]) == address(0) && tokenDecimalsMultipliers_[i] != 0)
+            ) revert WrongDecimalMultipliers();
+            address oldToken = address(_tokens[i]);
+            _tokens[i] = IERC20(tokens_[i]);
+            _decimalsMultipliers[i] = tokenDecimalsMultipliers_[i];
+            emit UpdatedToken(i, tokens_[i], tokenDecimalsMultipliers_[i], oldToken);
         }
     }
 
     function setTokens(
-        address[] memory tokens_,
-        uint256[] memory _tokenDecimalMultipliers
+        address[POOL_ASSETS] memory tokens_,
+        uint256[POOL_ASSETS] memory tokenDecimalMultipliers_
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setTokens(tokens_, _tokenDecimalMultipliers);
+        _setTokens(tokens_, tokenDecimalMultipliers_);
     }
 
-    function pause() external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
+    function pause() external onlyRole(EMERGENCY_ADMIN_ROLE) {
         _pause();
     }
 
@@ -110,6 +112,9 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         address receiver,
         IERC20[] memory rewardTokens
     ) external onlyRole(CONTROLLER_ROLE) {
+        _mintExtraGains();
+        _claimExtraGains(receiver);
+
         for (uint256 i = 0; i < _strategyInfo.length; i++) {
             StrategyInfo memory strategyInfo_ = _strategyInfo[i];
             if (strategyInfo_.minted > 0 && strategyInfo_.enabled) {
@@ -117,6 +122,37 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
             }
         }
         emit ClaimedRewards(receiver, rewardTokens);
+    }
+
+    /// @dev mint extra gains if any and weren't minted in this block
+    function _mintExtraGains() internal {
+        // return if gains were minted in this block
+        if (extraGainsMintedBlock == block.number) return;
+
+        uint256 currentTotalHoldings = totalHoldings();
+        //check if gains are present
+        if (currentTotalHoldings <= totalDeposited) return;
+
+        uint256 gains = currentTotalHoldings - totalDeposited;
+        extraGains += gains;
+        totalDeposited += gains;
+        extraGainsMintedBlock = block.number;
+        _mint(address(this), gains);
+    }
+
+    /// @dev claim extra gains if any
+    function _claimExtraGains(address receiver) internal {
+        if (extraGains == 0) return;
+
+        uint256 _extraGains = extraGains;
+        extraGains = 0;
+        IERC20(address(this)).transfer(receiver, _extraGains);
+        emit ClaimedExtraGains(receiver, _extraGains);
+    }
+
+    function mintAndClaimExtraGains(address receiver) external onlyRole(CONTROLLER_ROLE) {
+        _mintExtraGains();
+        _claimExtraGains(receiver);
     }
 
     function totalHoldings() public view returns (uint256) {
@@ -148,6 +184,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
             receiver = _msgSender();
         }
 
+        _mintExtraGains();
+
         uint256 depositedValue = doDepositStrategy(sid, amounts);
 
         return processSuccessfulDeposit(receiver, depositedValue, amounts, sid);
@@ -175,6 +213,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
             }
         }
 
+        _mintExtraGains();
+
         depositedValue = strategy.deposit(amounts);
 
         if (depositedValue == 0) revert WrongDeposit(sid, amounts);
@@ -188,6 +228,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
     ) internal returns (uint256 minted) {
         uint256 locked = 0;
         if (totalSupply() == 0) {
+            if (depositedValue <= MINIMUM_LIQUIDITY) revert WrongAmount();
             minted = depositedValue;
             locked = MINIMUM_LIQUIDITY;
             _mint(MINIMUM_LIQUIDITY_LOCKER, MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
@@ -218,6 +259,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         address controllerAddr = _msgSender();
 
         if (balanceOf(controllerAddr) < amount) revert WrongAmount();
+
+        _mintExtraGains();
 
         if (
             !strategy.withdraw(
@@ -291,7 +334,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         uint256[] memory _withdrawalsPercents,
         uint256 _receiverStrategy,
         uint256[POOL_ASSETS][] memory _minAmounts
-    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
+    ) external onlyRole(EMERGENCY_ADMIN_ROLE) {
         if (_strategies.length != _withdrawalsPercents.length) revert IncorrectArguments();
         if (_receiverStrategy >= _strategyInfo.length) revert WrongReceiver();
 
@@ -354,9 +397,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl2RolesValuation {
         emit EnabledStrategy(address(_strategyInfo[_sid].strategy));
     }
 
-    function disableStrategy(
-        uint256 _sid
-    ) external only2Roles([DEFAULT_ADMIN_ROLE, EMERGENCY_ROLE]) {
+    function disableStrategy(uint256 _sid) external onlyRole(EMERGENCY_ADMIN_ROLE) {
         if (_sid >= _strategyInfo.length) revert IncorrectSid();
 
         _strategyInfo[_sid].enabled = false;

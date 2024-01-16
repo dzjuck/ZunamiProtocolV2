@@ -4,9 +4,9 @@ pragma solidity ^0.8.22;
 import '../../../../../utils/Constants.sol';
 import '../../../../../interfaces/IController.sol';
 import '../../../../../interfaces/IStableConverter.sol';
-import '../../ConvexCurveStratBase.sol';
+import '../EmergencyAdminConvexCurveStratBase.sol';
 
-contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
+contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
     using SafeERC20 for IERC20;
 
     uint256 constant ZUNAMI_ZUNUSD_TOKEN_ID = 0;
@@ -45,7 +45,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
         address _zunamiControllerAddr,
         address _zunamiStableAddr
     )
-        ConvexCurveStratBase(
+        EmergencyAdminConvexCurveStratBase(
             _tokens,
             _tokenDecimalsMultipliers,
             _poolAddr,
@@ -55,25 +55,28 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
             _cvxPID
         )
     {
+        if (_zunamiControllerAddr == address(0)) revert ZeroAddress();
         zunamiController = IController(_zunamiControllerAddr);
+
+        if (_zunamiStableAddr == address(0)) revert ZeroAddress();
         zunamiStable = IERC20(_zunamiStableAddr);
     }
 
-    function setStableConverter(address stableConverterAddr) external onlyOwner {
+    function setStableConverter(address stableConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(stableConverterAddr) == address(0)) revert ZeroAddress();
         stableConverter = IStableConverter(stableConverterAddr);
         emit SetStableConverter(stableConverterAddr);
     }
 
     function convertCurvePoolTokenAmounts(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal pure override returns (uint256[2] memory amounts2) {
         return [amounts[ZUNAMI_ZUNUSD_TOKEN_ID], 0];
     }
 
     function convertAndApproveTokens(
         address pool,
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
         amounts2[CRVUSD_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_ZUNUSD_TOKEN_ID];
         zunamiStable.safeIncreaseAllowance(pool, amounts2[CRVUSD_TOKEN_POOL_TOKEN_ID]);
@@ -87,7 +90,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
         return ZUNAMI_ZUNUSD_TOKEN_ID;
     }
 
-    function inflate(uint256 ratioOfCrvLps, uint256 minInflatedAmount) external onlyOwner {
+    function _inflate(uint256 ratioOfCrvLps, uint256 minInflatedAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
 
         cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
@@ -122,7 +125,7 @@ contract CrvUsdApsConvexCurveStratBase is ConvexCurveStratBase {
         depositBooster(poolTokenAmount);
     }
 
-    function deflate(uint256 ratioOfCrvLps, uint256 minDeflateAmount) external onlyOwner {
+    function _deflate(uint256 ratioOfCrvLps, uint256 minDeflateAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
 
         cvxRewards.withdrawAndUnwrap(removingCrvLps, false);

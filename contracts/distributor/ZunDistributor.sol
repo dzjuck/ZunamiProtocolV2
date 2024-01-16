@@ -62,6 +62,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
     error StartBlockInFuture();
     error InvalidSignature();
     error ExpiredSignature();
+    error WrongVotingThreshold();
 
     modifier afterStart() {
         if (block.number <= START_BLOCK) {
@@ -99,7 +100,9 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
             revert WrongLength();
         }
         for (uint256 i; i < _gaugeAddrs.length; ++i) {
-            gauges[i] = Gauge(_gaugeAddrs[i], _gaugeVotes[i], 0);
+            address gaugeAddr = _gaugeAddrs[i];
+            if (gaugeAddr == address(0)) revert ZeroAddress();
+            gauges[i] = Gauge(gaugeAddr, _gaugeVotes[i], 0);
         }
         gaugesNumber = _gaugeAddrs.length;
     }
@@ -239,6 +242,9 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
     }
 
     function setVotingThreshold(uint256 _threshold) external onlyOwner whenNotPaused {
+        if (_threshold > voteToken.totalSupply()) {
+            revert WrongVotingThreshold();
+        }
         votingThreshold = _threshold;
         emit VotingThresholdChanged(_threshold);
     }

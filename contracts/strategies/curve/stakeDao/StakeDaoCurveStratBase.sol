@@ -16,6 +16,7 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
         address _poolAddr,
         address _poolTokenAddr
     ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr) {
+        if (_vaultAddr == address(0)) revert ZeroAddress();
         vault = IStakeDaoVault(_vaultAddr);
     }
 
@@ -26,7 +27,7 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
 
     function removeLiquidity(
         uint256 amount,
-        uint256[5] memory minTokenAmounts,
+        uint256[POOL_ASSETS] memory minTokenAmounts,
         bool removeAll
     ) internal virtual override {
         vault.withdraw(amount);

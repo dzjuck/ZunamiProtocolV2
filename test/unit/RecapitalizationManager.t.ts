@@ -92,7 +92,7 @@ describe('RecapitalizationManager', () => {
         await expect(await recapitalizationManager.stakingRewardDistributor()).to.be.equal(
             ADDRESS_ZERO
         );
-        const accumulationPeriod = await recapitalizationManager.ACCUMULATION_PERIOD();
+        const accumulationPeriod = await recapitalizationManager.INITIAL_ACCUMULATION_PERIOD();
         await expect(await recapitalizationManager.accumulationPeriod()).to.be.equal(
             accumulationPeriod.toString()
         );
@@ -123,10 +123,10 @@ describe('RecapitalizationManager', () => {
 
     it('should be set accumulation period', async () => {
         await expect(await recapitalizationManager.accumulationPeriod()).to.be.equal(
-            await recapitalizationManager.ACCUMULATION_PERIOD()
+            await recapitalizationManager.INITIAL_ACCUMULATION_PERIOD()
         );
 
-        const newAccumulationPeriod = (await recapitalizationManager.ACCUMULATION_PERIOD()).add(
+        const newAccumulationPeriod = (await recapitalizationManager.INITIAL_ACCUMULATION_PERIOD()).add(
             (14 * 24 * 60 * 60) / 12
         );
 

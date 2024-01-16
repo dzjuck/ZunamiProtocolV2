@@ -774,4 +774,22 @@ describe('ZunDistributor tests', () => {
         receipt = await tx.wait();
         console.log(receipt.cumulativeGasUsed);
     });
+
+    it('Same borderBlock with block.number will revert in _castVote', async function () {
+        const { vlZUN, distributor } = await loadFixture(deployFixture);
+
+        const startBlock = await distributor.START_BLOCK();
+        const lastFinalizedBlock = await distributor.lastFinalizeBlock();
+        expect(startBlock).eq(lastFinalizedBlock);
+
+        const endBlock = startBlock.add(await distributor.VOTING_PERIOD()).sub(1);
+        // get current block number
+        const currentBlock = await ethers.provider.getBlockNumber();
+        await mine(currentBlock - endBlock);
+
+        await expect(distributor.castVote([0, 1], [1, 1])).revertedWithCustomError(
+            vlZUN,
+            'ERC5805FutureLookup'
+        );
+    });
 });

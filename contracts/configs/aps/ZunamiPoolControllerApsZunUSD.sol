@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 
 import '../../ZunamiPoolCompoundController.sol';
 
-contract ZunamiPooControllerApsZunUSD is ZunamiPoolCompoundController {
+contract ZunamiPoolControllerApsZunUSD is ZunamiPoolCompoundController {
     constructor(
         address pool
     ) ZunamiPoolCompoundController(pool, 'Zunami USD APS LP', 'apsZunUSDLP') {}

@@ -81,10 +81,30 @@ describe('ZunamiPool', () => {
         expect(zunamiPool.address).to.properAddress;
 
         await expect(
-            zunamiPool.setTokens([dai.address, usdc.address, usdt.address], [1, 1e12])
-        ).to.be.revertedWithCustomError(zunamiPool, `WrongLength`);
+            zunamiPool.setTokens(
+                [dai.address, usdc.address, ADDRESS_ZERO, usdt.address, ADDRESS_ZERO],
+                [1, 1e12, 0, 1e12, 0]
+            )
+        ).to.be.revertedWithCustomError(zunamiPool, `WrongTokens`);
 
-        await zunamiPool.setTokens([dai.address, usdc.address, usdt.address], [1, 1e12, 1e12]);
+        await expect(
+            zunamiPool.setTokens(
+                [dai.address, usdc.address, usdt.address, ADDRESS_ZERO, ADDRESS_ZERO],
+                [1, 1e12, 1e12, 1e12, 0]
+            )
+        ).to.be.revertedWithCustomError(zunamiPool, `WrongDecimalMultipliers`);
+
+        await expect(
+            zunamiPool.setTokens(
+                [dai.address, usdc.address, usdt.address, ADDRESS_ZERO, ADDRESS_ZERO],
+                [1, 1e12, 0, 0, 0]
+            )
+        ).to.be.revertedWithCustomError(zunamiPool, `WrongDecimalMultipliers`);
+
+        await zunamiPool.setTokens(
+            [dai.address, usdc.address, usdt.address, ADDRESS_ZERO, ADDRESS_ZERO],
+            [1, 1e12, 1e12, 0, 0]
+        );
     });
 
     it('should be created rightly', async () => {
@@ -164,10 +184,10 @@ describe('ZunamiPool', () => {
     it('should not pause when not admin or emergency', async () => {
         await expect(zunamiPool.connect(alice).pause()).to.be.revertedWithCustomError(
             zunamiPool,
-            `UnauthorizedAccount2Roles`
+            `AccessControlUnauthorizedAccount`
         );
 
-        await zunamiPool.grantRole(await zunamiPool.EMERGENCY_ROLE(), alice.address);
+        await zunamiPool.grantRole(await zunamiPool.EMERGENCY_ADMIN_ROLE(), alice.address);
 
         await zunamiPool.connect(alice).pause();
 

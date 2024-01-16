@@ -6,10 +6,13 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../lib/ConicOracle/interfaces/IOracle.sol';
 import '../interfaces/IStrategy.sol';
-import './ZunamiPoolOwnable.sol';
+import './ZunamiPoolAccessControl.sol';
 
-abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
+abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
     using SafeERC20 for IERC20;
+
+    error WrongTokens();
+    error WrongDecimalMultipliers();
 
     uint8 public constant POOL_ASSETS = 5;
     uint256 public constant RATIO_MULTIPLIER = 1e18;
@@ -32,18 +35,30 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_
     ) {
+        bool otherZeros = false;
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+            if (otherZeros && address(tokens_[i]) != address(0)) revert WrongTokens();
+            if (address(tokens_[i]) == address(0)) otherZeros = true;
+            if (
+                (address(tokens_[i]) != address(0) && tokenDecimalsMultipliers_[i] == 0) ||
+                (address(tokens_[i]) == address(0) && tokenDecimalsMultipliers_[i] != 0)
+            ) revert WrongDecimalMultipliers();
+        }
+
         tokens = tokens_;
         tokenDecimalsMultipliers = tokenDecimalsMultipliers_;
     }
 
-    function setPriceOracle(address oracleAddr) public onlyOwner {
+    function setPriceOracle(address oracleAddr) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (oracleAddr == address(0)) revert ZeroAddress();
 
         oracle = IOracle(oracleAddr);
         emit PriceOracleSet(oracleAddr);
     }
 
-    function updateMinDepositAmount(uint256 _minDepositAmount) external onlyOwner {
+    function updateMinDepositAmount(
+        uint256 _minDepositAmount
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_minDepositAmount > 0 && _minDepositAmount <= DEPOSIT_DENOMINATOR, 'Wrong amount!');
         emit MinDepositAmountUpdated(minDepositAmount, _minDepositAmount);
         minDepositAmount = _minDepositAmount;
@@ -68,7 +83,9 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         return depositedLiquidity;
     }
 
-    function deposit(uint256[POOL_ASSETS] memory amounts) external returns (uint256) {
+    function deposit(
+        uint256[POOL_ASSETS] memory amounts
+    ) external onlyZunamiPool returns (uint256) {
         if (!checkDepositSuccessful(amounts)) {
             return 0;
         }
@@ -178,7 +195,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolOwnable {
         }
     }
 
-    function withdrawStuckToken(IERC20 _token) external onlyOwner {
+    function withdrawStuckToken(IERC20 _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 tokenBalance = _token.balanceOf(address(this));
         if (tokenBalance > 0) {
             _token.safeTransfer(_msgSender(), tokenBalance);

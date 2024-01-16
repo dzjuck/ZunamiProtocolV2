@@ -49,7 +49,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         // receive ETH on conversion
     }
 
-    function setNativeConverter(address nativeConverterAddr) external onlyOwner {
+    function setNativeConverter(address nativeConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(nativeConverterAddr) == address(0)) revert ZeroAddress();
         nativeConverter = INativeConverter(nativeConverterAddr);
         emit SetNativeConverter(nativeConverterAddr);
@@ -62,7 +62,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     }
 
     function convertCurvePoolTokenAmounts(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal view override returns (uint256[2] memory amounts2) {
         if (amounts[ZUNAMI_WETH_TOKEN_ID] == 0 && amounts[ZUNAMI_FRXETH_TOKEN_ID] == 0)
             return [uint256(0), 0];
@@ -76,7 +76,7 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
 
     function convertAndApproveTokens(
         address,
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
         if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
             IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).safeTransfer(

@@ -11,7 +11,7 @@ export async function createPoolAndControllerZunETH() {
     const zunamiPool = (await ZunamiPoolZunETHFactory.deploy()) as ZunamiPool;
 
     const ZunamiPooControllerZunETHFactory = await ethers.getContractFactory(
-        'ZunamiPooControllerZunETH'
+        'ZunamiPoolControllerZunETH'
     );
     const zunamiPoolController = (await ZunamiPooControllerZunETHFactory.deploy(
         zunamiPool.address

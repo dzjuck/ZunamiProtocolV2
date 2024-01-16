@@ -5,9 +5,9 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../interfaces/IStrategy.sol';
-import './ZunamiPoolOwnable.sol';
+import './ZunamiPoolAccessControl.sol';
 
-contract VaultStrat is IStrategy, ZunamiPoolOwnable {
+contract VaultStrat is IStrategy, ZunamiPoolAccessControl {
     using SafeERC20 for IERC20;
 
     uint256 public constant RATIO_MULTIPLIER = 1e18;
@@ -27,7 +27,9 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         tokenDecimalsMultipliers = tokenDecimalsMultipliers_;
     }
 
-    function deposit(uint256[POOL_ASSETS] calldata amounts) external returns (uint256) {
+    function deposit(
+        uint256[POOL_ASSETS] calldata amounts
+    ) external onlyZunamiPool returns (uint256) {
         uint256 depositedAmount;
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (amounts[i] > 0) {
@@ -52,7 +54,7 @@ contract VaultStrat is IStrategy, ZunamiPoolOwnable {
         return true;
     }
 
-    function withdrawAll(uint256[5] memory) external onlyZunamiPool {
+    function withdrawAll(uint256[POOL_ASSETS] memory) external onlyZunamiPool {
         transferPortionTokensTo(address(zunamiPool), RATIO_MULTIPLIER);
     }
 

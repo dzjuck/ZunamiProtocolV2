@@ -129,7 +129,7 @@ describe('StakingRewardDistributor tests', () => {
         await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true);
         await expect(
             stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true)
-        ).to.be.revertedWithCustomError(stakingRewardDistributor, 'TokenAlreadyAdded')
+        ).to.be.revertedWithCustomError(stakingRewardDistributor, 'TokenAlreadyAdded');
 
         // add the second pool
         const pid2 = 1;
@@ -147,37 +147,6 @@ describe('StakingRewardDistributor tests', () => {
 
         expect(await stakingRewardDistributor.poolCount()).to.eq(3);
         expect(await stakingRewardDistributor.totalAllocPoint()).to.eq(180);
-    });
-
-    it('add pool with zero allocation', async () => {
-        const { stakingRewardDistributor, ZUN, vlZUN, users } = await loadFixture(
-            deployFixture
-        );
-
-        // deploy test ERC20 token
-        const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
-        const POOLTOKEN1 = (await ERC20TokenFactory.deploy(18)) as ERC20;
-
-        // add 2 pools
-        const pid1 = 0;
-        await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, true);
-        const pid2 = 1;
-        await stakingRewardDistributor.addPool(0, POOLTOKEN1.address, vlZUN.address, true);
-
-        const amount = ethUnits(1000);
-
-        // deposit tokens to the pool with zero allocation
-        await POOLTOKEN1.transfer(users[0].address, amount);
-        await POOLTOKEN1.connect(users[0]).approve(stakingRewardDistributor.address, amount);
-        await stakingRewardDistributor.connect(users[0]).deposit(pid2, amount);
-        expect(await vlZUN.balanceOf(users[0].address)).to.eq(amount);
-
-        // withdraw tokens
-        await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, amount);
-        await stakingRewardDistributor.connect(users[0]).withdraw(pid2, amount);
-        expect(await vlZUN.balanceOf(users[0].address)).to.eq(0);
-
-        expect(await stakingRewardDistributor.totalAllocPoint()).to.eq(100);
     });
 
     it('add pool when two reward tokens exist', async () => {
@@ -265,9 +234,9 @@ describe('StakingRewardDistributor tests', () => {
         const accruedRewards1 = ethUnits(depositAmount1)
             .mul(accRewardPerShare1)
             .div(ACC_REWARD_PRECISION);
-        expect(
-            await stakingRewardDistributor.getPendingReward(tid1, pid, users[0].address)
-        ).to.eq(accruedRewards1);
+        expect(await stakingRewardDistributor.getPendingReward(tid1, pid, users[0].address)).to.eq(
+            accruedRewards1
+        );
 
         // add the second pool
         const pid1 = 1;
@@ -276,9 +245,14 @@ describe('StakingRewardDistributor tests', () => {
         // deposit to the second pool
         const secondPoolDepositAmount = ethUnits(depositAmount1);
         await POOLTOKEN.transfer(users[0].address, secondPoolDepositAmount);
-        await POOLTOKEN.connect(users[0]).approve(stakingRewardDistributor.address, secondPoolDepositAmount);
+        await POOLTOKEN.connect(users[0]).approve(
+            stakingRewardDistributor.address,
+            secondPoolDepositAmount
+        );
         await stakingRewardDistributor.connect(users[0]).deposit(pid1, secondPoolDepositAmount);
-        expect(await vlZUN.balanceOf(users[0].address)).to.eq(secondPoolDepositAmount.add(ethUnits(depositAmount1)));
+        expect(await vlZUN.balanceOf(users[0].address)).to.eq(
+            secondPoolDepositAmount.add(ethUnits(depositAmount1))
+        );
 
         await mine(BLOCKS_IN_1_DAYS);
 
@@ -288,15 +262,13 @@ describe('StakingRewardDistributor tests', () => {
             .mul(BLOCKS_IN_1_DAYS)
             .mul(200)
             .div(100 + 200);
-        const accRewardPerShare2 = reward2
-            .mul(ACC_REWARD_PRECISION)
-            .div(secondPoolDepositAmount);
+        const accRewardPerShare2 = reward2.mul(ACC_REWARD_PRECISION).div(secondPoolDepositAmount);
         const accruedRewards2 = secondPoolDepositAmount
             .mul(accRewardPerShare2)
             .div(ACC_REWARD_PRECISION);
-        expect(
-            await stakingRewardDistributor.getPendingReward(tid1, pid1, users[0].address)
-        ).to.eq(accruedRewards2);
+        expect(await stakingRewardDistributor.getPendingReward(tid1, pid1, users[0].address)).to.eq(
+            accruedRewards2
+        );
     });
 
     it('reallocate single pool', async () => {
@@ -323,10 +295,7 @@ describe('StakingRewardDistributor tests', () => {
     });
 
     it('deposit to the nonexistent pool', async () => {
-        const {
-            stakingRewardDistributor,
-            users,
-        } = await loadFixture(deployFixture);
+        const { stakingRewardDistributor, users } = await loadFixture(deployFixture);
 
         await expect(
             stakingRewardDistributor.connect(users[0]).deposit(0, ethUnits('1000'))
@@ -507,7 +476,7 @@ describe('StakingRewardDistributor tests', () => {
         const [poolInfo] = await stakingRewardDistributor.getAllPools();
         expect(poolInfo.accRewardsPerShare[tid1]).to.be.eq(
             firstRewardPerShare
-                .mul(BLOCKS_IN_2_WEEKS +4)
+                .mul(BLOCKS_IN_2_WEEKS + 4)
                 .mul(ACC_REWARD_PRECISION)
                 .div(ethUnits(depositAmount1 + depositAmount2))
         );
@@ -1119,5 +1088,163 @@ describe('StakingRewardDistributor tests', () => {
         expect(await REWARD2.balanceOf(users[0].address)).to.eq('7500148809523000000000');
         expect(await REWARD.balanceOf(users[1].address)).to.eq('24997519841269841000000000');
         expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499851190476000000000');
+    });
+
+    async function addPool(
+        stakingRewardDistributor: StakingRewardDistributor,
+        allocPoint: BigNumberish,
+        token: string,
+        stakingToken: string,
+        updateNeeded: boolean
+    ) {
+        const poolCountBefore = await stakingRewardDistributor.poolCount();
+        await stakingRewardDistributor.addPool(allocPoint, token, stakingToken, updateNeeded);
+        const poolCountAfter = await stakingRewardDistributor.poolCount();
+        expect(poolCountBefore.add(1)).eq(poolCountAfter);
+    }
+
+    async function addRewardToken(
+        stakingRewardDistributor: StakingRewardDistributor,
+        rewardToken: string
+    ) {
+        const rewardTokenCountBefore = await stakingRewardDistributor.rewardTokenCount();
+        await stakingRewardDistributor.addRewardToken(rewardToken);
+        const rewardTokenCountAfter = await stakingRewardDistributor.rewardTokenCount();
+        expect(rewardTokenCountBefore.add(1)).eq(rewardTokenCountAfter);
+    }
+
+    async function depositToPool(
+        stakingRewardDistributor: StakingRewardDistributor,
+        token: ERC20,
+        signer: SignerWithAddress,
+        poolId: BigNumberish,
+        amount: BigNumberish
+    ) {
+        await token.connect(signer).approve(stakingRewardDistributor.address, amount);
+        await stakingRewardDistributor.connect(signer).deposit(poolId, amount);
+    }
+
+    async function distributeRewardTokens(
+        stakingRewardDistributor: StakingRewardDistributor,
+        tokenId: BigNumberish,
+        rewardToken: ERC20,
+        amount: BigNumberish,
+        admin: SignerWithAddress
+    ) {
+        const distributorRole = await stakingRewardDistributor.DISTRIBUTOR_ROLE();
+        const isDistributorRoleGranted = await stakingRewardDistributor.hasRole(
+            distributorRole,
+            admin.address
+        );
+
+        if (!isDistributorRoleGranted)
+            await stakingRewardDistributor.grantRole(distributorRole, admin.address);
+
+        await rewardToken.connect(admin).approve(stakingRewardDistributor.address, amount);
+        await stakingRewardDistributor.connect(admin).distribute(tokenId, amount);
+    }
+
+    it('After time without distribution -> user can get more reward than need to', async () => {
+        const {
+            stakingRewardDistributor,
+            admin,
+            REWARD,
+            ZUN,
+            vlZUN,
+            users: [alice, bob],
+        } = await loadFixture(deployFixture);
+
+        // Ensure that there are initially no pools in the staking reward distributor.
+        expect(await stakingRewardDistributor.poolCount()).eq(0);
+
+        // Admin action: Adding a new pool and a reward token to the staking reward distributor.
+        const allocationPointsForPool = 100;
+        await addPool(
+            stakingRewardDistributor,
+            allocationPointsForPool,
+            ZUN.address,
+            vlZUN.address,
+            false
+        );
+        await addRewardToken(stakingRewardDistributor, REWARD.address);
+
+        // Alice deposits a specific amount of tokens into the protocol.
+        const depositAmount = ethUnits(100);
+        await ZUN.transfer(alice.address, depositAmount);
+        await depositToPool(stakingRewardDistributor, ZUN, alice, 0, depositAmount);
+
+        // Distributor: distributes reward tokens for the first time.
+        const distributionAmount = ethUnits(100);
+        console.log('Distributor: distributes reward tokens:', distributionAmount.toString());
+        console.log('========');
+        await distributeRewardTokens(
+            stakingRewardDistributor,
+            0,
+            REWARD,
+            distributionAmount,
+            admin
+        );
+
+        // Simulate time passing to end the current reward period.
+        const period = await stakingRewardDistributor.BLOCKS_IN_2_WEEKS();
+        await mine(period);
+
+        // Alice claims her rewards, expected to be the total balance of the contract.
+        await stakingRewardDistributor.connect(alice).claim(0);
+
+        // Simulating a period without any distribution (e.g., a month).
+        await mine(period.mul(2));
+
+        // Bob enters the system by depositing an amount equal to Alice's initial deposit.
+        await ZUN.transfer(bob.address, depositAmount);
+        await depositToPool(stakingRewardDistributor, ZUN, bob, 0, depositAmount);
+
+        // Another round of reward distribution by distributor.
+        await distributeRewardTokens(
+            stakingRewardDistributor,
+            0,
+            REWARD,
+            distributionAmount,
+            admin
+        );
+
+        // Bob claims his reward immediately after the distribution.
+        await stakingRewardDistributor.connect(bob).claim(0);
+        const bobBalanceFirstClaim = await REWARD.balanceOf(bob.address);
+        console.log("Bob's reward claimed (first reward):", bobBalanceFirstClaim.toString());
+
+        // Bob waits an additional period and claims his rewards again.
+        await mine(period);
+        await stakingRewardDistributor.connect(bob).claim(0);
+        const bobBalanceSecondClaim = await REWARD.balanceOf(bob.address);
+        console.log(
+            "Bob's reward claimed (second reward):",
+            bobBalanceSecondClaim.sub(bobBalanceFirstClaim).toString()
+        );
+        console.log('Total balance of Bob:', bobBalanceSecondClaim.toString());
+
+        console.log('========');
+
+        const aliceBalanceFirstClaim = await REWARD.balanceOf(alice.address);
+        console.log("Alice's balance before her second claim:", aliceBalanceFirstClaim.toString());
+
+        // Alice claims her rewards for the second time.
+        await stakingRewardDistributor.connect(alice).claim(0);
+        const aliceBalanceSecondClaim = await REWARD.balanceOf(alice.address);
+        console.log(
+            "Alice's reward claimed (second reward):",
+            aliceBalanceSecondClaim.sub(aliceBalanceFirstClaim).toString()
+        );
+        console.log('Total balance of Alice:', aliceBalanceSecondClaim.toString());
+
+        console.log('========');
+
+        // Although Alice participated in two distributions and Bob in one, their balance is not significantly different.
+        // Bob was able to take the tokens that belonged to Alice.
+        console.log('Total distribution: ', distributionAmount.mul(2).toString());
+        console.log(
+            'Balances diff: ',
+            aliceBalanceSecondClaim.sub(bobBalanceSecondClaim).toString()
+        );
     });
 });

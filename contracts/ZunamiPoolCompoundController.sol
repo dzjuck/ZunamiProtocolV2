@@ -139,6 +139,8 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
         uint256[POOL_ASSETS] memory amounts,
         address receiver
     ) internal override returns (uint256 shares) {
+        pool.mintAndClaimExtraGains(address(this));
+
         uint256 stableBefore = pool.balanceOf(address(this));
 
         uint256 assets = depositDefaultPool(amounts, address(this));
@@ -162,6 +164,8 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
         uint256[POOL_ASSETS] memory minTokenAmounts,
         address receiver
     ) internal override {
+        pool.mintAndClaimExtraGains(address(this));
+
         uint256 assets = (pool.balanceOf(address(this)) * shares) / totalSupply();
         withdrawDefaultPool(assets, minTokenAmounts, receiver);
         _burn(user, shares);

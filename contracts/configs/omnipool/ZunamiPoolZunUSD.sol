@@ -10,12 +10,12 @@ contract ZunamiPoolZunUSD is ZunamiPool {
     uint256 public constant ZUNAMI_USDT_TOKEN_ID = 2;
 
     constructor() ZunamiPool('Zunami USD', 'zunUSD') {
-        address[] memory tokens = new address[](3);
+        address[POOL_ASSETS] memory tokens;
         tokens[ZUNAMI_DAI_TOKEN_ID] = Constants.DAI_ADDRESS;
         tokens[ZUNAMI_USDC_TOKEN_ID] = Constants.USDC_ADDRESS;
         tokens[ZUNAMI_USDT_TOKEN_ID] = Constants.USDT_ADDRESS;
 
-        uint256[] memory tokenDecimalMultipliers = new uint256[](3);
+        uint256[POOL_ASSETS] memory tokenDecimalMultipliers;
         tokenDecimalMultipliers[ZUNAMI_DAI_TOKEN_ID] = 1;
         tokenDecimalMultipliers[ZUNAMI_USDC_TOKEN_ID] = 1e12;
         tokenDecimalMultipliers[ZUNAMI_USDT_TOKEN_ID] = 1e12;

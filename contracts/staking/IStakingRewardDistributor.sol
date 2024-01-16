@@ -10,5 +10,9 @@ interface IStakingRewardDistributor {
 
     function returnPoolToken(address token, uint256 amount) external;
 
-    function isRewardTokenAdded(address _token) external view returns (bool);
+    function isRewardTokenAdded(address token) external view returns (bool);
+
+    function recapitalizedAmounts(uint256 pid) external view returns (uint256);
+
+    function poolPidByAddress(address token) external view returns (uint256);
 }

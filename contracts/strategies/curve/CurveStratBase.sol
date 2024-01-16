@@ -19,7 +19,10 @@ abstract contract CurveStratBase is ZunamiStratBase {
         address poolAddr,
         address poolTokenAddr
     ) ZunamiStratBase(tokens_, tokenDecimalsMultipliers_) {
+        if (poolAddr == address(0)) revert ZeroAddress();
         pool = ICurvePool2(poolAddr);
+
+        if (poolTokenAddr == address(0)) revert ZeroAddress();
         poolToken = IERC20(poolTokenAddr);
     }
 
@@ -33,7 +36,7 @@ abstract contract CurveStratBase is ZunamiStratBase {
         uint256[POOL_ASSETS] memory tokenDecimals = tokenDecimalsMultipliers;
 
         uint256 amountsTotal;
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
             amountsTotal += amounts[i] * tokenDecimals[i];
         }
 

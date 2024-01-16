@@ -190,6 +190,8 @@ describe('ZunUSD flow tests', () => {
 
         await zunamiPoolController.claimRewards();
 
+        await expect(zunamiPool.balanceOf(zunamiPoolController.address)).to.not.eq(0);
+
         let tokens;
         let balance;
         for (let strategy of strategies) {

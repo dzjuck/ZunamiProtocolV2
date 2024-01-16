@@ -3,6 +3,6 @@ pragma solidity ^0.8.22;
 
 import '../../ZunamiPoolThroughRedemptionFeeController.sol';
 
-contract ZunamiPooControllerZunUSD is ZunamiPoolThroughRedemptionFeeController {
+contract ZunamiPoolControllerZunUSD is ZunamiPoolThroughRedemptionFeeController {
     constructor(address pool) ZunamiPoolThroughRedemptionFeeController(pool) {}
 }

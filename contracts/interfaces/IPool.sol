@@ -14,14 +14,13 @@ interface IPool is IERC20 {
     error WrongWithdrawParams(uint256 sid);
     error WrongRatio();
     error ZeroAddress();
-    error ZeroTokenAddress(uint256 index);
-    error ZeroTokenDecimalMultiplier(uint256 index);
     error DuplicatedStrategy();
     error IncorrectArguments();
     error WrongWithdrawPercent();
     error WrongReceiver();
     error IncorrectSid();
-    error WrongLength();
+    error WrongTokens();
+    error WrongDecimalMultipliers();
 
     struct StrategyInfo {
         IStrategy strategy;
@@ -44,6 +43,7 @@ interface IPool is IERC20 {
 
     event AddedStrategy(uint256 indexed sid, address indexed strategyAddr, uint256 startTime);
     event ClaimedRewards(address indexed receiver, IERC20[] rewardTokens);
+    event ClaimedExtraGains(address indexed receiver, uint256 amount);
     event EnabledStrategy(address indexed pool);
     event DisableStrategy(address indexed pool);
     event UpdatedToken(
@@ -83,4 +83,6 @@ interface IPool is IERC20 {
         uint256[5] memory minTokenAmounts,
         address receiver
     ) external;
+
+    function mintAndClaimExtraGains(address receiver) external;
 }

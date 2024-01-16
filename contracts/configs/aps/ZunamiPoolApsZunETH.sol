@@ -6,10 +6,10 @@ import '../../utils/Constants.sol';
 
 contract ZunamiPoolApsZunETH is ZunamiPool {
     constructor() ZunamiPool('Zunami ETH APS', 'apsZunETH') {
-        address[] memory tokens = new address[](1);
+        address[POOL_ASSETS] memory tokens;
         tokens[0] = Constants.zunETH_ADDRESS;
 
-        uint256[] memory tokenDecimalMultipliers = new uint256[](1);
+        uint256[POOL_ASSETS] memory tokenDecimalMultipliers;
         tokenDecimalMultipliers[0] = 1;
 
         _setTokens(tokens, tokenDecimalMultipliers);

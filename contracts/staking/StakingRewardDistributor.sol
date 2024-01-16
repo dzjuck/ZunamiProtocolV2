@@ -113,7 +113,7 @@ contract StakingRewardDistributor is
         __AccessControl_init();
         __ReentrancyGuard_init();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
@@ -129,6 +129,7 @@ contract StakingRewardDistributor is
     }
 
     function addRewardToken(IERC20 _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(_token) == address(0)) revert ZeroAddress();
         if (isRewardTokenAdded(address(_token))) revert TokenAlreadyAdded();
 
         uint256 tid = rewardTokenInfo.length;
@@ -153,6 +154,9 @@ contract StakingRewardDistributor is
         IERC20Supplied _stakingToken,
         bool _withUpdate
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_allocPoint == 0) revert WrongAmount();
+        if (address(_token) == address(0)) revert ZeroAddress();
+
         if (isPoolAdded(_token)) revert TokenAlreadyAdded();
 
         if (_withUpdate) {
@@ -298,6 +302,8 @@ contract StakingRewardDistributor is
 
     // Update reward variables of the given pool to be up-to-date.
     function updatePool(uint256 _pid) public {
+        if (_pid >= poolInfo.length) revert WrongPoolId();
+
         PoolInfo storage pool = poolInfo[_pid];
         uint256 lpSupply = totalAmounts[_pid];
 
@@ -379,6 +385,8 @@ contract StakingRewardDistributor is
 
     // claim rewards
     function claim(uint256 _tid) external nonReentrant {
+        if (_tid >= rewardTokenInfo.length) revert WrongPoolId();
+
         uint256 i;
         for (i; i < poolInfo.length; ++i) {
             updatePool(i);
@@ -448,6 +456,8 @@ contract StakingRewardDistributor is
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function withdrawEmergency(uint256 _pid) external nonReentrant {
+        if (_pid >= poolInfo.length) revert WrongPoolId();
+
         PoolInfo storage pool = poolInfo[_pid];
         UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
         uint256 amountAdjusted = (userPool.amount * getPoolTokenRatio(_pid)) / 1e18;
@@ -485,6 +495,9 @@ contract StakingRewardDistributor is
         uint256 _allocPoint,
         bool _withUpdate
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_pid >= poolInfo.length) revert WrongPoolId();
+        if(_allocPoint == 0) revert WrongAmount();
+
         if (_withUpdate) {
             updateAllPools();
         }

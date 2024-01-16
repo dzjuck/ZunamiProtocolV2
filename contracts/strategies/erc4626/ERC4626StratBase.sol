@@ -37,7 +37,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         uint256[POOL_ASSETS] memory tokenDecimals = tokenDecimalsMultipliers;
 
         uint256 amountsTotal;
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
             amountsTotal += amounts[i] * tokenDecimals[i];
         }
 
@@ -49,7 +49,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
     }
 
     function convertVaultAssetAmounts(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal view virtual returns (uint256 amount);
 
     function depositLiquidity(

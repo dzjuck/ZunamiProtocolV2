@@ -41,14 +41,14 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         zunamiTokenIndex = _zunamiTokenIndex;
     }
 
-    function setStableConverter(address stableConverterAddr) external onlyOwner {
+    function setStableConverter(address stableConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(stableConverterAddr) == address(0)) revert ZeroAddress();
         stableConverter = IStableConverter(stableConverterAddr);
         emit SetStableConverter(stableConverterAddr);
     }
 
     function convertCurvePoolTokenAmounts(
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal view override returns (uint256[2] memory amounts2) {
         if (
             amounts[ZUNAMI_USDT_TOKEN_ID] == 0 &&
@@ -77,7 +77,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
 
     function convertAndApproveTokens(
         address pool,
-        uint256[5] memory amounts
+        uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256[2] memory amounts2) {
         IERC20 token = tokens[zunamiTokenIndex];
 

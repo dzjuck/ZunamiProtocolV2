@@ -1,4 +1,4 @@
-const { ethers, upgrades} = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
@@ -12,10 +12,16 @@ async function main() {
     const vlZunAddress = '0x036C922e67cE6E06a2F61765533d65162B8775b1';
 
     console.log('Deploy Staking Reward Distributor ZUN:');
-    const StakingRewardDistributorFactory = await ethers.getContractFactory('StakingRewardDistributor');
-    const stakingRewardDistributor = await upgrades.deployProxy(StakingRewardDistributorFactory, [], {
-        kind: 'uups',
-    });
+    const StakingRewardDistributorFactory = await ethers.getContractFactory(
+        'StakingRewardDistributor'
+    );
+    const stakingRewardDistributor = await upgrades.deployProxy(
+        StakingRewardDistributorFactory,
+        [],
+        {
+            kind: 'uups',
+        }
+    );
 
     await stakingRewardDistributor.deployed();
     console.log('Staking Reward Distributor ZUN:', stakingRewardDistributor.address);

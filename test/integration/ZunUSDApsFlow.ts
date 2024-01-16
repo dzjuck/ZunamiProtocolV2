@@ -28,7 +28,10 @@ export async function createPoolAndCompoundController(token: string, rewardManag
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
     const zunamiPool = (await ZunamiPoolFactory.deploy('APS', 'APS')) as ZunamiPool;
 
-    await zunamiPool.setTokens([token], [1]);
+    await zunamiPool.setTokens(
+        [token, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
+        [1, 0, 0, 0, 0]
+    );
 
     const ZunamiPooControllerFactory = await ethers.getContractFactory(
         'ZunamiPoolCompoundController'

@@ -10,10 +10,12 @@ async function main() {
     const zunVoteTokenAddress = '';
 
     const rewardDistributorAddress = '';
-    const zunTokenRewardDistributorTid  = 0;
+    const zunTokenRewardDistributorTid = 0;
 
     console.log('Deploy StakingRewardDistributorGauge:');
-    const StakingRewardDistributorGauge = await ethers.getContractFactory('StakingRewardDistributorGauge');
+    const StakingRewardDistributorGauge = await ethers.getContractFactory(
+        'StakingRewardDistributorGauge'
+    );
     const gauge = await StakingRewardDistributorGauge.deploy(
         zunTokenAddress,
         rewardDistributorAddress,
