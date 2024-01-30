@@ -86,14 +86,14 @@ describe('StakingRewardDistributor tests', () => {
             const amount1 = ethUnits(depositAmount1);
             await ZUN.transfer(users[0].address, amount1);
             await ZUN.connect(users[0]).approve(stakingRewardDistributor.address, amount1);
-            await stakingRewardDistributor.connect(users[0]).deposit(pid, amount1);
+            await stakingRewardDistributor.connect(users[0]).deposit(pid, amount1, users[0].address);
             expect(await vlZUN.balanceOf(users[0].address)).to.eq(amount1);
         }
         if (depositAmount2) {
             const amount2 = ethUnits(depositAmount2);
             await ZUN.transfer(users[1].address, amount2);
             await ZUN.connect(users[1]).approve(stakingRewardDistributor.address, amount2);
-            await stakingRewardDistributor.connect(users[1]).deposit(pid, amount2);
+            await stakingRewardDistributor.connect(users[1]).deposit(pid, amount2, users[1].address);
             expect(await vlZUN.balanceOf(users[1].address)).to.eq(amount2);
         }
 
@@ -249,7 +249,7 @@ describe('StakingRewardDistributor tests', () => {
             stakingRewardDistributor.address,
             secondPoolDepositAmount
         );
-        await stakingRewardDistributor.connect(users[0]).deposit(pid1, secondPoolDepositAmount);
+        await stakingRewardDistributor.connect(users[0]).deposit(pid1, secondPoolDepositAmount, users[0].address);
         expect(await vlZUN.balanceOf(users[0].address)).to.eq(
             secondPoolDepositAmount.add(ethUnits(depositAmount1))
         );
@@ -298,7 +298,7 @@ describe('StakingRewardDistributor tests', () => {
         const { stakingRewardDistributor, users } = await loadFixture(deployFixture);
 
         await expect(
-            stakingRewardDistributor.connect(users[0]).deposit(0, ethUnits('1000'))
+            stakingRewardDistributor.connect(users[0]).deposit(0, ethUnits('1000'), users[0].address)
         ).to.be.revertedWithCustomError(stakingRewardDistributor, 'WrongPoolId');
     });
 
@@ -325,7 +325,7 @@ describe('StakingRewardDistributor tests', () => {
 
         // try to deposit without tokens
         await expect(
-            stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('1000'))
+            stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('1000'), users[0].address)
         ).to.be.revertedWithCustomError(ZUN, 'ERC20InsufficientAllowance');
 
         // users receive ZUN and deposit to distributor
@@ -333,8 +333,8 @@ describe('StakingRewardDistributor tests', () => {
         await ZUN.transfer(users[1].address, ethUnits('2000'));
         await ZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('1000'));
         await ZUN.connect(users[1]).approve(stakingRewardDistributor.address, ethUnits('2000'));
-        await stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('1000'));
-        await stakingRewardDistributor.connect(users[1]).deposit(pid, ethUnits('2000'));
+        await stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('1000'), users[0].address);
+        await stakingRewardDistributor.connect(users[1]).deposit(pid, ethUnits('2000'), users[1].address);
         expect(await vlZUN.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
         expect(await vlZUN.balanceOf(users[1].address)).to.eq(ethUnits('2000'));
     });
@@ -691,7 +691,7 @@ describe('StakingRewardDistributor tests', () => {
 
         const withdrawAmount = ethUnits(depositAmount1);
         await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, withdrawAmount);
-        await stakingRewardDistributor.connect(users[0]).withdraw(pid, withdrawAmount);
+        await stakingRewardDistributor.connect(users[0]).withdraw(pid, withdrawAmount, users[0].address);
 
         // check balances after withdraw - 15% of withdrawal has transfered to earlyExitReceiver
         expect(await vlZUN.balanceOf(users[0].address)).to.eq(0);
@@ -730,7 +730,7 @@ describe('StakingRewardDistributor tests', () => {
 
         const withdrawAmount = ethUnits(depositAmount1);
         await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, withdrawAmount);
-        await stakingRewardDistributor.connect(users[0]).withdraw(pid, withdrawAmount);
+        await stakingRewardDistributor.connect(users[0]).withdraw(pid, withdrawAmount, users[0].address);
 
         // check balances after withdraw
         expect(await vlZUN.balanceOf(users[0].address)).to.eq(0);
@@ -969,7 +969,7 @@ describe('StakingRewardDistributor tests', () => {
         // try to withdraw whole deposit back
         const withdrawAmount = ethUnits(depositAmount1);
         await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, withdrawAmount);
-        await stakingRewardDistributor.connect(users[0]).withdraw(pid, withdrawAmount);
+        await stakingRewardDistributor.connect(users[0]).withdraw(pid, withdrawAmount, users[0].address);
 
         // check balances after withdraw
         const totalAmount = ethUnits(depositAmount1 + depositAmount2);
@@ -1018,7 +1018,7 @@ describe('StakingRewardDistributor tests', () => {
 
         await ZUN.transfer(users[0].address, ethUnits('1000'));
         await ZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('1000'));
-        await stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('1000'));
+        await stakingRewardDistributor.connect(users[0]).deposit(pid, ethUnits('1000'), users[0].address);
         expect(await vlZUN.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
 
         await REWARD.approve(stakingRewardDistributor.address, ethUnits('100000000'));
@@ -1043,7 +1043,7 @@ describe('StakingRewardDistributor tests', () => {
 
         await ZUN.transfer(users[1].address, ethUnits('1000'));
         await ZUN.connect(users[1]).approve(stakingRewardDistributor.address, ethUnits('1000'));
-        await stakingRewardDistributor.connect(users[1]).deposit(pid, ethUnits('1000'));
+        await stakingRewardDistributor.connect(users[1]).deposit(pid, ethUnits('1000'), users[1].address);
         expect(await vlZUN.balanceOf(users[1].address)).to.eq(ethUnits('1000'));
 
         // wait 1 week - 50_400 blocks
@@ -1072,7 +1072,7 @@ describe('StakingRewardDistributor tests', () => {
         expect(await REWARD2.balanceOf(users[1].address)).to.eq('2499851190476000000000');
 
         await vlZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('500'));
-        await stakingRewardDistributor.connect(users[0]).withdraw(pid, ethUnits('500'));
+        await stakingRewardDistributor.connect(users[0]).withdraw(pid, ethUnits('500'), users[0].address);
 
         expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(ethUnits('1500'));
         expect(await ZUN.balanceOf(users[0].address)).to.eq(ethUnits('425'));
@@ -1121,7 +1121,7 @@ describe('StakingRewardDistributor tests', () => {
         amount: BigNumberish
     ) {
         await token.connect(signer).approve(stakingRewardDistributor.address, amount);
-        await stakingRewardDistributor.connect(signer).deposit(poolId, amount);
+        await stakingRewardDistributor.connect(signer).deposit(poolId, amount, signer.address);
     }
 
     async function distributeRewardTokens(

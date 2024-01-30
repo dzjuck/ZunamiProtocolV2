@@ -356,7 +356,7 @@ contract StakingRewardDistributor is
     }
 
     // Deposit tokens to staking for reward token allocation.
-    function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
+    function deposit(uint256 _pid, uint256 _amount, address _receiver) external nonReentrant {
         if (_pid >= poolInfo.length) revert WrongPoolId();
         updatePool(_pid);
 
@@ -365,7 +365,11 @@ contract StakingRewardDistributor is
             accrueReward(tid, _pid);
         }
 
-        UserPoolInfo storage userPool = userPoolInfo[_pid][msg.sender];
+        if (_receiver == address(0)) {
+            _receiver = msg.sender;
+        }
+
+        UserPoolInfo storage userPool = userPoolInfo[_pid][_receiver];
 
         if (_amount > 0) {
             poolInfo[_pid].token.safeTransferFrom(address(msg.sender), address(this), _amount);
@@ -375,7 +379,7 @@ contract StakingRewardDistributor is
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
             if (address(stakingToken) != address(0)) {
-                stakingToken.mint(msg.sender, _amount);
+                stakingToken.mint(_receiver, _amount);
             }
         }
 
@@ -383,12 +387,12 @@ contract StakingRewardDistributor is
             userPool.accruedRewards[tid] = calcReward(
                 tid,
                 poolInfo[_pid],
-                userPoolInfo[_pid][msg.sender]
+                userPoolInfo[_pid][_receiver]
             );
         }
 
         userPool.depositedBlock = block.number;
-        emit Deposited(msg.sender, _pid, _amount);
+        emit Deposited(_receiver, _pid, _amount);
     }
 
     // claim rewards
@@ -516,7 +520,11 @@ contract StakingRewardDistributor is
     }
 
     // Withdraw tokens from rewardToken staking.
-    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
+    function withdraw(uint256 _pid, uint256 _amount, address _receiver) external nonReentrant {
+        if (_receiver == address(0)) {
+            _receiver = msg.sender;
+        }
+
         if (userPoolInfo[_pid][msg.sender].amount < _amount) revert WrongAmount();
 
         updatePool(_pid);
@@ -543,7 +551,7 @@ contract StakingRewardDistributor is
                     amountAdjusted - transferAmount
                 );
             }
-            poolInfo[_pid].token.safeTransfer(address(msg.sender), transferAmount);
+            poolInfo[_pid].token.safeTransfer(address(_receiver), transferAmount);
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
             if (address(stakingToken) != address(0)) {
