@@ -128,7 +128,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     }
 
     function tokenPrice() public view returns (uint256) {
-        return calcTokenPrice(pool.totalDeposited(), totalSupply());
+        return calcTokenPrice(pool.totalSupply(), totalSupply());
     }
 
     function calcTokenPrice(uint256 _holdings, uint256 _tokens) public pure returns (uint256) {

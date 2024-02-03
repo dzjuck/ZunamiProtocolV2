@@ -32,7 +32,6 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     IERC20[POOL_ASSETS] private _tokens;
     uint256[POOL_ASSETS] private _decimalsMultipliers;
 
-    uint256 public totalDeposited;
     uint256 public extraGains;
     uint256 public extraGainsMintedBlock;
     bool public launched;
@@ -52,10 +51,6 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
     function _checkStrategyEnabled(uint256 sid) internal view {
         if (!_strategyInfo[sid].enabled) revert DisabledStrategy(sid);
-    }
-
-    function _decimalsOffset() internal view virtual returns (uint8) {
-        return 0;
     }
 
     function strategyInfo(uint256 sid) external view returns (StrategyInfo memory) {
@@ -129,13 +124,25 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         // return if gains were minted in this block
         if (extraGainsMintedBlock == block.number) return;
 
-        uint256 currentTotalHoldings = totalHoldings();
-        //check if gains are present
-        if (currentTotalHoldings <= totalDeposited) return;
+        uint256 gains;
+        uint256 strategyGains_;
+        for (uint256 sid = 0; sid < _strategyInfo.length; sid++) {
+            StrategyInfo storage strategyInfo_ = _strategyInfo[sid];
+            if (strategyInfo_.minted > 0 && strategyInfo_.enabled) {
+                uint256 holdings = strategyInfo_.strategy.totalHoldings();
+                uint256 minted = strategyInfo_.minted;
+                //check if gains are present
+                if (holdings <= minted) continue;
 
-        uint256 gains = currentTotalHoldings - totalDeposited;
+                unchecked {
+                    strategyGains_ = holdings - minted;
+                    strategyInfo_.minted += strategyGains_;
+                    gains += strategyGains_;
+                }
+            }
+        }
+
         extraGains += gains;
-        totalDeposited += gains;
         extraGainsMintedBlock = block.number;
         _mint(address(this), gains);
     }
@@ -188,7 +195,9 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
         uint256 depositedValue = doDepositStrategy(sid, amounts);
 
-        return processSuccessfulDeposit(receiver, depositedValue, amounts, sid);
+        processSuccessfulDeposit(receiver, depositedValue, amounts, sid);
+
+        return depositedValue;
     }
 
     function depositStrategy(
@@ -225,29 +234,22 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256 depositedValue,
         uint256[POOL_ASSETS] memory depositedTokens,
         uint256 sid
-    ) internal returns (uint256 minted) {
+    ) internal {
         uint256 locked = 0;
         if (totalSupply() == 0) {
             if (depositedValue <= MINIMUM_LIQUIDITY) revert WrongAmount();
-            minted = depositedValue;
             locked = MINIMUM_LIQUIDITY;
             _mint(MINIMUM_LIQUIDITY_LOCKER, MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
-        } else {
-            minted =
-                ((totalSupply() + 10 ** _decimalsOffset()) * depositedValue) /
-                (totalDeposited + 1);
         }
-        _mint(receiver, minted - locked);
-        _strategyInfo[sid].minted += minted;
+        _mint(receiver, depositedValue - locked);
+        _strategyInfo[sid].minted += depositedValue;
 
-        totalDeposited += depositedValue;
-
-        emit Deposited(receiver, depositedValue, depositedTokens, minted, sid);
+        emit Deposited(receiver, depositedValue, depositedTokens, sid);
     }
 
     function withdraw(
         uint256 sid,
-        uint256 amount,
+        uint256 stableAmount,
         uint256[POOL_ASSETS] memory tokenAmounts,
         address receiver
     ) external whenNotPaused onlyRole(CONTROLLER_ROLE) {
@@ -258,33 +260,24 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         IStrategy strategy = _strategyInfo[sid].strategy;
         address controllerAddr = _msgSender();
 
-        if (balanceOf(controllerAddr) < amount) revert WrongAmount();
+        if (balanceOf(controllerAddr) < stableAmount) revert WrongAmount();
 
         _mintExtraGains();
 
         if (
             !strategy.withdraw(
                 receiver == address(0) ? controllerAddr : receiver,
-                calcRatioSafe(amount, _strategyInfo[sid].minted),
+                calcRatioSafe(stableAmount, _strategyInfo[sid].minted),
                 tokenAmounts
             )
         ) revert WrongWithdrawParams(sid);
 
-        uint256 userDeposit = ((totalDeposited + 1) * amount) /
-            (totalSupply() + 10 ** _decimalsOffset());
-
-        processSuccessfulWithdrawal(controllerAddr, userDeposit, amount, sid);
+        processSuccessfulWithdrawal(controllerAddr, stableAmount, sid);
     }
 
-    function processSuccessfulWithdrawal(
-        address user,
-        uint256 userDeposit,
-        uint256 stableAmount,
-        uint256 sid
-    ) internal {
+    function processSuccessfulWithdrawal(address user, uint256 stableAmount, uint256 sid) internal {
         _burn(user, stableAmount);
         _strategyInfo[sid].minted -= stableAmount;
-        totalDeposited -= userDeposit;
         emit Withdrawn(user, stableAmount, sid);
     }
 

@@ -31,9 +31,8 @@ interface IPool is IERC20 {
 
     event Deposited(
         address indexed depositor,
-        uint256 depositedValue,
-        uint256[5] amounts,
         uint256 deposited,
+        uint256[5] amounts,
         uint256 indexed sid
     );
 
@@ -64,8 +63,6 @@ interface IPool is IERC20 {
     function claimRewards(address receiver, IERC20[] memory rewardTokens) external;
 
     function totalHoldings() external view returns (uint256);
-
-    function totalDeposited() external view returns (uint256);
 
     function strategyCount() external view returns (uint256);
 

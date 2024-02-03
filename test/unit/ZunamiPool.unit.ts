@@ -119,7 +119,6 @@ describe('ZunamiPool', () => {
         await expect((await zunamiPool.tokenDecimalsMultipliers())[2]).to.be.equal(10 ** 12);
 
         await expect(await zunamiPool.strategyCount()).to.be.equal(0);
-        await expect(await zunamiPool.totalDeposited()).to.be.equal(0);
 
         await expect(await zunamiPool.launched()).to.be.equal(false);
         await expect(await zunamiPool.paused()).to.be.equal(false);
@@ -298,12 +297,10 @@ describe('ZunamiPool', () => {
         await strategy.deposit.whenCalledWith(tokenBalances).returns(depositedValue.toFixed());
         await zunamiPool.deposit(sid, tokenBalances, admin.address);
 
-        const lpShares = depositedValue.toFixed();
         const minted = depositedValue.minus(MINIMUM_LIQUIDITY).toFixed();
-        expect(await zunamiPool.totalSupply()).to.be.equal(lpShares);
+        expect(await zunamiPool.totalSupply()).to.be.equal(depositedValue.toFixed());
         expect(await zunamiPool.balanceOf(admin.address)).to.be.equal(minted);
-        expect((await zunamiPool.strategyInfo(sid)).minted).to.be.equal(lpShares);
-        expect(await zunamiPool.totalDeposited()).to.be.equal(depositedValue.toFixed());
+        expect((await zunamiPool.strategyInfo(sid)).minted).to.be.equal(depositedValue.toFixed());
 
         tokenBalances = await transferTokensToZunamiPool([100, 100, 100, 0, 0]);
 
@@ -312,21 +309,13 @@ describe('ZunamiPool', () => {
 
         await zunamiPool.deposit(sid, tokenBalances, admin.address);
 
-        const totalSupply = bn((await zunamiPool.totalSupply()).toString());
-
-        const lpSharesExtra = totalSupply
-            .multipliedBy(newDepositedValue)
-            .dividedToIntegerBy((await zunamiPool.totalDeposited()).toString())
-            .toFixed();
-        const lpSharesTotal = bn(lpShares).plus(lpSharesExtra);
+        const lpSharesTotal = depositedValue.plus(newDepositedValue);
         expect(await zunamiPool.totalSupply()).to.be.equal(lpSharesTotal.toFixed());
         expect(await zunamiPool.balanceOf(admin.address)).to.be.equal(
             lpSharesTotal.minus(MINIMUM_LIQUIDITY).toFixed()
         );
         expect((await zunamiPool.strategyInfo(sid)).minted).to.be.equal(lpSharesTotal.toFixed());
-        expect(await zunamiPool.totalDeposited()).to.be.equal(
-            depositedValue.plus(newDepositedValue).toFixed()
-        );
+        expect(await zunamiPool.totalSupply()).to.be.equal(lpSharesTotal.toFixed());
     });
 
     it('should deposit strategy directly', async () => {
@@ -391,7 +380,6 @@ describe('ZunamiPool', () => {
             .returns(depositedValue.toFixed());
 
         const totalSupply = bn((await zunamiPool.totalSupply()).toString());
-        const totalDeposited = bn((await zunamiPool.totalDeposited()).toString());
 
         await zunamiPool.withdraw(sid, lpShares, tokenBalances, admin.address);
 
@@ -401,10 +389,6 @@ describe('ZunamiPool', () => {
             newTotalSupply.minus(MINIMUM_LIQUIDITY).toFixed()
         );
         expect((await zunamiPool.strategyInfo(sid)).minted).to.be.equal(newTotalSupply.toFixed());
-
-        const userDeposit = totalDeposited.multipliedBy(lpShares).dividedToIntegerBy(totalSupply);
-        const newTotalDeposited = depositedValue.minus(userDeposit).toFixed();
-        expect(await zunamiPool.totalDeposited()).to.be.equal(newTotalDeposited);
 
         await strategy.withdraw
             .whenCalledWith(
@@ -423,7 +407,6 @@ describe('ZunamiPool', () => {
         expect(await zunamiPool.totalSupply()).to.be.equal(MINIMUM_LIQUIDITY);
         expect(await zunamiPool.balanceOf(admin.address)).to.be.equal(0);
         expect((await zunamiPool.strategyInfo(sid)).minted).to.be.equal(MINIMUM_LIQUIDITY);
-        expect(await zunamiPool.totalDeposited()).to.be.equal(MINIMUM_LIQUIDITY);
     });
 
     it('should use launched when starting pool', async () => {

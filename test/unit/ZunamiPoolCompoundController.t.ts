@@ -429,19 +429,19 @@ describe('ZunamiPoolCompoundController', () => {
         expect(await zunamiController.balanceOf(bob.address)).to.be.equal(minted.toFixed());
 
         // total supply == deposited amount
-        await zunamiPool.totalDeposited.returns(amount.toFixed());
+        await zunamiPool.totalSupply.returns(amount.toFixed());
 
         await expect(await zunamiController.tokenPrice()).to.be.equal(tokenify(1).toFixed());
 
         // total supply == deposited amount * 2
-        await zunamiPool.totalDeposited.returns(amount.dividedBy(2).toFixed());
+        await zunamiPool.totalSupply.returns(amount.dividedBy(2).toFixed());
 
         await expect(await zunamiController.tokenPrice()).to.be.equal(
             tokenify(1).dividedBy(2).toFixed()
         );
 
         // total supply * 2 == deposited amount
-        await zunamiPool.totalDeposited.returns(amount.multipliedBy(2).toFixed());
+        await zunamiPool.totalSupply.returns(amount.multipliedBy(2).toFixed());
 
         await expect(await zunamiController.tokenPrice()).to.be.equal(
             tokenify(1).multipliedBy(2).toFixed()

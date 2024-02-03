@@ -119,7 +119,8 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     ) external onlyRole(EMERGENCY_ADMIN_ROLE) {
         _sellRewards(rewardManager, zunToken);
         uint256 zunTokenReturnAmount = zunToken.balanceOf(address(this));
-        uint256 recapitalizedAmount = stakingRewardDistributor.poolPidByAddress(address(zunToken));
+        uint256 pid = stakingRewardDistributor.poolPidByAddress(address(zunToken));
+        uint256 recapitalizedAmount = stakingRewardDistributor.recapitalizedAmounts(pid);
         if (zunTokenReturnAmount > recapitalizedAmount) {
             zunTokenReturnAmount = recapitalizedAmount;
         }

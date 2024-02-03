@@ -234,10 +234,15 @@ describe('RecapitalizationManager', () => {
             .setRewardDistributor(stakingRewardDistributor.address);
 
         const zunAmount = tokenify(100);
-        await zun.balanceOf.returns(zunAmount.toFixed());
+        await zun.balanceOf.whenCalledWith(recapitalizationManager.address).returns(zunAmount.toFixed());
+
         await zun.approve
             .whenCalledWith(stakingRewardDistributor.address, zunAmount.toFixed())
             .returns(true);
+
+        await stakingRewardDistributor.recapitalizedAmounts
+          .whenCalledWith(0)
+          .returns(zunAmount.toFixed());
 
         await recapitalizationManager
             .connect(admin)

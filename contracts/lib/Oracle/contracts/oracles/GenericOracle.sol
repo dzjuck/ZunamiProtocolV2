@@ -43,8 +43,8 @@ contract GenericOracle is IOracle, Ownable2Step {
     }
 
     function setCustomOracle(address token, address oracle) external onlyOwner {
-        if(token == address(0)) revert ZeroAddress();
-        if(oracle == address(0)) revert ZeroAddress();
+        if (token == address(0)) revert ZeroAddress();
+        if (oracle == address(0)) revert ZeroAddress();
         customOracles[token] = IOracle(oracle);
         emit CustomOracleAdded(token, oracle);
     }
