@@ -10,7 +10,7 @@ import '@openzeppelin/contracts/utils/Nonces.sol';
 import { EIP712 } from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 import { SignatureChecker } from '@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-import '../interfaces/IGauge.sol';
+import '../../interfaces/IGauge.sol';
 
 contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGuard {
     using SafeERC20 for ERC20;
