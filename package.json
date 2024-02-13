@@ -11,7 +11,7 @@
     "test": "hardhat test",
     "test:coverage": "hardhat coverage  --testfiles 'test/*.ts'",
     "test:verbose": "hardhat test --verbose test/*.ts",
-    "deploy:zunUSD:mainnet": "hardhat run --network mainnet ./scripts/deployZunUSD.js",
+    "deploy:zunUSD:mainnet": "hardhat run --network mainnet scripts/prod/deployZunUSD.js",
     "deploy:zunUSD:testnet": "hardhat run --network sepolia scripts/test/deployZunUSDTest.js"
   },
   "repository": {
@@ -19,7 +19,7 @@
     "url": "git+https://github.com/ZunamiLab/ZunamiProtocolV2.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Zunami Team",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ZunamiLab/ZunamiProtocolV2/issues"
@@ -40,13 +40,11 @@
     "dotenv": "^16.0.3",
     "hardhat": "^2.13.1",
     "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-deploy": "^0.11.42",
     "prettier": "2.8.3",
     "prettier-plugin-solidity": "1.1.1",
     "solhint": "3.3.7",
     "ts-node": ">=8.0.0",
     "typescript": ">=4.5.0"
-  },
-  "dependencies": {
-    "hardhat-deploy": "^0.11.42"
   }
 }

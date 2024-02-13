@@ -142,6 +142,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
             }
         }
 
+        if (gains == 0) return;
         extraGains += gains;
         extraGainsMintedBlock = block.number;
         _mint(address(this), gains);
@@ -194,10 +195,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         _mintExtraGains();
 
         uint256 depositedValue = doDepositStrategy(sid, amounts);
-
-        processSuccessfulDeposit(receiver, depositedValue, amounts, sid);
-
-        return depositedValue;
+        return processSuccessfulDeposit(receiver, depositedValue, amounts, sid);
     }
 
     function depositStrategy(
@@ -234,17 +232,20 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256 depositedValue,
         uint256[POOL_ASSETS] memory depositedTokens,
         uint256 sid
-    ) internal {
+    ) internal returns (uint256){
         uint256 locked = 0;
         if (totalSupply() == 0) {
             if (depositedValue <= MINIMUM_LIQUIDITY) revert WrongAmount();
             locked = MINIMUM_LIQUIDITY;
             _mint(MINIMUM_LIQUIDITY_LOCKER, MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         }
-        _mint(receiver, depositedValue - locked);
+        uint256 depositedValueSubLocked = depositedValue - locked;
+        _mint(receiver, depositedValueSubLocked);
         _strategyInfo[sid].minted += depositedValue;
 
         emit Deposited(receiver, depositedValue, depositedTokens, sid);
+
+        return depositedValueSubLocked;
     }
 
     function withdraw(

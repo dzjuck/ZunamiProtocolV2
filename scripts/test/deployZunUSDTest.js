@@ -1,7 +1,5 @@
 const { ethers } = require('hardhat');
 
-const { createAndInitConicOracles } = require('../utils/CreateAndInitConicOracles');
-
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
     console.log('Start deploy');
@@ -19,8 +17,6 @@ async function main() {
     const usdtTest = await ERC20Factory.deploy(6);
     await usdtTest.deployed();
     console.log('usdtTest deployed:', usdtTest.address);
-
-    // const {curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle} = await createAndInitConicOracles();
 
     console.log('Deploy zunUSD omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPool');
