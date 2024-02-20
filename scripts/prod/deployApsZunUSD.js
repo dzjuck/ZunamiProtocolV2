@@ -20,9 +20,9 @@ async function createAndInitStrategy(zunamiPool, stratName, oracle, stableConver
         );
     }
 
-    // result = await zunamiPool.addStrategy(strategy.address);
-    // await result.wait();
-    // console.log(`Added ${stratName} pool to ZunamiPool`);
+    result = await zunamiPool.addStrategy(strategy.address);
+    await result.wait();
+    console.log(`Added ${stratName} pool to ZunamiPool`);
 
     result = await strategy.setZunamiPool(zunamiPool.address);
     await result.wait();

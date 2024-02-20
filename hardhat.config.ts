@@ -83,7 +83,7 @@ const config: HardhatUserConfig = {
             chainId: 1,
             gas: 'auto',
             gasMultiplier: 1.2,
-            gasPrice: 20000000000,
+            gasPrice: 30000000000,
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
         },
@@ -97,6 +97,7 @@ const config: HardhatUserConfig = {
         development: {
             url: 'http://127.0.0.1:8545',
             gas: 12400000,
+            gasPrice: 24000000000,
             timeout: 1000000,
         },
     },
