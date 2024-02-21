@@ -21,3 +21,7 @@ npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunUSDApsV
 
 //ZAP
 npx hardhat verify --network mainnet --constructor-args ./abi/ZunamiDepositZap_arguments.js 0x7aecF73B61a8579F7cf2Fe9b2a2d97339e9168Bf
+
+// OMNIPOOL STRATEGIES
+npx hardhat verify --network mainnet --contract contracts/strategies/curve/stakeDao/crvUsdToken/usdc/UsdcCrvUsdStakeDaoCurve.sol:UsdcCrvUsdStakeDaoCurve 0x8D4D612D96D69C9DF83c2607f08f6E361983E598
+npx hardhat verify --network mainnet --contract contracts/strategies/curve/stakeDao/crvUsdToken/usdt/UsdtCrvUsdStakeDaoCurve.sol:UsdtCrvUsdStakeDaoCurve 0xadFa8e4C7004a9373426aC4F37F146a42aE699AB

@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '../../interfaces/IOracle.sol';
 import '../../interfaces/vendor/ICurvePoolOraclePrice.sol';
 
-contract FrxETHOracle is IOracle, Ownable2Step {
+contract FrxETHOracle is IOracle {
     error WrongToken();
 
     address internal constant FRXETH_ADDRESS = 0x5E8422345238F34275888049021821E8E08CAa1f;
@@ -18,7 +18,7 @@ contract FrxETHOracle is IOracle, Ownable2Step {
 
     IOracle private immutable _genericOracle;
 
-    constructor(address genericOracle) Ownable(msg.sender) {
+    constructor(address genericOracle) {
         _genericOracle = IOracle(genericOracle);
     }
 

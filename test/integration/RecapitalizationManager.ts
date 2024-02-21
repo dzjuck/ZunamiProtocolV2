@@ -559,7 +559,9 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address,
                 parseZUN(1000)
             );
-            await stakingRewardDistributor.connect(otherAccount).deposit(0, parseZUN(1000), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(0, parseZUN(1000), otherAccount.address);
 
             // when
             const tx = await recapitalizationManager.recapitalizePoolByStackedZun(
@@ -646,8 +648,12 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address,
                 parseZUN(500)
             );
-            await stakingRewardDistributor.connect(otherAccount).deposit(0, parseZUN(500), otherAccount.address);
-            await stakingRewardDistributor.connect(otherAccount1).deposit(0, parseZUN(500), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(0, parseZUN(500), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount1)
+                .deposit(0, parseZUN(500), otherAccount.address);
 
             // make first recapitalization
             await recapitalizationManager.recapitalizePoolByStackedZun(
@@ -738,7 +744,9 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address,
                 parseZUN(1000)
             );
-            await stakingRewardDistributor.connect(otherAccount).deposit(0, parseZUN(1000), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(0, parseZUN(1000), otherAccount.address);
 
             // when
             const tx = recapitalizationManager.recapitalizePoolByStackedZun(
@@ -795,7 +803,9 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address,
                 parseZUN(1000)
             );
-            await stakingRewardDistributor.connect(otherAccount).deposit(0, parseZUN(1000), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(0, parseZUN(1000), otherAccount.address);
             const recapitalizationAmount = parseZUN(40);
             await recapitalizationManager.recapitalizePoolByStackedZun(
                 recapitalizationAmount,
@@ -898,7 +908,9 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address,
                 parseZUN(1000)
             );
-            await stakingRewardDistributor.connect(otherAccount).deposit(0, parseZUN(1000), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(0, parseZUN(1000), otherAccount.address);
             const recapitalizationAmount = parseZUN(40);
             await recapitalizationManager.recapitalizePoolByStackedZun(
                 recapitalizationAmount,
@@ -1002,7 +1014,9 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address,
                 parseZUN(1000)
             );
-            await stakingRewardDistributor.connect(otherAccount).deposit(0, parseZUN(1000), otherAccount.address);
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(0, parseZUN(1000), otherAccount.address);
             const recapitalizationAmount = parseZUN(40);
             await recapitalizationManager.recapitalizePoolByStackedZun(
                 recapitalizationAmount,

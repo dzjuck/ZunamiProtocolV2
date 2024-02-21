@@ -135,14 +135,19 @@ describe('ZunamiPool', () => {
         const strategy2 = await mockStrategy();
         const strategy3 = await mockStrategy();
 
-        await expect(zunamiPool.addStrategy(ADDRESS_ZERO)).to.be.revertedWithCustomError(zunamiPool, `ZeroAddress`);
+        await expect(zunamiPool.addStrategy(ADDRESS_ZERO)).to.be.revertedWithCustomError(
+            zunamiPool,
+            `ZeroAddress`
+        );
 
         await zunamiPool.addStrategy(strategy1.address);
         await zunamiPool.addStrategy(strategy2.address);
         await zunamiPool.addStrategy(strategy3.address);
 
-        await expect(zunamiPool.addStrategy(strategy1.address))
-            .to.be.revertedWithCustomError(zunamiPool, `DuplicatedStrategy`);
+        await expect(zunamiPool.addStrategy(strategy1.address)).to.be.revertedWithCustomError(
+            zunamiPool,
+            `DuplicatedStrategy`
+        );
 
         await expect(await zunamiPool.strategyCount()).to.be.equal(3);
 
@@ -259,7 +264,10 @@ describe('ZunamiPool', () => {
             .toNumber();
         await increaseChainTime(timeAfterLock);
 
-        await expect(zunamiPool.disableStrategy(42)).to.be.revertedWithCustomError(zunamiPool, `IncorrectSid`);
+        await expect(zunamiPool.disableStrategy(42)).to.be.revertedWithCustomError(
+            zunamiPool,
+            `IncorrectSid`
+        );
         await zunamiPool.disableStrategy(sid);
 
         await expect(
@@ -270,7 +278,10 @@ describe('ZunamiPool', () => {
             zunamiPool.withdraw(sid, lpShares, tokenBalances, admin.address)
         ).to.be.revertedWithCustomError(zunamiPool, 'DisabledStrategy');
 
-        await expect(zunamiPool.enableStrategy(42)).to.be.revertedWithCustomError(zunamiPool, `IncorrectSid`);
+        await expect(zunamiPool.enableStrategy(42)).to.be.revertedWithCustomError(
+            zunamiPool,
+            `IncorrectSid`
+        );
         await zunamiPool.enableStrategy(sid);
 
         await expect(
@@ -386,8 +397,9 @@ describe('ZunamiPool', () => {
             )
             .returns(0);
 
-        await expect(zunamiPool.withdraw(sid, lpShares, tokenBalances, admin.address))
-                        .to.be.revertedWithCustomError(zunamiPool, `WrongWithdrawParams`);
+        await expect(
+            zunamiPool.withdraw(sid, lpShares, tokenBalances, admin.address)
+        ).to.be.revertedWithCustomError(zunamiPool, `WrongWithdrawParams`);
         await strategy.withdraw
             .whenCalledWith(
                 admin.address,
@@ -424,8 +436,9 @@ describe('ZunamiPool', () => {
         lpShares = depositedValue.dividedToIntegerBy(2).minus(MINIMUM_LIQUIDITY).toFixed();
         await zunamiPool.withdraw(sid, lpShares, tokenBalances, admin.address);
 
-        await expect(zunamiPool.withdraw(sid, 0, tokenBalances, admin.address))
-            .to.be.revertedWithCustomError(zunamiPool, `WrongRatio`);
+        await expect(
+            zunamiPool.withdraw(sid, 0, tokenBalances, admin.address)
+        ).to.be.revertedWithCustomError(zunamiPool, `WrongRatio`);
 
         expect(await zunamiPool.totalSupply()).to.be.equal(MINIMUM_LIQUIDITY);
         expect(await zunamiPool.balanceOf(admin.address)).to.be.equal(0);
@@ -507,10 +520,11 @@ describe('ZunamiPool', () => {
                 .connect(admin)
                 .moveFundsBatch([0], [tokenify(1).plus(1).toFixed()], 1, [[0, 0, 0, 0, 0]])
         ).to.be.revertedWithCustomError(zunamiPool, `WrongWithdrawPercent`);
-        
+
         await strategy1.deposit.whenCalledWith([0, 0, 0, 0, 0]).returns(depositedValue.toFixed());
         await strategy2.withdrawAll.returns();
-        await strategy2.withdraw.whenCalledWith(zunamiPool.address, '500000000000000000', [0, 0, 0, 0, 0])
+        await strategy2.withdraw
+            .whenCalledWith(zunamiPool.address, '500000000000000000', [0, 0, 0, 0, 0])
             .returns(0);
         await expect(
             zunamiPool
@@ -525,7 +539,9 @@ describe('ZunamiPool', () => {
         expect((await zunamiPool.strategyInfo(0)).minted).to.be.equal(tokenify(150).toFixed());
         expect((await zunamiPool.strategyInfo(1)).minted).to.be.equal(tokenify(150).toFixed());
 
-        await strategy1.deposit.whenCalledWith([tokenify(42).toFixed(), 0, 0, 0, 0]).returns(tokenify(42).toFixed());
+        await strategy1.deposit
+            .whenCalledWith([tokenify(42).toFixed(), 0, 0, 0, 0])
+            .returns(tokenify(42).toFixed());
         // await strategy2.deposit.whenCalledWith([tokenify(42).toFixed(), 0, 0, 0, 0]).returns(tokenify(42).toFixed());
         await strategy2.withdrawAll.returns();
         await dai.transfer(zunamiPool.address, tokenify(42).toFixed());
@@ -551,9 +567,9 @@ describe('ZunamiPool', () => {
         await setTotalHoldings(strategy1, tokenify(amount1).toFixed());
         await setTotalHoldings(strategy2, tokenify(amount2).toFixed());
 
-        let balanceBefore = await zunamiPool.balanceOf(admin.address)
-        await zunamiPool.connect(admin).mintAndClaimExtraGains(admin.address)
-        let balanceAfter = await zunamiPool.balanceOf(admin.address)
+        let balanceBefore = await zunamiPool.balanceOf(admin.address);
+        await zunamiPool.connect(admin).mintAndClaimExtraGains(admin.address);
+        let balanceAfter = await zunamiPool.balanceOf(admin.address);
         expect(balanceAfter).to.be.eq(balanceBefore);
 
         const tokenBalances = await transferTokensToZunamiPool([
@@ -571,12 +587,14 @@ describe('ZunamiPool', () => {
         await transferTokensToZunamiPool([depositedValue, depositedValue, depositedValue, 0, 0]);
         await strategy2.deposit.whenCalledWith(tokenBalances).returns(depositedValueToken);
         await zunamiPool.deposit(1, tokenBalances, admin.address);
-        expect(await zunamiPool.balanceOf(zunamiPool.address)).to.be.eq(tokenify(amount1 - depositedValue).toFixed());
+        expect(await zunamiPool.balanceOf(zunamiPool.address)).to.be.eq(
+            tokenify(amount1 - depositedValue).toFixed()
+        );
 
-        balanceBefore = await zunamiPool.balanceOf(admin.address)
-        await zunamiPool.connect(admin).mintAndClaimExtraGains(admin.address)
-        balanceAfter = await zunamiPool.balanceOf(admin.address)
-        const result = ((amount2 - depositedValue) + (amount1 - depositedValue)) * 10**18
+        balanceBefore = await zunamiPool.balanceOf(admin.address);
+        await zunamiPool.connect(admin).mintAndClaimExtraGains(admin.address);
+        balanceAfter = await zunamiPool.balanceOf(admin.address);
+        const result = (amount2 - depositedValue + (amount1 - depositedValue)) * 10 ** 18;
         expect(balanceAfter - balanceBefore).to.be.eq(result);
     });
 
@@ -594,9 +612,9 @@ describe('ZunamiPool', () => {
         await setTotalHoldings(strategy1, tokenify(amount1).toFixed());
         await setTotalHoldings(strategy2, tokenify(amount2).toFixed());
 
-        let balanceBefore = await zunamiPool.balanceOf(admin.address)
-        await zunamiPool.connect(admin).mintAndClaimExtraGains(admin.address)
-        let balanceAfter = await zunamiPool.balanceOf(admin.address)
+        let balanceBefore = await zunamiPool.balanceOf(admin.address);
+        await zunamiPool.connect(admin).mintAndClaimExtraGains(admin.address);
+        let balanceAfter = await zunamiPool.balanceOf(admin.address);
         expect(balanceAfter).to.be.eq(balanceBefore);
 
         const tokenBalances = await transferTokensToZunamiPool([
@@ -614,13 +632,14 @@ describe('ZunamiPool', () => {
         await transferTokensToZunamiPool([depositedValue, depositedValue, depositedValue, 0, 0]);
         await strategy2.deposit.whenCalledWith(tokenBalances).returns(depositedValueToken);
         await zunamiPool.deposit(1, tokenBalances, admin.address);
-        expect(await zunamiPool.balanceOf(zunamiPool.address)).to.be.eq(tokenify(amount1 - depositedValue).toFixed());
+        expect(await zunamiPool.balanceOf(zunamiPool.address)).to.be.eq(
+            tokenify(amount1 - depositedValue).toFixed()
+        );
 
-        balanceBefore = await zunamiPool.balanceOf(admin.address)
-        await zunamiPool.connect(admin).claimRewards(admin.address, [])
-        balanceAfter = await zunamiPool.balanceOf(admin.address)
-        const result = ((amount2 - depositedValue) + (amount1 - depositedValue)) * 10**18
+        balanceBefore = await zunamiPool.balanceOf(admin.address);
+        await zunamiPool.connect(admin).claimRewards(admin.address, []);
+        balanceAfter = await zunamiPool.balanceOf(admin.address);
+        const result = (amount2 - depositedValue + (amount1 - depositedValue)) * 10 ** 18;
         expect(balanceAfter - balanceBefore).to.be.eq(result);
     });
 });
-

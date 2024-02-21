@@ -37,35 +37,39 @@ async function main() {
     console.log('Deploy StableConverter:');
     const StableConverterFactory = await ethers.getContractFactory('StableConverter');
     // const stableConverter = await StableConverterFactory.deploy();
+    // await stableConverter.deployed();
     const stableConverter = await StableConverterFactory.attach(
         '0x0236B7A3996d8c3597173aA95fD2a915c7A8A42E'
     );
-    // await stableConverter.deployed();
     console.log('StableConverter:', stableConverter.address);
 
     console.log('Deploy zunUSD omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunUSD');
-    const zunamiPool = await ZunamiPool.deploy();
-    await zunamiPool.deployed();
+    const zunamiPool = await ZunamiPool.attach('0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6');
+    // const zunamiPool = await ZunamiPool.deploy();
+    // await zunamiPool.deployed();
     console.log('ZunamiPoolZunUSD:', zunamiPool.address);
 
     console.log('Deploy zunUSD pool controller:');
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunUSD');
-    const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
-    await zunamiPoolController.deployed();
+    const zunamiPoolController = await ZunamiPoolController.attach(
+        '0x618eee502CDF6b46A2199C21D1411f3F6065c940'
+    );
+    // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
+    // await zunamiPoolController.deployed();
     console.log('ZunamiPoolControllerZunUSD:', zunamiPoolController.address);
 
-    let result = await zunamiPool.grantRole(
-        await zunamiPool.CONTROLLER_ROLE(),
-        zunamiPoolController.address
-    );
-    await result.wait();
-    console.log(
-        'ZunamiPoolController granted CONTROLLER_ROLE:',
-        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
-    );
+    // let result = await zunamiPool.grantRole(
+    //     await zunamiPool.CONTROLLER_ROLE(),
+    //     zunamiPoolController.address
+    // );
+    // await result.wait();
+    // console.log(
+    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
+    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    // );
 
-    await createAndInitStrategy(zunamiPool, 'ZunUSDVaultStrat', null, null);
+    // await createAndInitStrategy(zunamiPool, 'ZunUSDVaultStrat', null, null);
     // await createAndInitStrategy(
     //     zunamiPool,
     //     'UsdcCrvUsdStakeDaoCurve',
