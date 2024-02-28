@@ -164,7 +164,7 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address
             );
             expect(await recapitalizationManager.accumulationPeriod()).to.equal(
-                await recapitalizationManager.INITIAL_ACCUMULATION_PERIOD()
+                (14 * 24 * 60 * 60) / 12
             );
             expect(
                 await recapitalizationManager.hasRole(

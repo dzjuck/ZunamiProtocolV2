@@ -615,11 +615,11 @@ describe('ZunDistributor tests', () => {
         const { voter, approveGauge, transferGauge, addedGauge, distributor, dao } =
             await loadFixture(deployFixture);
 
-        expect(await distributor.gaugesNumber()).to.eq(3);
+        expect(await distributor.gaugesLength()).to.eq(3);
 
         await distributor.connect(dao).addGauge(addedGauge.address);
 
-        expect(await distributor.gaugesNumber()).to.eq(4);
+        expect(await distributor.gaugesLength()).to.eq(4);
 
         let gaugeItem = await distributor.gauges(0);
         expect(gaugeItem.addr).to.eq(approveGauge.address);
@@ -636,15 +636,15 @@ describe('ZunDistributor tests', () => {
         const { voter, approveGauge, transferGauge, addedGauge, distributor, dao } =
             await loadFixture(deployFixture);
 
-        expect(await distributor.gaugesNumber()).to.eq(3);
+        expect(await distributor.gaugesLength()).to.eq(3);
 
         await distributor.connect(dao).addGauge(addedGauge.address);
 
-        expect(await distributor.gaugesNumber()).to.eq(4);
+        expect(await distributor.gaugesLength()).to.eq(4);
 
         await distributor.connect(dao).deleteGauge(0);
 
-        expect(await distributor.gaugesNumber()).to.eq(3);
+        expect(await distributor.gaugesLength()).to.eq(3);
 
         let gaugeItem = await distributor.gauges(0);
         expect(gaugeItem.addr).to.eq(transferGauge.address);

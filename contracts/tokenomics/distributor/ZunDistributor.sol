@@ -34,8 +34,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         uint256 currentVotes;
     }
 
-    uint256 public gaugesNumber;
-    mapping(uint256 => Gauge) public gauges;
+    Gauge[] public gauges;
 
     ERC20Votes public immutable voteToken;
     ERC20 public immutable token;
@@ -102,9 +101,12 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         for (uint256 i; i < _gaugeAddrs.length; ++i) {
             address gaugeAddr = _gaugeAddrs[i];
             if (gaugeAddr == address(0)) revert ZeroAddress();
-            gauges[i] = Gauge(gaugeAddr, _gaugeVotes[i], 0);
+            gauges.push(Gauge(gaugeAddr, _gaugeVotes[i], 0));
         }
-        gaugesNumber = _gaugeAddrs.length;
+    }
+
+    function gaugesLength() external view returns (uint256) {
+        return gauges.length;
     }
 
     function castVote(
@@ -162,11 +164,13 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
 
         // update votes' counters
         for (uint256 i; i < gaugeIds.length; ++i) {
-            if (gaugeIds[i] >= gaugesNumber) {
+            uint256 gaugeId = gaugeIds[i];
+            uint256 amount = amounts[i];
+            if (gaugeId >= gauges.length) {
                 revert WrongGaugeId();
             }
-            gauges[gaugeIds[i]].currentVotes += amounts[i];
-            totalVotes += amounts[i];
+            gauges[gaugeId].currentVotes += amount;
+            totalVotes += amount;
         }
 
         // check vote power
@@ -197,15 +201,17 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
             _finalizeVotingPeriod();
         }
 
+        uint256 gaugesLength_ = gauges.length;
         uint256 totalVotes;
-        for (uint256 i; i < gaugesNumber; ++i) {
+        for (uint256 i; i < gaugesLength_; ++i) {
             totalVotes += gauges[i].finalizedVotes;
         }
         uint256 amount;
-        for (uint256 i; i < gaugesNumber; ++i) {
-            amount = (_periodDistributionValue() * gauges[i].finalizedVotes) / totalVotes;
-            token.safeTransfer(gauges[i].addr, amount);
-            IGauge(gauges[i].addr).distribute(amount);
+        for (uint256 i; i < gaugesLength_; ++i) {
+            Gauge memory gauge = gauges[i];
+            amount = (_periodDistributionValue() * gauge.finalizedVotes) / totalVotes;
+            token.safeTransfer(gauge.addr, amount);
+            IGauge(gauge.addr).distribute(amount);
             totalDistributed += amount;
         }
 
@@ -223,21 +229,20 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         if (newGauge == address(0)) {
             revert ZeroAddress();
         }
-        gauges[gaugesNumber] = Gauge(newGauge, 0, 0);
-        gaugesNumber += 1;
+        gauges.push(Gauge(newGauge, 0, 0));
         emit GaugeAdded(newGauge);
     }
 
     // don't forget update gauges' indexes on frontend
     function deleteGauge(uint256 gaugeId) external onlyOwner whenNotPaused {
-        if (gaugeId >= gaugesNumber) {
+        uint256 gaugesLength_ = gauges.length;
+        if (gaugeId >= gaugesLength_) {
             revert WrongGaugeId();
         }
-        for (uint256 i = gaugeId; i < gaugesNumber - 1; ++i) {
+        for (uint256 i = gaugeId; i < gaugesLength_ - 1; i++) {
             gauges[i] = gauges[i + 1];
         }
-        delete (gauges[gaugesNumber - 1]);
-        gaugesNumber -= 1;
+        gauges.pop();
         emit GaugeDeleted(gaugeId);
     }
 
@@ -269,19 +274,21 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
     }
 
     function _finalizeVotingPeriod() internal {
+        uint256 gaugesLength_ = gauges.length;
         // update last votes if quorum reached
         uint256 totalVotes;
-        for (uint256 i; i < gaugesNumber; ++i) {
+        for (uint256 i; i < gaugesLength_; ++i) {
             totalVotes += gauges[i].currentVotes;
         }
         if (totalVotes >= votingThreshold && totalVotes > 0) {
-            for (uint256 i; i < gaugesNumber; ++i) {
-                gauges[i].finalizedVotes = gauges[i].currentVotes;
+            for (uint256 i; i < gaugesLength_; ++i) {
+                Gauge storage gauge = gauges[i];
+                gauge.finalizedVotes = gauge.currentVotes;
                 // reset current votes counters
-                gauges[i].currentVotes = 0;
+                gauge.currentVotes = 0;
             }
         } else {
-            for (uint256 i; i < gaugesNumber; ++i) {
+            for (uint256 i; i < gaugesLength_; ++i) {
                 gauges[i].currentVotes = 0;
             }
         }

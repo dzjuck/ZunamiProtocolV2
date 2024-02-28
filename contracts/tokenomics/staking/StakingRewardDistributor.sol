@@ -112,10 +112,15 @@ contract StakingRewardDistributor is
     event WithdrawnPoolToken(address token, uint256 amount);
     event ReturnedPoolToken(address token, uint256 amount);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize() public initializer {
-        __UUPSUpgradeable_init();
-        __AccessControl_init();
         __ReentrancyGuard_init();
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
@@ -167,9 +172,9 @@ contract StakingRewardDistributor is
             updateAllPools();
         }
 
-        uint256[] memory lastRewardBlocks = new uint256[](rewardTokenInfo.length);
-        uint256[] memory accRewardsPerShare = new uint256[](rewardTokenInfo.length);
         uint256 length = rewardTokenInfo.length;
+        uint256[] memory lastRewardBlocks = new uint256[](length);
+        uint256[] memory accRewardsPerShare = new uint256[](length);
         for (uint256 tid; tid < length; ++tid) {
             lastRewardBlocks[tid] = rewardTokenInfo[tid].distributionBlock > 0 &&
                 block.number >= rewardTokenInfo[tid].distributionBlock &&
@@ -399,8 +404,9 @@ contract StakingRewardDistributor is
     function claim(uint256 _tid) external nonReentrant {
         if (_tid >= rewardTokenInfo.length) revert WrongPoolId();
 
+        uint256 length = poolInfo.length;
         uint256 i;
-        for (i; i < poolInfo.length; ++i) {
+        for (i; i < length; ++i) {
             updatePool(i);
             accrueReward(_tid, i);
             UserPoolInfo storage userPool = userPoolInfo[i][msg.sender];
@@ -415,8 +421,9 @@ contract StakingRewardDistributor is
     }
 
     function claimAll() external nonReentrant {
+        uint256 length = poolInfo.length;
         uint256 i;
-        for (i; i < poolInfo.length; ++i) {
+        for (i; i < length; ++i) {
             updatePool(i);
             UserPoolInfo storage userPool = userPoolInfo[i][msg.sender];
             for (uint256 tid; tid < rewardTokenInfo.length; ++tid) {
@@ -555,8 +562,7 @@ contract StakingRewardDistributor is
 
             IERC20Supplied stakingToken = poolInfo[_pid].stakingToken;
             if (address(stakingToken) != address(0)) {
-                IERC20(address(stakingToken)).safeTransferFrom(msg.sender, address(this), _amount);
-                stakingToken.burn(_amount);
+                stakingToken.burnFrom(msg.sender, _amount);
             }
         }
 

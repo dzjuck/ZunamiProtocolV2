@@ -41,7 +41,6 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     error ZeroParam();
 
     bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN_ROLE');
-    uint256 public constant INITIAL_ACCUMULATION_PERIOD = (14 * 24 * 60 * 60) / 12; // 2 week in blocks
 
     IERC20 public immutable zunToken;
 
@@ -59,7 +58,8 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
 
         if (zunToken_ == address(0)) revert ZeroAddress();
         zunToken = IERC20(zunToken_);
-        setAccumulationPeriod(INITIAL_ACCUMULATION_PERIOD);
+
+        setAccumulationPeriod((14 * 24 * 60 * 60) / 12); // 2 week in blocks
     }
 
     function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
