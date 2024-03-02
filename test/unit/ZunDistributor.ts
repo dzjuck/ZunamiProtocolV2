@@ -12,7 +12,7 @@ import {
     ApproveGauge,
     TransferGauge,
     StakingRewardDistributorGauge,
-    StakingRewardDistributor,
+    IDistributor,
 } from '../../typechain-types';
 
 describe('ZunDistributor tests', () => {
@@ -47,16 +47,15 @@ describe('ZunDistributor tests', () => {
         )) as TransferGauge;
 
         const stakingRewardDistributor = (await smock.fake(
-            'IStakingRewardDistributor'
-        )) as FakeContract<IStakingRewardDistributor>;
+            'IDistributor'
+        )) as FakeContract<IDistributor>;
 
         const StakingRewardDistributorGaugeFactory = await ethers.getContractFactory(
             'StakingRewardDistributorGauge'
         );
         const stakingRewardDistributorGauge = (await StakingRewardDistributorGaugeFactory.deploy(
             ZUN.address,
-            stakingRewardDistributor.address,
-            0
+            stakingRewardDistributor.address
         )) as StakingRewardDistributorGauge;
 
         const addedGauge = (await TransferGaugeFactory.deploy(
@@ -767,7 +766,7 @@ describe('ZunDistributor tests', () => {
         );
     });
 
-    it.skip('gas opti', async () => {
+    it.skip('gas optimization', async () => {
         const {
             voter,
             approveGauge,
@@ -822,7 +821,7 @@ describe('ZunDistributor tests', () => {
         console.log(receipt.cumulativeGasUsed);
     });
 
-    // FIXME: ZunDistributor bug
+    //FIXME: ZunDistributor bug
     it.skip('Same borderBlock with block.number will revert in _castVote', async function () {
         const { vlZUN, distributor } = await loadFixture(deployFixture);
 
@@ -833,7 +832,7 @@ describe('ZunDistributor tests', () => {
         const endBlock = startBlock.add(await distributor.VOTING_PERIOD()).sub(1);
         // get current block number
         const currentBlock = await ethers.provider.getBlockNumber();
-        await mine(currentBlock - endBlock);
+        await mine(currentBlock - endBlock.toNumber());
 
         await expect(distributor.castVote([0, 1], [1, 1])).revertedWithCustomError(
             vlZUN,

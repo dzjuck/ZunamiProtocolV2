@@ -5,7 +5,7 @@ import {
     RecapitalizationManager,
     SellingCurveRewardManager,
     StableConverter,
-    StakingRewardDistributor,
+    ZUNStakingRewardDistributor,
     ZunamiToken,
 } from '../../typechain-types';
 import {
@@ -49,23 +49,23 @@ describe('Recapitalization Manager', async () => {
         const ZunToken = await ethers.getContractFactory('ZunamiToken');
         const ZUN = (await ZunToken.deploy(owner.address)) as ZunamiToken;
         await ZUN.deployed();
-        const ZunamiVotingToken = await ethers.getContractFactory('ZunamiVotingToken');
-        const vlZUN = await ZunamiVotingToken.deploy(owner.address);
-        await vlZUN.deployed();
 
         // deploy distributor contract
         const StakingRewardDistributor = await ethers.getContractFactory(
-            'StakingRewardDistributor'
+            'ZUNStakingRewardDistributor'
         );
-        const instance = await upgrades.deployProxy(StakingRewardDistributor, [], {
-            kind: 'uups',
-        });
+
+        const instance = await upgrades.deployProxy(
+            StakingRewardDistributor,
+            [ZUN.address, 'Zunami Voting Token', 'vlZUN', owner.address],
+            {
+                kind: 'uups',
+            }
+        );
         await instance.deployed();
-        const stakingRewardDistributor = instance as StakingRewardDistributor;
-        await vlZUN.grantRole(vlZUN.ISSUER_ROLE(), stakingRewardDistributor.address);
+        const stakingRewardDistributor = instance as ZUNStakingRewardDistributor;
 
         await stakingRewardDistributor.setEarlyExitReceiver(earlyExitReceiver.address);
-        await stakingRewardDistributor.addPool(100, ZUN.address, vlZUN.address, false);
         await stakingRewardDistributor.addRewardToken(addresses.crypto.crv);
         await stakingRewardDistributor.addRewardToken(addresses.crypto.cvx);
         await stakingRewardDistributor.addRewardToken(addresses.crypto.fxs);
@@ -152,8 +152,6 @@ describe('Recapitalization Manager', async () => {
             expect(await stakingRewardDistributor.isRewardTokenAdded(addresses.crypto.sdt)).is.true;
             expect(await stakingRewardDistributor.isRewardTokenAdded(ZUN.address)).is.true;
 
-            expect(await stakingRewardDistributor.poolCount()).to.equal(1);
-
             expect(await recapitalizationManager.rewardTokens(0)).to.equal(addresses.crypto.crv);
             expect(await recapitalizationManager.rewardTokens(1)).to.equal(addresses.crypto.cvx);
             expect(await recapitalizationManager.rewardTokens(2)).to.equal(addresses.crypto.fxs);
@@ -184,8 +182,16 @@ describe('Recapitalization Manager', async () => {
     describe('Reward distribution', async () => {
         it('Should distribute rewards from recapitalization manager', async () => {
             // given
-            const { recapitalizationManager, stakingRewardDistributor, CRV, CVX, FXS, SDT } =
-                await loadFixture(deployFixture);
+            const {
+                recapitalizationManager,
+                stakingRewardDistributor,
+                CRV,
+                CVX,
+                FXS,
+                SDT,
+                ZUN,
+                otherAccount,
+            } = await loadFixture(deployFixture);
             await provideLiquidity(
                 addresses.crypto.crv,
                 CRV_SPONSOR,
@@ -213,6 +219,16 @@ describe('Recapitalization Manager', async () => {
 
             await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
 
+            // deposit zun tokens to reward distributor
+            await ZUN.transfer(otherAccount.address, parseEther('1000'));
+            await ZUN.connect(otherAccount).approve(
+                stakingRewardDistributor.address,
+                parseZUN(1000)
+            );
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(parseZUN(1000), otherAccount.address);
+
             // when
             const tx = await recapitalizationManager.distributeRewards();
 
@@ -221,13 +237,13 @@ describe('Recapitalization Manager', async () => {
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(1, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(2, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(3, anyUint);
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(
                 parseEther('10')
@@ -244,8 +260,17 @@ describe('Recapitalization Manager', async () => {
         });
         it('Should distribute rewards from recapitalization manager except of unknown reward', async () => {
             // given
-            const { recapitalizationManager, stakingRewardDistributor, CRV, CVX, FXS, SDT, SPELL } =
-                await loadFixture(deployFixture);
+            const {
+                recapitalizationManager,
+                stakingRewardDistributor,
+                CRV,
+                CVX,
+                FXS,
+                SDT,
+                SPELL,
+                ZUN,
+                otherAccount,
+            } = await loadFixture(deployFixture);
             await provideLiquidity(
                 addresses.crypto.crv,
                 CRV_SPONSOR,
@@ -279,6 +304,16 @@ describe('Recapitalization Manager', async () => {
 
             await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
 
+            // deposit zun tokens to reward distributor
+            await ZUN.transfer(otherAccount.address, parseEther('1000'));
+            await ZUN.connect(otherAccount).approve(
+                stakingRewardDistributor.address,
+                parseZUN(1000)
+            );
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(parseZUN(1000), otherAccount.address);
+
             // when
             const tx = await recapitalizationManager.distributeRewards();
 
@@ -287,13 +322,13 @@ describe('Recapitalization Manager', async () => {
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(1, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(2, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(3, anyUint);
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(
                 parseEther('10')
@@ -328,8 +363,16 @@ describe('Recapitalization Manager', async () => {
 
         it('Should distribute rewards from recapitalization manager twice', async () => {
             // given
-            const { recapitalizationManager, stakingRewardDistributor, CRV, CVX, FXS, SDT } =
-                await loadFixture(deployFixture);
+            const {
+                recapitalizationManager,
+                stakingRewardDistributor,
+                CRV,
+                CVX,
+                FXS,
+                SDT,
+                ZUN,
+                otherAccount,
+            } = await loadFixture(deployFixture);
             // first distribution
             await provideLiquidity(
                 addresses.crypto.crv,
@@ -355,6 +398,16 @@ describe('Recapitalization Manager', async () => {
                 recapitalizationManager.address,
                 parseEther('10')
             );
+
+            // deposit zun tokens to reward distributor
+            await ZUN.transfer(otherAccount.address, parseEther('1000'));
+            await ZUN.connect(otherAccount).approve(
+                stakingRewardDistributor.address,
+                parseZUN(1000)
+            );
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(parseZUN(1000), otherAccount.address);
 
             await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
             await recapitalizationManager.distributeRewards();
@@ -395,13 +448,13 @@ describe('Recapitalization Manager', async () => {
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(1, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(2, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(3, anyUint);
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(
                 parseEther('11')
@@ -418,8 +471,14 @@ describe('Recapitalization Manager', async () => {
         });
         it('Should distribute rewards after claiming in zunUSD pool', async () => {
             // given
-            const { recapitalizationManager, stakingRewardDistributor, CRV, SDT } =
-                await loadFixture(deployFixture);
+            const {
+                recapitalizationManager,
+                stakingRewardDistributor,
+                CRV,
+                SDT,
+                ZUN,
+                otherAccount,
+            } = await loadFixture(deployFixture);
             // deploy zunUSD
             const { zunUSDController } = await deployZunUSDPoolWithStrategies();
             await zunUSDController.changeRewardCollector(recapitalizationManager.address);
@@ -429,14 +488,24 @@ describe('Recapitalization Manager', async () => {
             const expectedCRV = await CRV.balanceOf(recapitalizationManager.address);
             const expectedSDT = await SDT.balanceOf(recapitalizationManager.address);
 
+            // deposit zun tokens to reward distributor
+            await ZUN.transfer(otherAccount.address, parseEther('1000'));
+            await ZUN.connect(otherAccount).approve(
+                stakingRewardDistributor.address,
+                parseZUN(1000)
+            );
+            await stakingRewardDistributor
+                .connect(otherAccount)
+                .deposit(parseZUN(1000), otherAccount.address);
+
             // when
             const tx = await recapitalizationManager.distributeRewards();
 
             // then
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(3, anyUint);
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(expectedCRV);
             expect(await SDT.balanceOf(stakingRewardDistributor.address)).is.equal(expectedSDT);
@@ -630,7 +699,7 @@ describe('Recapitalization Manager', async () => {
             );
             await stakingRewardDistributor
                 .connect(otherAccount)
-                .deposit(0, parseZUN(1000), otherAccount.address);
+                .deposit(parseZUN(1000), otherAccount.address);
 
             // when
             const tx = await recapitalizationManager.recapitalizePoolByStackedZun(
@@ -652,8 +721,8 @@ describe('Recapitalization Manager', async () => {
                     tid
                 );
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'WithdrawnPoolToken')
-                .withArgs(ZUN.address, parseZUN(500));
+                .to.emit(stakingRewardDistributor, 'WithdrawnToken')
+                .withArgs(parseZUN(500));
             await expect(tx).to.changeTokenBalances(
                 ZUN,
                 [stakingRewardDistributor.address, stubZunToDAITokenManager.address],
@@ -719,10 +788,10 @@ describe('Recapitalization Manager', async () => {
             );
             await stakingRewardDistributor
                 .connect(otherAccount)
-                .deposit(0, parseZUN(500), otherAccount.address);
+                .deposit(parseZUN(500), otherAccount.address);
             await stakingRewardDistributor
                 .connect(otherAccount1)
-                .deposit(0, parseZUN(500), otherAccount.address);
+                .deposit(parseZUN(500), otherAccount.address);
 
             // make first recapitalization
             await recapitalizationManager.recapitalizePoolByStackedZun(
@@ -753,8 +822,8 @@ describe('Recapitalization Manager', async () => {
                     tid
                 );
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'WithdrawnPoolToken')
-                .withArgs(ZUN.address, parseZUN(400));
+                .to.emit(stakingRewardDistributor, 'WithdrawnToken')
+                .withArgs(parseZUN(400));
             await expect(tx).to.changeTokenBalances(
                 ZUN,
                 [stakingRewardDistributor.address, stubZunToDAITokenManager.address],
@@ -815,7 +884,7 @@ describe('Recapitalization Manager', async () => {
             );
             await stakingRewardDistributor
                 .connect(otherAccount)
-                .deposit(0, parseZUN(1000), otherAccount.address);
+                .deposit(parseZUN(1000), otherAccount.address);
 
             // when
             const tx = recapitalizationManager.recapitalizePoolByStackedZun(
@@ -874,7 +943,7 @@ describe('Recapitalization Manager', async () => {
             );
             await stakingRewardDistributor
                 .connect(otherAccount)
-                .deposit(0, parseZUN(1000), otherAccount.address);
+                .deposit(parseZUN(1000), otherAccount.address);
             const recapitalizationAmount = parseZUN(40);
             await recapitalizationManager.recapitalizePoolByStackedZun(
                 recapitalizationAmount,
@@ -932,9 +1001,9 @@ describe('Recapitalization Manager', async () => {
                 .to.emit(recapitalizationManager, 'RestoredStakedZunByRewards')
                 .withArgs(parseZUN(40), stubRewardToZunManager.address, tx.blockNumber);
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'ReturnedPoolToken')
-                .withArgs(ZUN.address, parseZUN(40));
-            expect(await stakingRewardDistributor.recapitalizedAmounts(0)).to.equal(0);
+                .to.emit(stakingRewardDistributor, 'ReturnedToken')
+                .withArgs(parseZUN(40));
+            expect(await stakingRewardDistributor.recapitalizedAmount()).to.equal(0);
         });
         it('Should restore staked zun by rewards partially', async () => {
             // given
@@ -979,7 +1048,7 @@ describe('Recapitalization Manager', async () => {
             );
             await stakingRewardDistributor
                 .connect(otherAccount)
-                .deposit(0, parseZUN(1000), otherAccount.address);
+                .deposit(parseZUN(1000), otherAccount.address);
             const recapitalizationAmount = parseZUN(40);
             await recapitalizationManager.recapitalizePoolByStackedZun(
                 recapitalizationAmount,
@@ -1037,10 +1106,10 @@ describe('Recapitalization Manager', async () => {
                 .to.emit(recapitalizationManager, 'RestoredStakedZunByRewards')
                 .withArgs(parseZUN(4), stubRewardToZunManager.address, tx.blockNumber);
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'ReturnedPoolToken')
-                .withArgs(ZUN.address, parseZUN(4));
+                .to.emit(stakingRewardDistributor, 'ReturnedToken')
+                .withArgs(parseZUN(4));
             // should be spent during reward distribution
-            expect(await stakingRewardDistributor.recapitalizedAmounts(0)).to.equal(parseZUN(36));
+            expect(await stakingRewardDistributor.recapitalizedAmount()).to.equal(parseZUN(36));
         });
         it('Should send remaining ZUN during reward distribution after restoring staked zun by rewards', async () => {
             // given
@@ -1085,7 +1154,7 @@ describe('Recapitalization Manager', async () => {
             );
             await stakingRewardDistributor
                 .connect(otherAccount)
-                .deposit(0, parseZUN(1000), otherAccount.address);
+                .deposit(parseZUN(1000), otherAccount.address);
             const recapitalizationAmount = parseZUN(40);
             await recapitalizationManager.recapitalizePoolByStackedZun(
                 recapitalizationAmount,
@@ -1147,7 +1216,7 @@ describe('Recapitalization Manager', async () => {
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'RewardPerBlockSet')
+                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
                 .withArgs(4, anyUint);
             await expect(tx).to.changeTokenBalances(
                 ZUN,

@@ -8,7 +8,7 @@ import { FakeContract, smock } from '@defi-wonderland/smock';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
-import { IPool, IStakingRewardDistributor, IRewardManager, IERC20 } from '../../typechain-types';
+import { IPool, IZUNStakingRewardDistributor, IRewardManager, IERC20 } from '../../typechain-types';
 import { mine } from '@nomicfoundation/hardhat-network-helpers';
 
 chai.should(); // if you like should syntax
@@ -38,7 +38,7 @@ describe('RecapitalizationManager', () => {
     let carol: SignerWithAddress;
     let rosa: SignerWithAddress;
 
-    let stakingRewardDistributor: FakeContract<IStakingRewardDistributor>;
+    let stakingRewardDistributor: FakeContract<IZUNStakingRewardDistributor>;
     let recapitalizationManager: Contract;
     let rewardTokens: Contract[];
     let zun: FakeContract<IERC20>;
@@ -55,8 +55,8 @@ describe('RecapitalizationManager', () => {
         ];
 
         stakingRewardDistributor = (await smock.fake(
-            'IStakingRewardDistributor'
-        )) as FakeContract<IStakingRewardDistributor>;
+            'IZUNStakingRewardDistributor'
+        )) as FakeContract<IZUNStakingRewardDistributor>;
 
         const currentBlock = (await ethers.provider.getBlockNumber()) + 1;
         const RecapitalizationManager = await ethers.getContractFactory(
@@ -227,9 +227,7 @@ describe('RecapitalizationManager', () => {
                 tid
             );
 
-        stakingRewardDistributor.withdrawPoolToken
-            .atCall(0)
-            .should.be.calledWith(zun.address, zunAmount.toString());
+        stakingRewardDistributor.withdrawToken.atCall(0).should.be.calledWith(zunAmount.toString());
         rewardManager.handle
             .atCall(0)
             .should.be.calledWith(zun.address, zunAmount.toFixed(), poolToken.address);
@@ -254,16 +252,12 @@ describe('RecapitalizationManager', () => {
             .whenCalledWith(stakingRewardDistributor.address, zunAmount.toFixed())
             .returns(true);
 
-        await stakingRewardDistributor.recapitalizedAmounts
-            .whenCalledWith(0)
-            .returns(zunAmount.toFixed());
+        await stakingRewardDistributor.recapitalizedAmount.returns(zunAmount.toFixed());
 
         await recapitalizationManager
             .connect(admin)
             .restoreStakedZunByRewards(rewardManager.address);
 
-        stakingRewardDistributor.returnPoolToken
-            .atCall(0)
-            .should.be.calledWith(zun.address, zunAmount.toFixed());
+        stakingRewardDistributor.returnToken.atCall(0).should.be.calledWith(zunAmount.toFixed());
     });
 });

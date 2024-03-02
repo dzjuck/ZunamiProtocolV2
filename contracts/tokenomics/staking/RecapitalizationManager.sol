@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '../../interfaces/IPool.sol';
-import './IStakingRewardDistributor.sol';
+import './IZUNStakingRewardDistributor.sol';
 import '../../RewardTokenManager.sol';
 import { stEthEthConvexCurveStrat } from '../../strategies/curve/convex/eth/stEthEthConvexCurveStrat.sol';
 
@@ -45,7 +45,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     IERC20 public immutable zunToken;
 
     uint256 public rewardDistributionBlock;
-    IStakingRewardDistributor public stakingRewardDistributor;
+    IZUNStakingRewardDistributor public stakingRewardDistributor;
     uint256 public accumulationPeriod;
 
     event SetRewardDistributor(address rewardDistributorAddr);
@@ -71,7 +71,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (rewardDistributorAddr == address(0)) revert ZeroAddress();
 
-        stakingRewardDistributor = IStakingRewardDistributor(rewardDistributorAddr);
+        stakingRewardDistributor = IZUNStakingRewardDistributor(rewardDistributorAddr);
         emit SetRewardDistributor(rewardDistributorAddr);
     }
 
@@ -96,12 +96,9 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
             token_ = rewardTokens[i];
             if (address(token_) == address(0)) break;
             transferAmount = token_.balanceOf(address(this));
-            if (
-                transferAmount > 0 && stakingRewardDistributor.isRewardTokenAdded(address(token_))
-            ) {
+            if (transferAmount > 0) {
                 token_.safeIncreaseAllowance(address(stakingRewardDistributor), transferAmount);
-                uint256 tid = stakingRewardDistributor.rewardTokenTidByAddress(address(token_));
-                stakingRewardDistributor.distribute(tid, transferAmount);
+                stakingRewardDistributor.distribute(address(token_), transferAmount);
             }
         }
 
@@ -144,7 +141,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         IERC20 depositedToken = pool.token(tid);
         if (address(depositedToken) == address(0)) revert WrongTid(tid);
 
-        stakingRewardDistributor.withdrawPoolToken(address(zunToken), zunAmount);
+        stakingRewardDistributor.withdrawToken(zunAmount);
 
         _sellToken(rewardManager, zunToken, zunAmount, address(depositedToken));
         _depositToken(pool, sid, tid, depositedToken);
@@ -163,14 +160,13 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     ) external onlyRole(EMERGENCY_ADMIN_ROLE) {
         _sellRewards(rewardManager, zunToken);
         uint256 zunTokenReturnAmount = zunToken.balanceOf(address(this));
-        uint256 pid = stakingRewardDistributor.poolPidByAddress(address(zunToken));
-        uint256 recapitalizedAmount = stakingRewardDistributor.recapitalizedAmounts(pid);
+        uint256 recapitalizedAmount = stakingRewardDistributor.recapitalizedAmount();
         if (zunTokenReturnAmount > recapitalizedAmount) {
             zunTokenReturnAmount = recapitalizedAmount;
         }
 
         zunToken.safeIncreaseAllowance(address(stakingRewardDistributor), zunTokenReturnAmount);
-        stakingRewardDistributor.returnPoolToken(address(zunToken), zunTokenReturnAmount);
+        stakingRewardDistributor.returnToken(zunTokenReturnAmount);
 
         rewardDistributionBlock = block.number;
 

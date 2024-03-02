@@ -3,20 +3,22 @@ import { loadFixture, mine } from '@nomicfoundation/hardhat-network-helpers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
-import { ERC20, StakingRewardDistributor } from '../../typechain-types';
+import { ERC20, ZUNStakingRewardDistributor } from '../../typechain-types';
 import { BigNumberish } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const ethUnits = (amount: number | string) => parseUnits(amount.toString(), 'ether');
 
-const toBn = (value: number | string) => ethers.BigNumber.from(value);
-
 const BLOCKS_IN_1_DAYS = (24 * 60 * 60) / 12;
 const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
 const BLOCKS_IN_2_WEEKS = BLOCKS_IN_1_WEEKS * 2;
 const BLOCKS_IN_3_WEEKS = BLOCKS_IN_1_WEEKS * 3;
+const BLOCKS_IN_4_MONTHS = BLOCKS_IN_1_DAYS * 30 * 4;
+const ACC_REWARD_PRECISION = 1e12;
 
-describe('StakingRewardDistributor tests', () => {
+const toBn = (value: number | string) => ethers.BigNumber.from(value);
+
+describe('ZUNStakingRewardDistributor tests', () => {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [admin, user1, user2, user3, earlyExitReceiver] = await ethers.getSigners();
@@ -29,7 +31,7 @@ describe('StakingRewardDistributor tests', () => {
 
         // deploy distributor contract
         const StakingRewardDistributorFactory = await ethers.getContractFactory(
-            'StakingRewardDistributor'
+            'ZUNStakingRewardDistributor'
         );
 
         const instance = await upgrades.deployProxy(
@@ -41,7 +43,9 @@ describe('StakingRewardDistributor tests', () => {
         );
         await instance.deployed();
 
-        const stakingRewardDistributor = instance as StakingRewardDistributor;
+        const stakingRewardDistributor = instance as ZUNStakingRewardDistributor;
+
+        await stakingRewardDistributor.setEarlyExitReceiver(earlyExitReceiver.address);
 
         return {
             stakingRewardDistributor,
@@ -107,7 +111,7 @@ describe('StakingRewardDistributor tests', () => {
         };
     }
 
-    it('add and deposit to pool for rewards', async () => {
+    it('add and deposit to the second pool for rewards', async () => {
         const fixture = await loadFixture(deployFixture);
 
         // deploy test ERC20 token
@@ -128,9 +132,13 @@ describe('StakingRewardDistributor tests', () => {
 
         // check pending rewards for single pool
         const rewardTokenInfo1 = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        const reward1 = rewardTokenInfo1.distribution;
+        const accRewardPerShare1 = reward1
+            .mul(ACC_REWARD_PRECISION)
+            .div(ethUnits(depositAmount1 + depositAmount2));
         const accruedRewards1 = ethUnits(depositAmount1)
-            .mul(rewardTokenInfo1.distribution)
-            .div(1e18);
+            .mul(accRewardPerShare1)
+            .div(ACC_REWARD_PRECISION);
         expect(await stakingRewardDistributor.getPendingReward(tid1, users[0].address)).to.eq(
             accruedRewards1
         );
@@ -157,11 +165,43 @@ describe('StakingRewardDistributor tests', () => {
             .mul(BLOCKS_IN_1_DAYS)
             .mul(200)
             .div(100 + 200);
-
-        const accruedRewards2 = 0; //FIXME
+        const accRewardPerShare2 = reward2.mul(ACC_REWARD_PRECISION).div(secondPoolDepositAmount);
+        const accruedRewards2 = secondPoolDepositAmount
+            .mul(accRewardPerShare2)
+            .div(ACC_REWARD_PRECISION);
         expect(await stakingRewardDistributor.getPendingReward(tid1, users[0].address)).to.eq(
             accruedRewards2
         );
+    });
+
+    it('should deposit ZUN tokens and get vlZUN', async () => {
+        const { stakingRewardDistributor, ZUN, REWARD, REWARD2, admin, users, earlyExitReceiver } =
+            await loadFixture(deployFixture);
+
+        // balances of ZUN and vlZUN are empty
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(ethUnits('0'));
+        expect(await ZUN.balanceOf(users[1].address)).to.eq(ethUnits('0'));
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('0'));
+        expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(ethUnits('0'));
+
+        // try to deposit without tokens
+        await expect(
+            stakingRewardDistributor.connect(users[0]).deposit(ethUnits('1000'), users[0].address)
+        ).to.be.revertedWithCustomError(ZUN, 'ERC20InsufficientAllowance');
+
+        // users receive ZUN and deposit to distributor
+        await ZUN.transfer(users[0].address, ethUnits('1000'));
+        await ZUN.transfer(users[1].address, ethUnits('2000'));
+        await ZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('1000'));
+        await ZUN.connect(users[1]).approve(stakingRewardDistributor.address, ethUnits('2000'));
+        await stakingRewardDistributor
+            .connect(users[0])
+            .deposit(ethUnits('1000'), users[0].address);
+        await stakingRewardDistributor
+            .connect(users[1])
+            .deposit(ethUnits('2000'), users[1].address);
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
+        expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(ethUnits('2000'));
     });
 
     it('reward tokens distribution', async () => {
@@ -407,12 +447,16 @@ describe('StakingRewardDistributor tests', () => {
         // check pending rewards
         const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
         const reward = ethUnits('100000000');
-        const accRewardPerShare = ethUnits(depositAmount1 + depositAmount2);
-        const accruedRewards = ethUnits(depositAmount1).mul(accRewardPerShare).div(1e18);
+        const accRewardPerShare = reward
+            .mul(ACC_REWARD_PRECISION)
+            .div(ethUnits(depositAmount1 + depositAmount2));
+        const accruedRewards = ethUnits(depositAmount1)
+            .mul(accRewardPerShare)
+            .div(ACC_REWARD_PRECISION);
         expect(total).to.eq(accruedRewards);
     });
 
-    it('withdraw token immediately after deposit', async () => {
+    it('withdraw ZUN tokens immediately after deposit', async () => {
         const fixture = await loadFixture(deployFixture);
 
         const depositAmount1 = 1000;
@@ -451,6 +495,89 @@ describe('StakingRewardDistributor tests', () => {
 
         // check pool amount
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
+        const totalAmountsAfter = await stakingRewardDistributor.totalAmount();
+        expect(totalAmountsAfter).to.eq(totalAmountsBefore.sub(ethUnits(depositAmount1)));
+    });
+
+    it('withdraw ZUN tokens after 4 months', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, ZUN, users, earlyExitReceiver } = fixture;
+
+        // check balances before withdraw
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(
+            ethUnits(depositAmount1)
+        );
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(ethUnits(0));
+        expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(ethUnits(0));
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(
+            ethUnits(depositAmount1 + depositAmount2)
+        );
+
+        await mine(BLOCKS_IN_4_MONTHS);
+
+        const withdrawAmount = ethUnits(depositAmount1);
+        await stakingRewardDistributor
+            .connect(users[0])
+            .approve(stakingRewardDistributor.address, withdrawAmount);
+        await stakingRewardDistributor
+            .connect(users[0])
+            .withdraw(withdrawAmount, false, users[0].address);
+
+        // check balances after withdraw
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(withdrawAmount);
+        expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(0);
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(
+            ethUnits(depositAmount2)
+        );
+    });
+
+    it('withdraw ZUN tokens immediately after deposit', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        const { tid1, tid2 } = await depositByTwoUsersState(
+            depositAmount1,
+            depositAmount2,
+            fixture
+        );
+        const { stakingRewardDistributor, ZUN, users, earlyExitReceiver } = fixture;
+
+        // check balances before withdraw
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(
+            ethUnits(depositAmount1)
+        );
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(ethUnits(0));
+        expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(ethUnits(0));
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(
+            ethUnits(depositAmount1 + depositAmount2)
+        );
+        const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
+
+        const withdrawAmount = ethUnits(depositAmount1);
+        await stakingRewardDistributor
+            .connect(users[0])
+            .approve(stakingRewardDistributor.address, withdrawAmount);
+        await stakingRewardDistributor
+            .connect(users[0])
+            .withdraw(withdrawAmount, false, users[0].address);
+
+        // check balances after withdraw - 15% of withdrawal has transfered to earlyExitReceiver
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(withdrawAmount.div(100).mul(85));
+        expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(
+            withdrawAmount.div(100).mul(15)
+        );
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(
+            ethUnits(depositAmount2)
+        );
+
+        expect(stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
         const totalAmountsAfter = await stakingRewardDistributor.totalAmount();
         expect(totalAmountsAfter).to.eq(totalAmountsBefore.sub(ethUnits(depositAmount1)));
     });
@@ -553,6 +680,130 @@ describe('StakingRewardDistributor tests', () => {
         expect(adminBalanceWETHAfter).to.eq(initalAdminBalance);
     });
 
+    it('withdraw pool tokens from staking reward distributor', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, ZUN, users } = fixture;
+
+        // add RECAPITALIZATION_ROLE to user[2]
+        await stakingRewardDistributor.grantRole(
+            await stakingRewardDistributor.RECAPITALIZATION_ROLE(),
+            users[2].address
+        );
+
+        // check balances before withdraw
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(0));
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(0);
+
+        // withdraw pool tokens from staking reward distributor
+        const withdrawAmount = 2500;
+        await stakingRewardDistributor.connect(users[2]).withdrawToken(ethUnits(withdrawAmount));
+
+        // check balances after withdraw
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(withdrawAmount));
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(
+            ethUnits(withdrawAmount)
+        );
+    });
+
+    it('return pool tokens to staking reward distributor', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, ZUN, users } = fixture;
+
+        // add RECAPITALIZATION_ROLE to user[2]
+        await stakingRewardDistributor.grantRole(
+            await stakingRewardDistributor.RECAPITALIZATION_ROLE(),
+            users[2].address
+        );
+
+        // check balances before withdraw
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(0));
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(0);
+
+        // withdraw pool tokens from staking reward distributor
+        const withdrawAmount = 2500;
+        await stakingRewardDistributor.connect(users[2]).withdrawToken(ethUnits(withdrawAmount));
+
+        // check balances after withdraw
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(withdrawAmount));
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(
+            ethUnits(withdrawAmount)
+        );
+
+        // return pool tokens from staking reward distributor
+        await ZUN.connect(users[2]).approve(
+            stakingRewardDistributor.address,
+            ethUnits(withdrawAmount)
+        );
+        await stakingRewardDistributor.connect(users[2]).returnToken(ethUnits(withdrawAmount));
+
+        // check balances after return
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(0));
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(ethUnits(0));
+    });
+
+    it('withdraw ajusted amount of tokens because of recapitalization', async () => {
+        const fixture = await loadFixture(deployFixture);
+
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, ZUN, users, earlyExitReceiver } = fixture;
+
+        // add ZUN token as reward token
+        const tid3 = 2;
+        await stakingRewardDistributor.addRewardToken(ZUN.address);
+
+        await mine(BLOCKS_IN_4_MONTHS);
+
+        // add RECAPITALIZATION_ROLE to user[2]
+        await stakingRewardDistributor.grantRole(
+            await stakingRewardDistributor.RECAPITALIZATION_ROLE(),
+            users[2].address
+        );
+
+        // check balances before withdraw pool tokens
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(0);
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(0);
+
+        // withdraw pool tokens from staking reward distributor
+        const recapitalizeAmount = ethUnits(2500);
+        await stakingRewardDistributor.connect(users[2]).withdrawToken(recapitalizeAmount);
+
+        // check balances after withdraw pool tokens
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(recapitalizeAmount);
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(recapitalizeAmount);
+
+        // try to withdraw whole deposit back
+        const withdrawAmount = ethUnits(depositAmount1);
+        await stakingRewardDistributor
+            .connect(users[0])
+            .approve(stakingRewardDistributor.address, withdrawAmount);
+        await stakingRewardDistributor
+            .connect(users[0])
+            .withdraw(withdrawAmount, false, users[0].address);
+
+        // check balances after withdraw
+        const totalAmount = ethUnits(depositAmount1 + depositAmount2);
+        const adjustedAmount = withdrawAmount
+            .mul(totalAmount.sub(recapitalizeAmount).mul(ethUnits(1)).div(totalAmount))
+            .div(ethUnits(1));
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(adjustedAmount);
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(recapitalizeAmount);
+        expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(0);
+        expect(await ZUN.balanceOf(stakingRewardDistributor.address)).to.eq(
+            totalAmount.sub(adjustedAmount).sub(recapitalizeAmount)
+        );
+    });
+
     it('should distribute ZUN tokens', async () => {
         const {
             stakingRewardDistributor,
@@ -589,10 +840,10 @@ describe('StakingRewardDistributor tests', () => {
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
 
         await REWARD.approve(stakingRewardDistributor.address, ethUnits('100000000'));
-        await stakingRewardDistributor.distribute(tid1, ethUnits('100000000'));
+        await stakingRewardDistributor.distribute(REWARD.address, ethUnits('100000000'));
 
         await REWARD2.approve(stakingRewardDistributor.address, ethUnits('10000'));
-        await stakingRewardDistributor.distribute(tid2, ethUnits('10000'));
+        await stakingRewardDistributor.distribute(REWARD2.address, ethUnits('10000'));
 
         expect(await REWARD.balanceOf(stakingRewardDistributor.address)).to.eq(
             ethUnits('100000000')
@@ -651,7 +902,7 @@ describe('StakingRewardDistributor tests', () => {
     });
 
     async function addRewardToken(
-        stakingRewardDistributor: StakingRewardDistributor,
+        stakingRewardDistributor: ZUNStakingRewardDistributor,
         rewardToken: string
     ) {
         const rewardTokenCountBefore = await stakingRewardDistributor.rewardTokenCount();
@@ -661,7 +912,7 @@ describe('StakingRewardDistributor tests', () => {
     }
 
     async function depositToPool(
-        stakingRewardDistributor: StakingRewardDistributor,
+        stakingRewardDistributor: ZUNStakingRewardDistributor,
         token: ERC20,
         signer: SignerWithAddress,
         amount: BigNumberish
@@ -671,7 +922,7 @@ describe('StakingRewardDistributor tests', () => {
     }
 
     async function distributeRewardTokens(
-        stakingRewardDistributor: StakingRewardDistributor,
+        stakingRewardDistributor: ZUNStakingRewardDistributor,
         rewardToken: ERC20,
         amount: BigNumberish,
         admin: SignerWithAddress
@@ -783,7 +1034,7 @@ describe('StakingRewardDistributor tests', () => {
         const distributorRole = await stakingRewardDistributor.DISTRIBUTOR_ROLE();
         await stakingRewardDistributor.grantRole(distributorRole, admin.address);
         await REWARD.approve(stakingRewardDistributor.address, distributeAmount);
-        await stakingRewardDistributor.distribute(0, distributeAmount);
+        await stakingRewardDistributor.distribute(REWARD.address, distributeAmount);
         await mine(BLOCKS_IN_2_WEEKS);
 
         const pendingRewardBefore = await stakingRewardDistributor.getPendingReward(0, bob.address);
@@ -941,7 +1192,7 @@ describe('StakingRewardDistributor tests', () => {
         await stakingRewardDistributor.connect(alice).claim(alice.address);
         await stakingRewardDistributor.connect(bob).claim(bob.address);
         // New distribution started with 0 amount
-        await stakingRewardDistributor.connect(admin).distribute(0, 0);
+        await stakingRewardDistributor.connect(admin).distribute(REWARD.address, 0);
         await mine(BLOCKS_IN_1_WEEKS);
         // After some blocks, the pool hasn't been updated as the rewardsPerBlock is 0
         console.log(
