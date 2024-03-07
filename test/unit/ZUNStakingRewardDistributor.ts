@@ -4,7 +4,7 @@ import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
 import { ERC20, ZunamiToken, ZUNStakingRewardDistributor } from '../../typechain-types';
-import { BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getSignTypedData } from '../utils/signature';
 
@@ -225,11 +225,13 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
         const withdrawAmount = ethUnits(depositAmount1);
-        await stakingRewardDistributor
+        const tx = await stakingRewardDistributor
             .connect(users[0])
-            .approve(stakingRewardDistributor.address, withdrawAmount);
-        await stakingRewardDistributor.connect(users[0]).withdraw(0, false, users[0].address);
+            .withdraw(0, false, users[0].address);
 
+        expect(tx)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[0].address, 0, withdrawAmount, 0, withdrawAmount);
         // check balances after withdraw - 15% of withdrawal has transfered to earlyExitReceiver
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
         expect(await ZUN.balanceOf(users[0].address)).to.eq(withdrawAmount.div(100).mul(85));
@@ -270,15 +272,17 @@ describe('ZUNStakingRewardDistributor tests', () => {
         );
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
-        // mine blocks to unlock the deposit without early exit fee
+        // mine blocks to unlock the withdraw without early exit fee
         await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
 
         const withdrawAmount = ethUnits(depositAmount1);
-        await stakingRewardDistributor
+        const tx = await stakingRewardDistributor
             .connect(users[0])
-            .approve(stakingRewardDistributor.address, withdrawAmount);
-        await stakingRewardDistributor.connect(users[0]).withdraw(0, false, users[0].address);
+            .withdraw(0, false, users[0].address);
 
+        expect(tx)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[0].address, 0, withdrawAmount, 0, withdrawAmount);
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
         expect(await ZUN.balanceOf(users[0].address)).to.eq(withdrawAmount);
         expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(0);
@@ -329,19 +333,22 @@ describe('ZUNStakingRewardDistributor tests', () => {
         );
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
-        // mine blocks to unlock the deposit without early exit fee
+        // mine blocks to unlock the withdraw without early exit fee
         await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
 
         const withdrawAmount = ethUnits(depositAmount1);
-        await stakingRewardDistributor
-            .connect(users[0])
-            .approve(stakingRewardDistributor.address, withdrawAmount);
         const expectedReward = await stakingRewardDistributor.getPendingReward(
             tid,
             users[0].address
         );
-        await stakingRewardDistributor.connect(users[0]).withdraw(0, true, users[0].address);
 
+        const tx = await stakingRewardDistributor
+            .connect(users[0])
+            .withdraw(0, true, users[0].address);
+
+        expect(tx)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[0].address, 0, withdrawAmount, 0, withdrawAmount);
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
         expect(await ZUN.balanceOf(users[0].address)).to.eq(withdrawAmount);
         expect(await ZUN.balanceOf(earlyExitReceiver.address)).to.eq(0);
@@ -378,12 +385,8 @@ describe('ZUNStakingRewardDistributor tests', () => {
         await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, ZUN, users, earlyExitReceiver } = fixture;
 
-        // mine blocks to unlock the deposit without early exit fee and withdraw
+        // mine blocks to unlock the withdraw without early exit fee and withdraw
         await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
-        const withdrawAmount = ethUnits(depositAmount1);
-        await stakingRewardDistributor
-            .connect(users[0])
-            .approve(stakingRewardDistributor.address, withdrawAmount);
         await stakingRewardDistributor.connect(users[0]).withdraw(0, false, users[0].address);
 
         // try to withdraw again
@@ -412,8 +415,13 @@ describe('ZUNStakingRewardDistributor tests', () => {
 
         // withdraw pool tokens from staking reward distributor
         const withdrawAmount = 2500;
-        await stakingRewardDistributor.connect(users[2]).withdrawToken(ethUnits(withdrawAmount));
+        const tx = await stakingRewardDistributor
+            .connect(users[2])
+            .withdrawToken(ethUnits(withdrawAmount));
 
+        await expect(tx)
+            .to.emit(stakingRewardDistributor, 'WithdrawnToken')
+            .withArgs(ethUnits(withdrawAmount));
         // check balances after withdraw
         expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(withdrawAmount));
         expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(
@@ -421,27 +429,148 @@ describe('ZUNStakingRewardDistributor tests', () => {
         );
     });
 
-    it('check that deposit works correctly after withdraw pool tokens from staking reward distributor', async () => {
+    // FIXME: This test shows wrong behavior. It should be fixed.
+    it('user deposit and withdraw reduced amount when recapitalizedAmount > 0', async () => {
         const fixture = await loadFixture(deployFixture);
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
+        // deposit before withdraw token
         await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
-        const { stakingRewardDistributor, ZUN, users } = fixture;
-        // add RECAPITALIZATION_ROLE to user[2]
+        const { stakingRewardDistributor, ZUN, users, admin } = fixture;
         await stakingRewardDistributor.grantRole(
             await stakingRewardDistributor.RECAPITALIZATION_ROLE(),
-            users[2].address
+            admin.address
         );
-        // withdraw pool tokens from staking reward distributor
-        const withdrawAmount = 2500;
-        await stakingRewardDistributor.connect(users[2]).withdrawToken(ethUnits(withdrawAmount));
+        // withdraw pool token from staking reward distributor
+        const withdrawTokenAmount = ethUnits(1010);
+        expect(await stakingRewardDistributor.getTokenRatio()).to.eq(ethUnits(1));
+        await stakingRewardDistributor.connect(admin).withdrawToken(withdrawTokenAmount);
+        // check that token ratio and recapitalized amount are updated
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(withdrawTokenAmount);
+        expect(await stakingRewardDistributor.getTokenRatio()).to.eq(
+            BigNumber.from('663333333333333333')
+        );
 
-        // deposit some tokens by user[2]
-        const newDepositAmount = 1000;
+        // deposit after withdraw token
+        const newDepositAmount = ethUnits(1000);
         await ZUN.transfer(users[2].address, newDepositAmount);
         await depositToPool(stakingRewardDistributor, ZUN, users[2], newDepositAmount);
-
         expect(await stakingRewardDistributor.balanceOf(users[2].address)).to.eq(newDepositAmount);
+        expect(await stakingRewardDistributor.getTokenRatio()).to.eq(
+            BigNumber.from('747500000000000000')
+        );
+
+        // withdraw tokens by all users after lock period (without early exit fee)
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[2].address, 0)).untilBlock);
+
+        const withdrawAmount1 = ethUnits(depositAmount1);
+        const amountReduced1 = withdrawAmount1
+            .mul(BigNumber.from('747500000000000000'))
+            .div(ethUnits(1));
+        console.log('amountReduced1', amountReduced1.toString());
+        const tx1 = await stakingRewardDistributor
+            .connect(users[0])
+            .withdraw(0, false, users[0].address);
+        await expect(tx1)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[0].address, 0, withdrawAmount1, amountReduced1, amountReduced1);
+
+        const withdrawAmount2 = ethUnits(depositAmount2);
+        // FIXME: Token ratio becomes smaller after each withdraw, because totalAmount is decreased
+        const amountReduced2 = withdrawAmount2
+            .mul(BigNumber.from('663333333333333333'))
+            .div(ethUnits(1));
+        console.log('amountReduced2', amountReduced2.toString());
+        const tx2 = await stakingRewardDistributor
+            .connect(users[1])
+            .withdraw(0, false, users[1].address);
+        await expect(tx2)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[1].address, 0, withdrawAmount2, amountReduced2, amountReduced2);
+
+        // FIXME: Token ratio becomes smaller after each withdraw, because totalAmount is decreased
+        // FIXME: This user deposited after withdrawToken. Should there be a decrease for him?
+        // FIXME: This user can't withdraw, because recaptializedAmount > totalAmount on this step
+        const withdrawAmount3 = newDepositAmount;
+        const amountReduced3 = withdrawAmount3.mul(1).div(ethUnits(1));
+        const tx3 = await stakingRewardDistributor
+            .connect(users[2])
+            .withdraw(0, false, users[2].address);
+        await expect(tx3)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[2].address, 0, withdrawAmount3, amountReduced3, amountReduced3);
+
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
+        expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(0);
+        expect(await stakingRewardDistributor.balanceOf(users[2].address)).to.eq(0);
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(amountReduced1);
+        expect(await ZUN.balanceOf(users[1].address)).to.eq(amountReduced2);
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(amountReduced3);
+    });
+
+    it('user deposit before `withdrawToken` and withdraw after `returnToken`', async () => {
+        const fixture = await loadFixture(deployFixture);
+        const depositAmount1 = 1000;
+        const depositAmount2 = 2000;
+        // deposit before withdraw token
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, ZUN, users, admin } = fixture;
+        await stakingRewardDistributor.grantRole(
+            await stakingRewardDistributor.RECAPITALIZATION_ROLE(),
+            admin.address
+        );
+        // withdraw pool token from staking reward distributor
+        const withdrawTokenAmount = 100;
+        expect(await stakingRewardDistributor.getTokenRatio()).to.eq(ethUnits(1));
+        await stakingRewardDistributor.connect(admin).withdrawToken(ethUnits(withdrawTokenAmount));
+        // check that token ratio and recapitalized amount are updated
+        expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(
+            ethUnits(withdrawTokenAmount)
+        );
+
+        // deposit after withdraw token
+        const newDepositAmount = ethUnits(1000);
+        await ZUN.transfer(users[2].address, newDepositAmount);
+        await depositToPool(stakingRewardDistributor, ZUN, users[2], newDepositAmount);
+        expect(await stakingRewardDistributor.balanceOf(users[2].address)).to.eq(newDepositAmount);
+
+        // return pool tokens from staking reward distributor
+        await ZUN.approve(stakingRewardDistributor.address, ethUnits(withdrawTokenAmount));
+        await stakingRewardDistributor.returnToken(ethUnits(withdrawTokenAmount));
+
+        // withdraw tokens by all users after lock period (without early exit fee)
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[2].address, 0)).untilBlock);
+
+        const withdrawAmount1 = ethUnits(depositAmount1);
+        const tx1 = await stakingRewardDistributor
+            .connect(users[0])
+            .withdraw(0, false, users[0].address);
+        await expect(tx1)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[0].address, 0, withdrawAmount1, withdrawAmount1, withdrawAmount1);
+
+        const withdrawAmount2 = ethUnits(depositAmount2);
+        const tx2 = await stakingRewardDistributor
+            .connect(users[1])
+            .withdraw(0, false, users[1].address);
+        await expect(tx2)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[1].address, 0, withdrawAmount2, withdrawAmount2, withdrawAmount2);
+
+        const withdrawAmount3 = newDepositAmount;
+        const tx3 = await stakingRewardDistributor
+            .connect(users[2])
+            .withdraw(0, false, users[2].address);
+        await expect(tx3)
+            .to.emit(stakingRewardDistributor, 'Withdrawn')
+            .withArgs(users[2].address, 0, withdrawAmount3, withdrawAmount3, withdrawAmount3);
+
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
+        expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(0);
+        expect(await stakingRewardDistributor.balanceOf(users[2].address)).to.eq(0);
+        expect(await ZUN.balanceOf(users[0].address)).to.eq(withdrawAmount1);
+        expect(await ZUN.balanceOf(users[1].address)).to.eq(withdrawAmount2);
+        expect(await ZUN.balanceOf(users[2].address)).to.eq(withdrawAmount3);
     });
 
     it('return pool tokens to staking reward distributor', async () => {
@@ -477,8 +606,13 @@ describe('ZUNStakingRewardDistributor tests', () => {
             stakingRewardDistributor.address,
             ethUnits(withdrawAmount)
         );
-        await stakingRewardDistributor.connect(users[2]).returnToken(ethUnits(withdrawAmount));
+        const tx = await stakingRewardDistributor
+            .connect(users[2])
+            .returnToken(ethUnits(withdrawAmount));
 
+        await expect(tx)
+            .to.emit(stakingRewardDistributor, 'ReturnedToken')
+            .withArgs(ethUnits(withdrawAmount));
         // check balances after return
         expect(await ZUN.balanceOf(users[2].address)).to.eq(ethUnits(0));
         expect(await stakingRewardDistributor.recapitalizedAmount()).to.eq(ethUnits(0));

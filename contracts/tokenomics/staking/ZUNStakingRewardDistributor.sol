@@ -139,12 +139,12 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
 
         _checkpointRewards(msg.sender, totalSupply(), _claimRewards, address(0));
 
+        uint256 amountReduced = (amount * getTokenRatio()) / 1e18;
         _burn(msg.sender, amount);
         totalAmount -= amount;
         // Set untilBlock to 0 to mark the lock as withdrawn.
         lock.untilBlock = 0;
 
-        uint256 amountReduced = (amount * getTokenRatio()) / 1e18;
         uint256 transferredAmount = amountReduced;
         if (block.number < untilBlock) {
             transferredAmount =
