@@ -55,7 +55,7 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
     }
 
     function getTokenRatio() public view returns (uint256) {
-        return ((totalAmount - recapitalizedAmount) * 1e18) / totalAmount;
+        return (((totalAmount + 1) - recapitalizedAmount) * 1e18) / (totalAmount + 1);
     }
 
     function withdrawToken(uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
@@ -142,6 +142,14 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
         uint256 amountReduced = (amount * getTokenRatio()) / 1e18;
         _burn(msg.sender, amount);
         totalAmount -= amount;
+        if (
+            (recapitalizedAmount < (amount - amountReduced)) &&
+            (amount - amountReduced) - recapitalizedAmount < 1 gwei
+        ) {
+            recapitalizedAmount = 0;
+        } else {
+            recapitalizedAmount -= (amount - amountReduced);
+        }
         // Set untilBlock to 0 to mark the lock as withdrawn.
         lock.untilBlock = 0;
 
