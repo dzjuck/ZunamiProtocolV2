@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
 import './BaseStakingRewardDistributor.sol';
 import './IZUNStakingRewardDistributor.sol';
@@ -79,6 +80,26 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
 
     // Deposit tokens to staking for reward token allocation.
     function deposit(uint256 _amount, address _receiver) external nonReentrant {
+        _deposit(_amount, _receiver);
+    }
+
+    function depositWithPermit(
+        uint256 _amount,
+        address _receiver,
+        uint256 _deadline,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external nonReentrant {
+        IERC20Permit tokenPermit = IERC20Permit(address(token));
+        // the use of `try/catch` allows the permit to fail and makes the code tolerant to frontrunning.
+        try
+            tokenPermit.permit(msg.sender, address(this), _amount, _deadline, _v, _r, _s)
+        {} catch {}
+        _deposit(_amount, _receiver);
+    }
+
+    function _deposit(uint256 _amount, address _receiver) internal {
         if (_amount == 0) revert ZeroAmount();
 
         if (_receiver == address(0)) {

@@ -3,9 +3,10 @@ import { loadFixture, mine, mineUpTo } from '@nomicfoundation/hardhat-network-he
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
-import { ERC20, ZUNStakingRewardDistributor } from '../../typechain-types';
+import { ERC20, ZunamiToken, ZUNStakingRewardDistributor } from '../../typechain-types';
 import { BigNumberish } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { getSignTypedData } from '../utils/signature';
 
 const ethUnits = (amount: number | string) => parseUnits(amount.toString(), 'ether');
 
@@ -25,7 +26,8 @@ describe('ZUNStakingRewardDistributor tests', () => {
 
         // deploy test ERC20 token
         const ERC20TokenFactory = await ethers.getContractFactory('ERC20Token');
-        const ZUN = (await ERC20TokenFactory.deploy(18)) as ERC20;
+        const ZunTokenFactory = await ethers.getContractFactory('ZunamiToken');
+        const ZUN = (await ZunTokenFactory.deploy(admin.address)) as ZunamiToken;
         const REWARD = (await ERC20TokenFactory.deploy(18)) as ERC20;
         const REWARD2 = (await ERC20TokenFactory.deploy(18)) as ERC20;
 
@@ -159,6 +161,38 @@ describe('ZUNStakingRewardDistributor tests', () => {
             tx2.blockNumber! + BLOCKS_IN_4_MONTHS
         );
         expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('3000'));
+    });
+
+    it('should deposit with permit', async () => {
+        // given
+        const { stakingRewardDistributor, ZUN, REWARD, REWARD2, admin, users, earlyExitReceiver } =
+            await loadFixture(deployFixture);
+        const depositAmount = ethUnits('1000');
+        await ZUN.transfer(users[0].address, depositAmount);
+        const { deadline, v, r, s } = await getSignTypedData(
+            users[0],
+            ZUN,
+            stakingRewardDistributor.address,
+            depositAmount
+        );
+
+        // when
+        const tx1 = await stakingRewardDistributor
+            .connect(users[0])
+            .depositWithPermit(depositAmount, users[0].address, deadline, v, r, s);
+
+        // then
+        await expect(tx1)
+            .to.emit(stakingRewardDistributor, 'Deposited')
+            .withArgs(users[0].address, 0, ethUnits('1000'), tx1.blockNumber! + BLOCKS_IN_4_MONTHS);
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).amount).to.eq(
+            ethUnits('1000')
+        );
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock).to.eq(
+            tx1.blockNumber! + BLOCKS_IN_4_MONTHS
+        );
+        expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('1000'));
     });
 
     it('should revert deposit when amount is zero', async () => {
@@ -302,7 +336,10 @@ describe('ZUNStakingRewardDistributor tests', () => {
         await stakingRewardDistributor
             .connect(users[0])
             .approve(stakingRewardDistributor.address, withdrawAmount);
-        const expectedReward = await stakingRewardDistributor.getPendingReward(tid, users[0].address);
+        const expectedReward = await stakingRewardDistributor.getPendingReward(
+            tid,
+            users[0].address
+        );
         await stakingRewardDistributor.connect(users[0]).withdraw(0, true, users[0].address);
 
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(0);
