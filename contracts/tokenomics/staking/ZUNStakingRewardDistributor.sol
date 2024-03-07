@@ -19,6 +19,8 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
     uint16 public constant EXIT_PERCENT = 150; // 15%
     uint16 public constant PERCENT_DENOMINATOR = 1e3;
 
+    uint256 public constant RATION_DENOMINATOR = 1e18;
+
     uint32 public constant BLOCKS_IN_4_MONTHS = (4 * 30 * 24 * 60 * 60) / 12;
 
     struct LockInfo {
@@ -54,8 +56,15 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
         emit EarlyExitReceiverChanged(_receiver);
     }
 
-    function getTokenRatio() public view returns (uint256) {
-        return (((totalAmount + 1) - recapitalizedAmount) * 1e18) / (totalAmount + 1);
+    function getRecapitalizationRatio() public view returns (uint256) {
+        if (recapitalizedAmount == 0) {
+            return RATION_DENOMINATOR;
+        }
+        return ((totalAmount - recapitalizedAmount) * RATION_DENOMINATOR) / totalAmount;
+    }
+
+    function _reduceByStakedAmount(uint256 _tokenBalance) internal view override returns (uint256 reducedTokenBalance) {
+        reducedTokenBalance = _tokenBalance + recapitalizedAmount - totalAmount;
     }
 
     function withdrawToken(uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
@@ -110,7 +119,13 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
 
         token.safeTransferFrom(address(msg.sender), address(this), _amount);
 
+        uint256 ratio = getRecapitalizationRatio();
+        if (ratio < RATION_DENOMINATOR) {
+            uint256 amountReduced = (_amount * ratio) / RATION_DENOMINATOR;
+            recapitalizedAmount += _amount - amountReduced;
+        }
         totalAmount += _amount;
+
         _mint(_receiver, _amount);
 
         uint128 untilBlock = uint128(block.number + BLOCKS_IN_4_MONTHS);
@@ -139,17 +154,20 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
 
         _checkpointRewards(msg.sender, totalSupply(), _claimRewards, address(0));
 
-        uint256 amountReduced = (amount * getTokenRatio()) / 1e18;
+        uint256 ratio = getRecapitalizationRatio();
         _burn(msg.sender, amount);
         totalAmount -= amount;
-        if (
-            (recapitalizedAmount < (amount - amountReduced)) &&
-            (amount - amountReduced) - recapitalizedAmount < 1 gwei
-        ) {
-            recapitalizedAmount = 0;
-        } else {
-            recapitalizedAmount -= (amount - amountReduced);
+
+        uint256 amountReduced = amount;
+        if(ratio < RATION_DENOMINATOR) {
+            amountReduced = (amount * ratio) / RATION_DENOMINATOR;
+            if(amount - amountReduced > recapitalizedAmount) {
+                recapitalizedAmount = 0;
+            } else {
+                recapitalizedAmount -= (amount - amountReduced);
+            }
         }
+
         // Set untilBlock to 0 to mark the lock as withdrawn.
         lock.untilBlock = 0;
 

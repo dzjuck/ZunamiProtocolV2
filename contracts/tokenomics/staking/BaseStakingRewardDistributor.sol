@@ -147,6 +147,10 @@ abstract contract BaseStakingRewardDistributor is
         }
     }
 
+    function _reduceByStakedAmount(uint256 _tokenBalance) internal view virtual returns (uint256 reducedTokenBalance) {
+        reducedTokenBalance = _tokenBalance - totalAmount;
+    }
+
     function _checkpointReward(
         uint256 _tid,
         address _user,
@@ -160,18 +164,9 @@ abstract contract BaseStakingRewardDistributor is
         uint256 userDistribution = userRewardDistribution[_user][_tid];
         uint256 newClaimable = 0;
         if (userDistribution < distribution) {
-            //            console.log(
-            //                '_checkpointReward userDistribution before',
-            //                userRewardDistribution[_user][_tid]
-            //            );
             userRewardDistribution[_user][_tid] = distribution;
-            //            console.log(
-            //                '_checkpointReward userDistribution after',
-            //                userRewardDistribution[_user][_tid]
-            //            );
             emit UserDistributionUpdated(_tid, _user, distribution);
             newClaimable = (_userBalance * (distribution - userDistribution)) / 1e18;
-            //            console.log('_checkpointReward newClaimable', newClaimable);
         }
 
         uint256 totalClaimable = claimableRewards[_tid][_user] + newClaimable;
@@ -181,18 +176,10 @@ abstract contract BaseStakingRewardDistributor is
                 rewardTokenInfo[_tid].balance -= totalClaimable;
                 // update amount claimed
                 claimedRewards[_tid][_user] += totalClaimable;
-                //                console.log(
-                //                    '_checkpointReward claimedRewards[_tid][_user]',
-                //                    claimedRewards[_tid][_user]
-                //                );
                 emit Claimed(_receiver, _tid, totalClaimable);
             } else if (newClaimable > 0) {
                 // update total_claimable
                 claimableRewards[_tid][_user] = totalClaimable;
-                //                console.log(
-                //                    '_checkpointReward claimableRewards[_tid][_user]',
-                //                    claimableRewards[_tid][_user]
-                //                );
             }
         }
     }
@@ -201,28 +188,21 @@ abstract contract BaseStakingRewardDistributor is
         uint256 _tid,
         uint256 _totalSupply
     ) internal returns (uint256 distribution) {
-        //        console.log('updateDistribution _totalSupply', _totalSupply);
         RewardTokenInfo storage rewardInfo = rewardTokenInfo[_tid];
         address token_ = address(rewardInfo.token);
         uint256 dI = 0;
         if (_totalSupply != 0) {
             uint256 tokenBalance = IERC20(token_).balanceOf(address(this));
-            //            console.log('updateDistribution tokenBalance', tokenBalance);
             if (token_ == address(token)) {
-                tokenBalance -= totalAmount;
-                //                console.log('updateDistribution tokenBalance', tokenBalance);
+                tokenBalance = _reduceByStakedAmount(tokenBalance);
             }
             dI = (1e18 * (tokenBalance - rewardInfo.balance)) / _totalSupply;
-            //            console.log('updateDistribution dI', dI);
             rewardInfo.balance = tokenBalance;
-            //            console.log('updateDistribution tokenBalance', tokenBalance);
         }
 
         distribution = rewardInfo.distribution + dI;
-        //        console.log('updateDistribution distribution', distribution);
         if (dI != 0) {
             rewardInfo.distribution = distribution;
-            //            console.log('updateDistribution rewardInfo.distribution', rewardInfo.distribution);
             emit DistributionUpdated(_tid, distribution);
         }
     }
@@ -234,8 +214,6 @@ abstract contract BaseStakingRewardDistributor is
         if (_token == address(0)) revert ZeroAddress();
         if (!isRewardTokenAdded(_token)) revert AbsentRewardToken();
         uint256 tid = rewardTokenTidByAddress[_token];
-        //        console.log('distribute tid', tid);
-        //        console.log('distribute amount', _amount);
 
         rewardTokenInfo[tid].token.safeTransferFrom(msg.sender, address(this), _amount);
         _updateDistribution(tid, totalSupply());
