@@ -1,6 +1,6 @@
 import { ethers, network } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { BigNumber } from 'ethers';
+import {BigNumber, Signer} from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
@@ -14,15 +14,13 @@ import { createStrategies } from '../utils/CreateStrategies';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
-import { ZunamiPool, ZunamiPoolCompoundController, ZunamiDepositZap } from '../../typechain-types';
+import {ZunamiPool, ZunamiPoolCompoundController, ZunamiDepositZap, GenericOracle} from '../../typechain-types';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
 
 import * as addrs from '../address.json';
-
-const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
-const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
+import {attachPoolAndControllerZunUSD} from "../utils/AttachPoolAndControllerZunUSD";
 
 export async function createPoolAndCompoundController(token: string, rewardManager: string) {
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
@@ -81,9 +79,23 @@ async function mintTokenTo(
     });
 }
 
+async function initCurveRegistryCache() {
+  const curvePools = ['0x8c24b3213fd851db80245fccc42c40b94ac9a745'];
+
+  const curveRegistryCacheAddress = '0x2E68bE71687469280319BCf9E635a8783Db5d238';
+
+  const curveRegistryCache = await ethers.getContractAt(
+    'CurveRegistryCache',
+    curveRegistryCacheAddress
+  );
+
+  for (const curvePool of curvePools) {
+    await curveRegistryCache.initPool(curvePool);
+  }
+}
+
 describe('ZunUSD flow APS tests', () => {
-    const strategyNames = ['ZunUSDVaultStrat'];
-    const strategyApsNames = ['VaultStrat'];
+    const strategyApsNames = ['ZunUSDApsVaultStrat','ZunUsdCrvUsdApsConvexCurveStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -93,16 +105,22 @@ describe('ZunUSD flow APS tests', () => {
 
         await mintStables(admin, usdc);
 
-        const { curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle } =
-            await createAndInitConicOracles([crvUSD_USDT_pool_addr, crvUSD_USDC_pool_addr]);
-
         const { stableConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
             'StableConverter',
             'SellingCurveRewardManager'
         );
 
-        const { zunamiPool, zunamiPoolController, frxEthNativeConverter } =
-            await createPoolAndControllerZunUSD();
+        const genericOracleAddress = "0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410";
+        const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
+        const genericOracle = (await GenericOracleFactory.attach(genericOracleAddress)) as GenericOracle;
+
+        await initCurveRegistryCache();
+
+        const zunUSDPoolAddress = "0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6";
+        const zunUSDPoolControllerAddress = "0x618eee502CDF6b46A2199C21D1411f3F6065c940";
+
+        const { zunamiPool, zunamiPoolController } =
+            await attachPoolAndControllerZunUSD(zunUSDPoolAddress, zunUSDPoolControllerAddress);
 
         const { stableConverter: stableConverterAps, rewardManager: rewardManagerAps } =
             await createConvertersAndRewardManagerContracts(
@@ -113,22 +131,12 @@ describe('ZunUSD flow APS tests', () => {
         const { zunamiPool: zunamiPoolAps, zunamiPoolController: zunamiPoolControllerAps } =
             await createPoolAndCompoundController(zunamiPool.address, rewardManagerAps.address);
 
-        const strategies = await createStrategies(
-            strategyNames,
-            genericOracle,
-            zunamiPool,
-            stableConverter,
-            frxEthNativeConverter,
-            undefined,
-            undefined
-        );
-
         const strategiesAps = await createStrategies(
             strategyApsNames,
             genericOracle,
             zunamiPoolAps,
             stableConverter,
-            frxEthNativeConverter,
+          undefined,
             [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
             [1, 0, 0, 0, 0]
         );
@@ -160,7 +168,6 @@ describe('ZunUSD flow APS tests', () => {
             feeCollector,
             zunamiPool,
             zunamiPoolController,
-            strategies,
             stableConverter,
             rewardManager,
             zunamiPoolAps,
@@ -168,9 +175,6 @@ describe('ZunUSD flow APS tests', () => {
             strategiesAps,
             stableConverterAps,
             rewardManagerAps,
-            curveRegistryCache,
-            curveLPOracle,
-            chainlinkOracle,
             genericOracle,
             dai,
             usdc,
@@ -178,31 +182,22 @@ describe('ZunUSD flow APS tests', () => {
         };
     }
 
-    it('should compound all rewards', async () => {
+    it('should deposit, withdraw and compound all rewards in all strategies', async () => {
         const {
             admin,
             zunamiPool,
             zunamiPoolController,
             zunamiPoolAps,
             zunamiPoolControllerAps,
-            strategies,
             strategiesAps,
             stableConverterAps,
         } = await loadFixture(deployFixture);
 
-        for (let i = 0; i < strategies.length; i++) {
-            const strategy = strategies[i];
-            await zunamiPool.addStrategy(strategy.address);
-
-            await zunamiPoolController.setDefaultDepositSid(i);
-            await zunamiPoolController.setDefaultWithdrawSid(i);
-
-            await expect(
-                zunamiPoolController
-                    .connect(admin)
-                    .deposit(getMinAmountZunUSD('10000'), admin.getAddress())
-            ).to.emit(zunamiPool, 'Deposited');
-        }
+        await expect(
+          zunamiPoolController
+            .connect(admin)
+            .deposit(getMinAmountZunUSD('10000'), admin.getAddress())
+        ).to.emit(zunamiPool, 'Deposited');
 
         for (let i = 0; i < strategiesAps.length; i++) {
             const strategy = strategiesAps[i];
@@ -255,29 +250,6 @@ describe('ZunUSD flow APS tests', () => {
 
         expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
 
-        let tokens;
-        let balance;
-        for (let strategy of strategies) {
-            if (!strategy.token) {
-                continue;
-            }
-            const config = await strategy.config();
-            if (config.rewards) {
-                tokens = [await strategy.token(), ...config.rewards].map(
-                    (token) => new ethers.Contract(token, erc20ABI, admin)
-                );
-            } else {
-                tokens = [await strategy.token(), config.crv, config.cvx].map(
-                    (token) => new ethers.Contract(token, erc20ABI, admin)
-                );
-            }
-
-            for (let token of tokens) {
-                balance = await token.balanceOf(strategy.address);
-                expect(balance).to.eq(0);
-            }
-        }
-
         for (let i = 0; i < strategiesAps.length; i++) {
             let sharesAmount = BigNumber.from(
                 await zunamiPoolControllerAps.balanceOf(admin.getAddress())
@@ -303,20 +275,17 @@ describe('ZunUSD flow APS tests', () => {
     it('should deposit to aps using zap', async () => {
         const {
             admin,
-            zunamiPool,
             zunamiPoolController,
             zunamiPoolAps,
             zunamiPoolControllerAps,
             dai,
             usdc,
             usdt,
-            strategies,
             strategiesAps,
         } = await loadFixture(deployFixture);
 
         // Add strategies to omnipool and aps pool
         const sid = 0;
-        await zunamiPool.addStrategy(strategies[sid].address);
         await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
 
         //deploy zap

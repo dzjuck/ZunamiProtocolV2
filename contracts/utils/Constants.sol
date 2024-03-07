@@ -64,8 +64,8 @@ library Constants {
     address internal constant CVX_zunUSD_crvFRAX_REWARDS_ADDRESS = address(0);
     uint256 internal constant CVX_zunUSD_crvFRAX_PID = 0;
 
-    address internal constant CRV_zunUSD_crvUSD_ADDRESS = address(0);
-    address internal constant CRV_zunUSD_crvUSD_LP_ADDRESS = address(0);
-    address internal constant CVX_zunUSD_crvUSD_REWARDS_ADDRESS = address(0);
-    uint256 internal constant CVX_zunUSD_crvUSD_PID = 0;
+    address internal constant CRV_zunUSD_crvUSD_ADDRESS = 0x8C24b3213FD851db80245FCCc42c40B94Ac9a745;
+    address internal constant CRV_zunUSD_crvUSD_LP_ADDRESS = 0x8C24b3213FD851db80245FCCc42c40B94Ac9a745;
+    address internal constant CVX_zunUSD_crvUSD_REWARDS_ADDRESS = 0xB0408d1477554268Ece9b0a40290C345196fBf1B;
+    uint256 internal constant CVX_zunUSD_crvUSD_PID = 309;
 }

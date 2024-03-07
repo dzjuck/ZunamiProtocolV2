@@ -4,18 +4,19 @@ pragma solidity ^0.8.23;
 import '../../../../../utils/Constants.sol';
 import '../../../../../interfaces/IController.sol';
 import '../../../../../interfaces/IStableConverter.sol';
-import '../EmergencyAdminConvexCurveStratBase.sol';
+import '../EmergencyAdminConvexCurveNStratBase.sol';
+import "../../../../../interfaces/ICurvePool2.sol";
 
-contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
+contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     using SafeERC20 for IERC20;
 
     uint256 constant ZUNAMI_ZUNUSD_TOKEN_ID = 0;
 
-    uint128 public constant CRVUSD_TOKEN_POOL_TOKEN_ID = 0;
-    int128 public constant CRVUSD_TOKEN_POOL_TOKEN_ID_INT = int128(CRVUSD_TOKEN_POOL_TOKEN_ID);
-
-    uint128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID = 1;
+    uint128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID = 0;
     int128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID_INT = int128(CRVUSD_TOKEN_POOL_CRVUSD_ID);
+
+    uint128 public constant CRVUSD_TOKEN_POOL_TOKEN_ID = 1;
+    int128 public constant CRVUSD_TOKEN_POOL_TOKEN_ID_INT = int128(CRVUSD_TOKEN_POOL_TOKEN_ID);
 
     IController public immutable zunamiController;
     IERC20 public immutable zunamiStable;
@@ -45,7 +46,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
         address _zunamiControllerAddr,
         address _zunamiStableAddr
     )
-        EmergencyAdminConvexCurveStratBase(
+        EmergencyAdminConvexCurveNStratBase(
             _tokens,
             _tokenDecimalsMultipliers,
             _poolAddr,
@@ -70,16 +71,20 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
 
     function convertCurvePoolTokenAmounts(
         uint256[POOL_ASSETS] memory amounts
-    ) internal pure override returns (uint256[2] memory amounts2) {
-        return [amounts[ZUNAMI_ZUNUSD_TOKEN_ID], 0];
+    ) internal pure override returns (uint256[] memory) {
+        uint256[] memory amountsN = new uint256[](8);
+        amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_ZUNUSD_TOKEN_ID];
+        return amountsN;
     }
 
     function convertAndApproveTokens(
         address pool,
         uint256[POOL_ASSETS] memory amounts
-    ) internal override returns (uint256[2] memory amounts2) {
-        amounts2[CRVUSD_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_ZUNUSD_TOKEN_ID];
-        zunamiStable.safeIncreaseAllowance(pool, amounts2[CRVUSD_TOKEN_POOL_TOKEN_ID]);
+    ) internal override returns (uint256[] memory) {
+        uint256[] memory amountsN = new uint256[](8);
+        amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_ZUNUSD_TOKEN_ID];
+        zunamiStable.safeIncreaseAllowance(pool, amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID]);
+        return amountsN;
     }
 
     function getCurveRemovingTokenIndex() internal pure override returns (int128) {
@@ -117,11 +122,11 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
         usdc.safeIncreaseAllowance(address(zunamiController), usdcAmount);
         uint256 zunStableAmount = zunamiController.deposit([0, usdcAmount, 0, 0, 0], address(this));
 
-        uint256[2] memory amounts2;
-        amounts2[CRVUSD_TOKEN_POOL_TOKEN_ID] = zunStableAmount;
+        uint256[] memory amountsN = new uint256[](8);
+        amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID] = zunStableAmount;
         zunamiStable.safeIncreaseAllowance(address(pool), zunStableAmount);
 
-        uint256 poolTokenAmount = depositCurve(amounts2);
+        uint256 poolTokenAmount = depositCurve(amountsN);
         depositBooster(poolTokenAmount);
     }
 
@@ -158,11 +163,11 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
 
         IERC20 crvUsd = IERC20(Constants.CRVUSD_ADDRESS);
 
-        uint256[2] memory amounts2;
-        amounts2[CRVUSD_TOKEN_POOL_CRVUSD_ID] = crvUsdAmount;
+        uint256[] memory amountsN = new uint256[](8);
+        amountsN[CRVUSD_TOKEN_POOL_CRVUSD_ID] = crvUsdAmount;
         crvUsd.safeIncreaseAllowance(address(pool), crvUsdAmount);
 
-        uint256 poolTokenAmount = depositCurve(amounts2);
+        uint256 poolTokenAmount = depositCurve(amountsN);
         depositBooster(poolTokenAmount);
     }
 

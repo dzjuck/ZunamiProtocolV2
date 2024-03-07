@@ -5,14 +5,16 @@ import {
     ZunamiPool,
 } from '../../typechain-types';
 import { ethers } from 'hardhat';
+import {ContractFactory} from "ethers";
 
 async function deployStrategy(
+    strategyName: string,
     factory: ContractFactory,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
 ) {
     let strategy;
-    if (tokens && tokensDecimals) {
+    if (strategyName == "VaultStrat" && tokens && tokensDecimals) {
         strategy = await factory.deploy(tokens, tokensDecimals);
     } else {
         strategy = await factory.deploy();
@@ -35,7 +37,7 @@ export async function createStrategies(
     // Init all strategies
     for (const strategyName of strategyNames) {
         const factory = await ethers.getContractFactory(strategyName);
-        const strategy = await deployStrategy(factory, tokens, tokensDecimals);
+        const strategy = await deployStrategy(strategyName, factory, tokens, tokensDecimals);
 
         await strategy.setZunamiPool(zunamiPool.address);
 
