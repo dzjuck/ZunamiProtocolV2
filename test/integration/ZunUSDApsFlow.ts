@@ -1,5 +1,5 @@
 import { ethers, network } from 'hardhat';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import {impersonateAccount, loadFixture, setBalance} from '@nomicfoundation/hardhat-network-helpers';
 import {BigNumber, Signer} from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
@@ -7,14 +7,18 @@ import { expect } from 'chai';
 import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 
 import { mintStables } from '../utils/MintStables';
-import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
 import { createStablecoins } from '../utils/CreateStablecoins';
 import { createStrategies } from '../utils/CreateStrategies';
-import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
-import {ZunamiPool, ZunamiPoolCompoundController, ZunamiDepositZap, GenericOracle} from '../../typechain-types';
+import {
+  ZunamiPool,
+  ZunamiPoolCompoundController,
+  ZunamiDepositZap,
+  GenericOracle,
+  IStableConverter, IERC20
+} from '../../typechain-types';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
@@ -94,6 +98,19 @@ async function initCurveRegistryCache() {
   }
 }
 
+async function setOracleFixedPrice(genericOracle: GenericOracle, admin: string, token: string, price: string) {
+  const FixedOracleFactory = await ethers.getContractFactory("FixedOracle");
+  const fixedOracle = await FixedOracleFactory.deploy(token, price);
+
+  await impersonateAccount(admin);
+  const impersonatedSigner = await ethers.getSigner(admin);
+
+  // set balance to cover any tx costs
+  await setBalance(admin, ethers.utils.parseEther('2').toHexString());
+
+  await genericOracle.connect(impersonatedSigner).setCustomOracle(token, fixedOracle.address);
+}
+
 describe('ZunUSD flow APS tests', () => {
     const strategyApsNames = ['ZunUSDApsVaultStrat','ZunUsdCrvUsdApsConvexCurveStrat'];
 
@@ -114,7 +131,9 @@ describe('ZunUSD flow APS tests', () => {
         const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
         const genericOracle = (await GenericOracleFactory.attach(genericOracleAddress)) as GenericOracle;
 
-        await initCurveRegistryCache();
+        const zunamiDeploerAddress = "0xe9b2B067eE106A6E518fB0552F3296d22b82b32B";
+        const CRVZUNUSDPoolAddress = "0x8c24b3213fd851db80245fccc42c40b94ac9a745";
+        await setOracleFixedPrice(genericOracle, zunamiDeploerAddress, CRVZUNUSDPoolAddress, 1e18.toString());
 
         const zunUSDPoolAddress = "0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6";
         const zunUSDPoolControllerAddress = "0x618eee502CDF6b46A2199C21D1411f3F6065c940";
@@ -204,9 +223,8 @@ describe('ZunUSD flow APS tests', () => {
             await zunamiPoolAps.addStrategy(strategy.address);
 
             await zunamiPoolControllerAps.setDefaultDepositSid(i);
-            await zunamiPoolControllerAps.setDefaultWithdrawSid(i);
 
-            const zStableBalance = parseUnits('10000', 'ether');
+            const zStableBalance = parseUnits('1000', 'ether');
 
             await zunamiPool.approve(zunamiPoolControllerAps.address, zStableBalance);
 
@@ -235,7 +253,7 @@ describe('ZunUSD flow APS tests', () => {
 
         await zunamiPool.transfer(
             stableConverterAps.address,
-            ethers.utils.parseUnits('20000', 'ether').sub(MINIMUM_LIQUIDITY)
+            ethers.utils.parseUnits('10000', 'ether').sub(MINIMUM_LIQUIDITY)
         );
 
         await zunamiPoolControllerAps.autoCompoundAll();
@@ -250,21 +268,30 @@ describe('ZunUSD flow APS tests', () => {
 
         expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
 
-        for (let i = 0; i < strategiesAps.length; i++) {
-            let sharesAmount = BigNumber.from(
-                await zunamiPoolControllerAps.balanceOf(admin.getAddress())
-            );
-            expect(sharesAmount).to.gt(0);
+        const sharesAmount = BigNumber.from(
+          await zunamiPoolControllerAps.balanceOf(admin.getAddress())
+        );
+        expect(sharesAmount).to.gt(0);
 
+        const withdrawAmount =  ethers.utils.parseUnits('500', 'ether').sub(MINIMUM_LIQUIDITY);
+
+        for (let i = 0; i < strategiesAps.length; i++) {
             let assetsBefore = BigNumber.from(await zunamiPool.balanceOf(admin.getAddress()));
 
+            await zunamiPoolControllerAps.setDefaultWithdrawSid(i);
+
+            const sharesAmountBefore = BigNumber.from(
+              await zunamiPoolControllerAps.balanceOf(admin.getAddress())
+            );
+
             await expect(
-                zunamiPoolControllerAps.withdraw(sharesAmount, [0, 0, 0, 0, 0], admin.getAddress())
+                zunamiPoolControllerAps.withdraw(withdrawAmount, [0, 0, 0, 0, 0], admin.getAddress())
             ).to.emit(zunamiPoolAps, 'Withdrawn');
-            sharesAmount = BigNumber.from(
+
+            const sharesAmountAfter = BigNumber.from(
                 await zunamiPoolControllerAps.balanceOf(admin.getAddress())
             );
-            expect(sharesAmount).to.eq(0);
+            expect(sharesAmountBefore).to.gt(sharesAmountAfter);
 
             expect(
                 BigNumber.from(await zunamiPool.balanceOf(admin.getAddress())).sub(assetsBefore)

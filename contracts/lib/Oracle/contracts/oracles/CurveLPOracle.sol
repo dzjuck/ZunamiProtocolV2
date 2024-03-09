@@ -14,17 +14,20 @@ import '../../interfaces/ICurveRegistryCache.sol';
 contract CurveLPOracle is IOracle, Ownable2Step {
     using ScaledMath for uint256;
 
+    error ZeroAddress();
+
     event ImbalanceThresholdUpdated(address indexed token, uint256 threshold);
+    event CurveRegistryCacheSet(address indexed curveRegistryCache);
 
     uint256 internal constant _MAX_IMBALANCE_THRESHOLD = 0.1e18;
     mapping(address => uint256) public imbalanceThresholds;
 
     IOracle private immutable _genericOracle;
-    ICurveRegistryCache private immutable curveRegistryCache;
+    ICurveRegistryCache private curveRegistryCache;
 
     constructor(address genericOracle, address curveRegistryCache_) Ownable(msg.sender) {
         _genericOracle = IOracle(genericOracle);
-        curveRegistryCache = ICurveRegistryCache(curveRegistryCache_);
+        setCurveRegistryCache(curveRegistryCache_);
     }
 
     function isTokenSupported(address token) external view override returns (bool) {
@@ -80,6 +83,12 @@ contract CurveLPOracle is IOracle, Ownable2Step {
         require(threshold <= _MAX_IMBALANCE_THRESHOLD, 'threshold too high');
         imbalanceThresholds[token] = threshold;
         emit ImbalanceThresholdUpdated(token, threshold);
+    }
+
+    function setCurveRegistryCache(address curveRegistryCache_) public onlyOwner {
+        if (curveRegistryCache_ == address(0)) revert ZeroAddress();
+        curveRegistryCache = ICurveRegistryCache(curveRegistryCache_);
+        emit CurveRegistryCacheSet(curveRegistryCache_);
     }
 
     function _getCurvePool(address lpToken_) internal view returns (address) {
