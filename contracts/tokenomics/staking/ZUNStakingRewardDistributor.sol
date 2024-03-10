@@ -8,7 +8,11 @@ import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import './BaseStakingRewardDistributor.sol';
 import './IZUNStakingRewardDistributor.sol';
 
-contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakingRewardDistributor {
+contract ZUNStakingRewardDistributor is
+    IZUNStakingRewardDistributor,
+    ERC20VotesUpgradeable,
+    BaseStakingRewardDistributor
+{
     using SafeERC20 for IERC20;
 
     error LockDoesNotExist();
@@ -26,6 +30,16 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
     struct LockInfo {
         uint128 amount;
         uint128 untilBlock;
+    }
+
+    function initialize(
+        address _token,
+        string memory _name,
+        string memory _symbol,
+        address _defaultAdmin
+    ) public override initializer {
+        super.initialize(_token, _name, _symbol, _defaultAdmin);
+        __ERC20Votes_init();
     }
 
     mapping(address => LockInfo[]) public userLocks;
@@ -184,5 +198,34 @@ contract ZUNStakingRewardDistributor is IZUNStakingRewardDistributor, BaseStakin
         token.safeTransfer(address(_tokenReceiver), transferredAmount);
 
         emit Withdrawn(msg.sender, _lockIndex, amount, amountReduced, transferredAmount);
+    }
+
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) public override(BaseStakingRewardDistributor, ERC20Upgradeable) returns (bool) {
+        return super.transfer(recipient, amount);
+    }
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public override(BaseStakingRewardDistributor, ERC20Upgradeable) returns (bool) {
+        return super.transferFrom(sender, recipient, amount);
+    }
+
+    function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal override(BaseStakingRewardDistributor, ERC20VotesUpgradeable) {
+        super._update(from, to, value);
+    }
+
+    function nonces(
+        address owner
+    ) public view override(BaseStakingRewardDistributor, NoncesUpgradeable) returns (uint256) {
+        return super.nonces(owner);
     }
 }
