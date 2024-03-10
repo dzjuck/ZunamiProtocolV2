@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.23;
 
-import "../../interfaces/IOracle.sol";
-import "../../libraries/ScaledMath.sol";
+import '../../interfaces/IOracle.sol';
+import '../../libraries/ScaledMath.sol';
 
 interface ICurvePriceOracle {
     function price_oracle() external view returns (uint256);
@@ -29,7 +29,7 @@ contract CrvUsdOracle is IOracle {
     }
 
     function getUSDPrice(address token_) external view override returns (uint256) {
-        require(isTokenSupported(token_), "token not supported");
+        require(isTokenSupported(token_), 'token not supported');
         uint256 priceFromUsdc_ = _getCrvUsdPriceForCurvePool(_CRVUSD_USDC, _USDC);
         uint256 priceFromUsdt_ = _getCrvUsdPriceForCurvePool(_CRVUSD_USDT, _USDT);
         uint256 priceFromUsdp_ = _getCrvUsdPriceForCurvePool(_CRVUSD_USDP, _USDP);

@@ -3,8 +3,8 @@ import { ZunamiPool, ZunamiPoolThroughController } from '../../typechain-types';
 import * as addrs from '../address.json';
 
 export async function attachPoolAndControllerZunUSD(
-  zunUSDPoolAddress: string,
-  zunUSDPoolControllerAddress: string
+    zunUSDPoolAddress: string,
+    zunUSDPoolControllerAddress: string
 ) {
     const ZunamiPoolZunUSDFactory = await ethers.getContractFactory('ZunamiPoolZunUSD');
     const zunamiPool = (await ZunamiPoolZunUSDFactory.attach(zunUSDPoolAddress)) as ZunamiPool;
@@ -13,7 +13,7 @@ export async function attachPoolAndControllerZunUSD(
         'ZunamiPoolControllerZunUSD'
     );
     const zunamiPoolController = (await ZunamiPooControllerZunUSDFactory.attach(
-      zunUSDPoolControllerAddress
+        zunUSDPoolControllerAddress
     )) as ZunamiPoolThroughController;
 
     return { zunamiPool, zunamiPoolController };

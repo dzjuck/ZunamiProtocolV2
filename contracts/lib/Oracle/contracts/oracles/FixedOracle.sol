@@ -4,13 +4,12 @@ pragma solidity ^0.8.23;
 import '../../interfaces/IOracle.sol';
 
 contract FixedOracle is IOracle {
-
     error ZeroAddress();
     error ZeroUsdPrice();
     error WrongToken();
 
-    address immutable public token;
-    uint256 immutable public usdPrice;
+    address public immutable token;
+    uint256 public immutable usdPrice;
 
     constructor(address _token, uint256 _usdPrice) {
         if (_token == address(0)) revert ZeroAddress();

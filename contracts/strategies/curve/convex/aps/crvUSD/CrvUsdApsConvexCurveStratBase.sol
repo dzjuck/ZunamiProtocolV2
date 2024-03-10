@@ -5,7 +5,7 @@ import '../../../../../utils/Constants.sol';
 import '../../../../../interfaces/IController.sol';
 import '../../../../../interfaces/IStableConverter.sol';
 import '../EmergencyAdminConvexCurveNStratBase.sol';
-import "../../../../../interfaces/ICurvePool2.sol";
+import '../../../../../interfaces/ICurvePool2.sol';
 
 contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     using SafeERC20 for IERC20;

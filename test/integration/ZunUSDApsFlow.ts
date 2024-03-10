@@ -1,6 +1,10 @@
 import { ethers, network } from 'hardhat';
-import {impersonateAccount, loadFixture, setBalance} from '@nomicfoundation/hardhat-network-helpers';
-import {BigNumber, Signer} from 'ethers';
+import {
+    impersonateAccount,
+    loadFixture,
+    setBalance,
+} from '@nomicfoundation/hardhat-network-helpers';
+import { BigNumber, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
@@ -13,18 +17,19 @@ import { createStrategies } from '../utils/CreateStrategies';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
 import {
-  ZunamiPool,
-  ZunamiPoolCompoundController,
-  ZunamiDepositZap,
-  GenericOracle,
-  IStableConverter, IERC20
+    ZunamiPool,
+    ZunamiPoolCompoundController,
+    ZunamiDepositZap,
+    GenericOracle,
+    IStableConverter,
+    IERC20,
 } from '../../typechain-types';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
 
 import * as addrs from '../address.json';
-import {attachPoolAndControllerZunUSD} from "../utils/AttachPoolAndControllerZunUSD";
+import { attachPoolAndControllerZunUSD } from '../utils/AttachPoolAndControllerZunUSD';
 
 export async function createPoolAndCompoundController(token: string, rewardManager: string) {
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
@@ -84,35 +89,40 @@ async function mintTokenTo(
 }
 
 async function initCurveRegistryCache() {
-  const curvePools = ['0x8c24b3213fd851db80245fccc42c40b94ac9a745'];
+    const curvePools = ['0x8c24b3213fd851db80245fccc42c40b94ac9a745'];
 
-  const curveRegistryCacheAddress = '0x2E68bE71687469280319BCf9E635a8783Db5d238';
+    const curveRegistryCacheAddress = '0x2E68bE71687469280319BCf9E635a8783Db5d238';
 
-  const curveRegistryCache = await ethers.getContractAt(
-    'CurveRegistryCache',
-    curveRegistryCacheAddress
-  );
+    const curveRegistryCache = await ethers.getContractAt(
+        'CurveRegistryCache',
+        curveRegistryCacheAddress
+    );
 
-  for (const curvePool of curvePools) {
-    await curveRegistryCache.initPool(curvePool);
-  }
+    for (const curvePool of curvePools) {
+        await curveRegistryCache.initPool(curvePool);
+    }
 }
 
-async function setOracleFixedPrice(genericOracle: GenericOracle, admin: string, token: string, price: string) {
-  const FixedOracleFactory = await ethers.getContractFactory("FixedOracle");
-  const fixedOracle = await FixedOracleFactory.deploy(token, price);
+async function setOracleFixedPrice(
+    genericOracle: GenericOracle,
+    admin: string,
+    token: string,
+    price: string
+) {
+    const FixedOracleFactory = await ethers.getContractFactory('FixedOracle');
+    const fixedOracle = await FixedOracleFactory.deploy(token, price);
 
-  await impersonateAccount(admin);
-  const impersonatedSigner = await ethers.getSigner(admin);
+    await impersonateAccount(admin);
+    const impersonatedSigner = await ethers.getSigner(admin);
 
-  // set balance to cover any tx costs
-  await setBalance(admin, ethers.utils.parseEther('2').toHexString());
+    // set balance to cover any tx costs
+    await setBalance(admin, ethers.utils.parseEther('2').toHexString());
 
-  await genericOracle.connect(impersonatedSigner).setCustomOracle(token, fixedOracle.address);
+    await genericOracle.connect(impersonatedSigner).setCustomOracle(token, fixedOracle.address);
 }
 
 describe('ZunUSD flow APS tests', () => {
-    const strategyApsNames = ['ZunUSDApsVaultStrat','ZunUsdCrvUsdApsConvexCurveStrat'];
+    const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunUsdCrvUsdApsConvexCurveStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -127,19 +137,28 @@ describe('ZunUSD flow APS tests', () => {
             'SellingCurveRewardManager'
         );
 
-        const genericOracleAddress = "0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410";
+        const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
         const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
-        const genericOracle = (await GenericOracleFactory.attach(genericOracleAddress)) as GenericOracle;
+        const genericOracle = (await GenericOracleFactory.attach(
+            genericOracleAddress
+        )) as GenericOracle;
 
-        const zunamiDeploerAddress = "0xe9b2B067eE106A6E518fB0552F3296d22b82b32B";
-        const CRVZUNUSDPoolAddress = "0x8c24b3213fd851db80245fccc42c40b94ac9a745";
-        await setOracleFixedPrice(genericOracle, zunamiDeploerAddress, CRVZUNUSDPoolAddress, 1e18.toString());
+        const zunamiDeploerAddress = '0xe9b2B067eE106A6E518fB0552F3296d22b82b32B';
+        const CRVZUNUSDPoolAddress = '0x8c24b3213fd851db80245fccc42c40b94ac9a745';
+        await setOracleFixedPrice(
+            genericOracle,
+            zunamiDeploerAddress,
+            CRVZUNUSDPoolAddress,
+            (1e18).toString()
+        );
 
-        const zunUSDPoolAddress = "0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6";
-        const zunUSDPoolControllerAddress = "0x618eee502CDF6b46A2199C21D1411f3F6065c940";
+        const zunUSDPoolAddress = '0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6';
+        const zunUSDPoolControllerAddress = '0x618eee502CDF6b46A2199C21D1411f3F6065c940';
 
-        const { zunamiPool, zunamiPoolController } =
-            await attachPoolAndControllerZunUSD(zunUSDPoolAddress, zunUSDPoolControllerAddress);
+        const { zunamiPool, zunamiPoolController } = await attachPoolAndControllerZunUSD(
+            zunUSDPoolAddress,
+            zunUSDPoolControllerAddress
+        );
 
         const { stableConverter: stableConverterAps, rewardManager: rewardManagerAps } =
             await createConvertersAndRewardManagerContracts(
@@ -155,7 +174,7 @@ describe('ZunUSD flow APS tests', () => {
             genericOracle,
             zunamiPoolAps,
             stableConverter,
-          undefined,
+            undefined,
             [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
             [1, 0, 0, 0, 0]
         );
@@ -213,9 +232,9 @@ describe('ZunUSD flow APS tests', () => {
         } = await loadFixture(deployFixture);
 
         await expect(
-          zunamiPoolController
-            .connect(admin)
-            .deposit(getMinAmountZunUSD('10000'), admin.getAddress())
+            zunamiPoolController
+                .connect(admin)
+                .deposit(getMinAmountZunUSD('10000'), admin.getAddress())
         ).to.emit(zunamiPool, 'Deposited');
 
         for (let i = 0; i < strategiesAps.length; i++) {
@@ -269,11 +288,11 @@ describe('ZunUSD flow APS tests', () => {
         expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
 
         const sharesAmount = BigNumber.from(
-          await zunamiPoolControllerAps.balanceOf(admin.getAddress())
+            await zunamiPoolControllerAps.balanceOf(admin.getAddress())
         );
         expect(sharesAmount).to.gt(0);
 
-        const withdrawAmount =  ethers.utils.parseUnits('500', 'ether').sub(MINIMUM_LIQUIDITY);
+        const withdrawAmount = ethers.utils.parseUnits('500', 'ether').sub(MINIMUM_LIQUIDITY);
 
         for (let i = 0; i < strategiesAps.length; i++) {
             let assetsBefore = BigNumber.from(await zunamiPool.balanceOf(admin.getAddress()));
@@ -281,11 +300,15 @@ describe('ZunUSD flow APS tests', () => {
             await zunamiPoolControllerAps.setDefaultWithdrawSid(i);
 
             const sharesAmountBefore = BigNumber.from(
-              await zunamiPoolControllerAps.balanceOf(admin.getAddress())
+                await zunamiPoolControllerAps.balanceOf(admin.getAddress())
             );
 
             await expect(
-                zunamiPoolControllerAps.withdraw(withdrawAmount, [0, 0, 0, 0, 0], admin.getAddress())
+                zunamiPoolControllerAps.withdraw(
+                    withdrawAmount,
+                    [0, 0, 0, 0, 0],
+                    admin.getAddress()
+                )
             ).to.emit(zunamiPoolAps, 'Withdrawn');
 
             const sharesAmountAfter = BigNumber.from(

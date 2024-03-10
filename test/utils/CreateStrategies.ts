@@ -5,7 +5,7 @@ import {
     ZunamiPool,
 } from '../../typechain-types';
 import { ethers } from 'hardhat';
-import {ContractFactory} from "ethers";
+import { ContractFactory } from 'ethers';
 
 async function deployStrategy(
     strategyName: string,
@@ -14,7 +14,7 @@ async function deployStrategy(
     tokensDecimals: number[] | undefined
 ) {
     let strategy;
-    if (strategyName == "VaultStrat" && tokens && tokensDecimals) {
+    if (strategyName == 'VaultStrat' && tokens && tokensDecimals) {
         strategy = await factory.deploy(tokens, tokensDecimals);
     } else {
         strategy = await factory.deploy();
