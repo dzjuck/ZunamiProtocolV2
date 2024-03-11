@@ -1,9 +1,14 @@
 import { ethers, upgrades } from 'hardhat';
-import { loadFixture, mine, mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
-import { parseUnits } from 'ethers/lib/utils';
+import { loadFixture, mine, mineUpTo, time } from '@nomicfoundation/hardhat-network-helpers';
+import { parseEther, parseUnits } from 'ethers/lib/utils';
 import { expect } from 'chai';
 
-import { ERC20, ZunamiToken, ZUNStakingRewardDistributor } from '../../typechain-types';
+import {
+    ERC20,
+    ZunamiToken,
+    ZUNStakingRewardDistributor,
+    ZUNStakingRewardDistributorVotes,
+} from '../../typechain-types';
 import { BigNumber, BigNumberish } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getSignTypedData } from '../utils/signature';
@@ -12,7 +17,6 @@ const ethUnits = (amount: number | string) => parseUnits(amount.toString(), 'eth
 
 const BLOCKS_IN_1_DAYS = (24 * 60 * 60) / 12;
 const BLOCKS_IN_4_MONTHS = BLOCKS_IN_1_DAYS * 30 * 4;
-const ACC_REWARD_PRECISION = 1e12;
 const zeroAddress = ethers.constants.AddressZero;
 
 const toBn = (value: number | string) => ethers.BigNumber.from(value);
@@ -52,6 +56,40 @@ describe('ZUNStakingRewardDistributor tests', () => {
             ZUN,
             REWARD,
             REWARD2,
+            admin,
+            users: [user1, user2, user3],
+            earlyExitReceiver,
+        };
+    }
+
+    async function deployVotesFixture() {
+        // Contracts are deployed using the first signer/account by default
+        const [admin, user1, user2, user3, earlyExitReceiver] = await ethers.getSigners();
+
+        // deploy test ERC20 token
+        const ZunTokenFactory = await ethers.getContractFactory('ZunamiToken');
+        const ZUN = (await ZunTokenFactory.deploy(admin.address)) as ZunamiToken;
+
+        // deploy distributor contract
+        const ZunStakingRewardDistributorVotesFactory = await ethers.getContractFactory(
+            'ZUNStakingRewardDistributorVotes'
+        );
+
+        const instance = await upgrades.deployProxy(
+            ZunStakingRewardDistributorVotesFactory,
+            [ZUN.address, 'Zunami Voting Token', 'vlZUN', admin.address],
+            {
+                kind: 'uups',
+            }
+        );
+        await instance.deployed();
+
+        const zunStakingRewardDistributorVotes = instance as ZUNStakingRewardDistributorVotes;
+
+        await zunStakingRewardDistributorVotes.setEarlyExitReceiver(earlyExitReceiver.address);
+
+        return {
+            token: zunStakingRewardDistributorVotes,
             admin,
             users: [user1, user2, user3],
             earlyExitReceiver,
@@ -1126,4 +1164,331 @@ describe('ZUNStakingRewardDistributor tests', () => {
         await rewardToken.connect(admin).approve(stakingRewardDistributor.address, amount);
         await stakingRewardDistributor.connect(admin).distribute(rewardToken.address, amount);
     }
+});
+
+describe('Votes Tests', () => {
+    const supply = parseEther('10000000');
+
+    async function deployVotesFixture() {
+        // Contracts are deployed using the first signer/account by default
+        const [admin, user1, user2, user3, earlyExitReceiver] = await ethers.getSigners();
+
+        // deploy test ERC20 token
+        const ZunTokenFactory = await ethers.getContractFactory('ZunamiToken');
+        const ZUN = (await ZunTokenFactory.deploy(admin.address)) as ZunamiToken;
+
+        // deploy distributor contract
+        const ZunStakingRewardDistributorVotesFactory = await ethers.getContractFactory(
+            'ZUNStakingRewardDistributorVotes'
+        );
+
+        const instance = await upgrades.deployProxy(
+            ZunStakingRewardDistributorVotesFactory,
+            [ZUN.address, 'Zunami Voting Token', 'vlZUN', admin.address],
+            {
+                kind: 'uups',
+            }
+        );
+        await instance.deployed();
+
+        const zunStakingRewardDistributorVotes = instance as ZUNStakingRewardDistributorVotes;
+
+        await zunStakingRewardDistributorVotes.setEarlyExitReceiver(earlyExitReceiver.address);
+
+        return {
+            token: zunStakingRewardDistributorVotes,
+            admin,
+            users: [user1, user2, user3],
+            earlyExitReceiver,
+        };
+    }
+
+    it('initial nonce is 0', async function () {
+        const { token, users } = await loadFixture(deployVotesFixture);
+        const holder = users[0];
+
+        expect(await token.nonces(holder.address)).to.equal(0);
+    });
+
+    it('recent checkpoints', async function () {
+        const { token, users } = await loadFixture(deployVotesFixture);
+        const holder = users[0];
+        await token.connect(holder).delegate(holder.address);
+        for (let i = 0; i < 6; i++) {
+            await token.mint(holder.address, 1);
+        }
+        const timepoint = await time.latestBlock();
+        expect(await token.numCheckpoints(holder.address)).to.equal(6);
+        // recent
+        expect(await token.getPastVotes(holder.address, timepoint - 1)).to.equal(5);
+        // non-recent
+        expect(await token.getPastVotes(holder.address, timepoint - 6)).to.equal(0);
+    });
+
+    describe('set delegation', function () {
+        describe('call', function () {
+            it('delegation with balance', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                await token.mint(holder.address, supply);
+                expect(await token.delegates(holder.address)).to.equal(
+                    ethers.constants.AddressZero
+                );
+
+                const tx = await token.connect(holder).delegate(holder.address);
+                const timepoint = await tx.blockNumber!;
+
+                await expect(tx)
+                    .to.emit(token, 'DelegateChanged')
+                    .withArgs(holder.address, ethers.constants.AddressZero, holder.address)
+                    .to.emit(token, 'DelegateVotesChanged')
+                    .withArgs(holder.address, 0, supply);
+
+                expect(await token.delegates(holder.address)).to.equal(holder.address);
+                expect(await token.getVotes(holder.address)).to.equal(supply);
+                expect(await token.getPastVotes(holder.address, timepoint - 1)).to.equal(0);
+                await mine();
+                expect(await token.getPastVotes(holder.address, timepoint)).to.equal(supply);
+            });
+
+            it('delegation without balance', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                expect(await token.delegates(holder.address)).to.equal(
+                    ethers.constants.AddressZero
+                );
+
+                await expect(token.connect(holder).delegate(holder.address))
+                    .to.emit(token, 'DelegateChanged')
+                    .withArgs(holder.address, ethers.constants.AddressZero, holder.address)
+                    .to.not.emit(token, 'DelegateVotesChanged');
+
+                expect(await token.delegates(holder.address)).to.equal(holder.address);
+            });
+        });
+    });
+
+    describe('change delegation', function () {
+        it('call', async function () {
+            const { token, users } = await loadFixture(deployVotesFixture);
+            const holder = users[0];
+            const delegatee = users[1];
+            await token.mint(holder.address, supply);
+            await token.connect(holder).delegate(holder.address);
+
+            expect(await token.delegates(holder.address)).to.equal(holder.address);
+
+            const tx = await token.connect(holder).delegate(delegatee.address);
+            const timepoint = await tx.blockNumber!;
+
+            await expect(tx)
+                .to.emit(token, 'DelegateChanged')
+                .withArgs(holder.address, holder.address, delegatee.address)
+                .to.emit(token, 'DelegateVotesChanged')
+                .withArgs(holder.address, supply, 0)
+                .to.emit(token, 'DelegateVotesChanged')
+                .withArgs(delegatee.address, 0, supply);
+
+            expect(await token.delegates(holder.address)).to.equal(delegatee.address);
+
+            expect(await token.getVotes(holder.address)).to.equal(0);
+            expect(await token.getVotes(delegatee.address)).to.equal(supply);
+            expect(await token.getPastVotes(holder.address, timepoint - 1)).to.equal(supply);
+            expect(await token.getPastVotes(delegatee.address, timepoint - 1)).to.equal(0);
+            await mine();
+            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(0);
+            expect(await token.getPastVotes(delegatee.address, timepoint)).to.equal(supply);
+        });
+    });
+
+    describe('transfers', function () {
+        it('no delegation', async function () {
+            const { token, users } = await loadFixture(deployVotesFixture);
+            const holder = users[0];
+            const recipient = users[1];
+            await token.mint(holder.address, supply);
+
+            await expect(token.connect(holder).transfer(recipient.address, 1))
+                .to.emit(token, 'Transfer')
+                .withArgs(holder.address, recipient.address, 1)
+                .to.not.emit(token, 'DelegateVotesChanged');
+
+            const holderVotes = 0;
+            const recipientVotes = 0;
+
+            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
+            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
+
+            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
+            const timepoint = await time.latestBlock();
+            await mine();
+            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
+            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
+        });
+
+        it('sender delegation', async function () {
+            const { token, users } = await loadFixture(deployVotesFixture);
+            const holder = users[0];
+            const recipient = users[1];
+            await token.mint(holder.address, supply);
+
+            await token.connect(holder).delegate(holder.address);
+
+            const tx = await token.connect(holder).transfer(recipient.address, 1);
+            await expect(tx)
+                .to.emit(token, 'Transfer')
+                .withArgs(holder.address, recipient.address, 1)
+                .to.emit(token, 'DelegateVotesChanged')
+                .withArgs(holder.address, supply, supply.sub(1));
+
+            const holderVotes = supply.sub(1);
+            const recipientVotes = 0;
+
+            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
+            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
+
+            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
+            const timepoint = await time.latestBlock();
+            await mine();
+            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
+            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
+        });
+
+        it('receiver delegation', async function () {
+            const { token, users } = await loadFixture(deployVotesFixture);
+            const holder = users[0];
+            const recipient = users[1];
+            await token.mint(holder.address, supply);
+            await token.connect(recipient).delegate(recipient.address);
+
+            const tx = await token.connect(holder).transfer(recipient.address, 1);
+            await expect(tx)
+                .to.emit(token, 'Transfer')
+                .withArgs(holder.address, recipient.address, 1)
+                .to.emit(token, 'DelegateVotesChanged')
+                .withArgs(recipient.address, 0, 1);
+
+            const holderVotes = 0;
+            const recipientVotes = 1;
+
+            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
+            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
+
+            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
+            const timepoint = await time.latestBlock();
+            await mine();
+            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
+            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
+        });
+
+        it('full delegation', async function () {
+            const { token, users } = await loadFixture(deployVotesFixture);
+            const holder = users[0];
+            const recipient = users[1];
+            await token.mint(holder.address, supply);
+            await token.connect(recipient).delegate(recipient.address);
+
+            await token.connect(holder).delegate(holder.address);
+            await token.connect(recipient).delegate(recipient.address);
+
+            const tx = await token.connect(holder).transfer(recipient.address, 1);
+            await expect(tx)
+                .to.emit(token, 'Transfer')
+                .withArgs(holder.address, recipient.address, 1)
+                .to.emit(token, 'DelegateVotesChanged')
+                .withArgs(holder.address, supply, supply.sub(1))
+                .to.emit(token, 'DelegateVotesChanged')
+                .withArgs(recipient.address, 0, 1);
+
+            const holderVotes = supply.sub(1);
+            const recipientVotes = 1;
+
+            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
+            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
+
+            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
+            const timepoint = await time.latestBlock();
+            await mine();
+            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
+            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
+        });
+
+        describe('getPastTotalSupply', function () {
+            it('reverts if block number >= current block', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                await token.connect(holder).delegate(holder.address);
+
+                const clock = await token.clock();
+                await expect(token.getPastTotalSupply(50_000_000_000))
+                    .to.be.revertedWithCustomError(token, 'ERC5805FutureLookup')
+                    .withArgs(50_000_000_000, clock);
+            });
+
+            it('returns 0 if there are no checkpoints', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                await token.connect(holder).delegate(holder.address);
+
+                expect(await token.getPastTotalSupply(0)).to.equal(0);
+            });
+
+            it('returns the latest block if >= last checkpoint block', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                await token.connect(holder).delegate(holder.address);
+
+                const tx = await token.mint(holder.address, supply);
+                const timepoint = await tx.blockNumber!;
+                await mine(2);
+
+                expect(await token.getPastTotalSupply(timepoint)).to.equal(supply);
+                expect(await token.getPastTotalSupply(timepoint + 1)).to.equal(supply);
+            });
+
+            it('returns zero if < first checkpoint block', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                await token.connect(holder).delegate(holder.address);
+
+                await mine();
+                const tx = await token.mint(holder.address, supply);
+                const timepoint = await tx.blockNumber!;
+                await mine(2);
+
+                expect(await token.getPastTotalSupply(timepoint - 1)).to.equal(0);
+                expect(await token.getPastTotalSupply(timepoint + 1)).to.equal(supply);
+            });
+
+            it('generally returns the voting balance at the appropriate checkpoint', async function () {
+                const { token, users } = await loadFixture(deployVotesFixture);
+                const holder = users[0];
+                await token.connect(holder).delegate(holder.address);
+
+                const t1 = await token.mint(holder.address, supply);
+                await mine(2);
+                const t2 = await token.burn(holder.address, 10);
+                await mine(2);
+                const t3 = await token.burn(holder.address, 10);
+                await mine(2);
+                const t4 = await token.mint(holder.address, 20);
+                await mine(2);
+
+                const t1Timepoint = await t1.blockNumber!;
+                const t2Timepoint = await t2.blockNumber!;
+                const t3Timepoint = await t3.blockNumber!;
+                const t4Timepoint = await t4.blockNumber!;
+
+                expect(await token.getPastTotalSupply(t1Timepoint - 1)).to.equal(0);
+                expect(await token.getPastTotalSupply(t1Timepoint)).to.equal(supply);
+                expect(await token.getPastTotalSupply(t1Timepoint + 1)).to.equal(supply);
+                expect(await token.getPastTotalSupply(t2Timepoint)).to.equal(supply.sub(10));
+                expect(await token.getPastTotalSupply(t2Timepoint + 1)).to.equal(supply.sub(10));
+                expect(await token.getPastTotalSupply(t3Timepoint)).to.equal(supply.sub(20));
+                expect(await token.getPastTotalSupply(t3Timepoint + 1)).to.equal(supply.sub(20));
+                expect(await token.getPastTotalSupply(t4Timepoint)).to.equal(supply);
+                expect(await token.getPastTotalSupply(t4Timepoint + 1)).to.equal(supply);
+            });
+        });
+    });
 });

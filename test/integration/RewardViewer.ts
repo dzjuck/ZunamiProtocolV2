@@ -1,4 +1,4 @@
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { loadFixture, reset } from '@nomicfoundation/hardhat-network-helpers';
 import {
     IERC20,
     RewardViewer,
@@ -17,12 +17,15 @@ import { parseUnits } from 'ethers/lib/utils';
 import { increaseChainTime } from '../utils/IncreaseChainTime';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
+import { FORK_BLOCK_NUMBER, PROVIDER_URL } from '../../hardhat.config';
 
 describe('Reward Viewer', async () => {
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
     async function deployFixture() {
+        await reset(PROVIDER_URL, 18334216);
+
         // Contracts are deployed using the first signer/account by default
         const [owner, otherAccount, otherAccount1] = await ethers.getSigners();
 
@@ -38,6 +41,11 @@ describe('Reward Viewer', async () => {
             rewardViewer,
         };
     }
+
+    // Reset the network to the initial state
+    after(async function () {
+        await reset(PROVIDER_URL, FORK_BLOCK_NUMBER);
+    });
 
     describe('Deployment', async () => {
         it('Should correctly deploy the contracts', async () => {

@@ -33,7 +33,7 @@ const CRV_SPONSOR = '0x0E33Be39B13c576ff48E14392fBf96b02F40Cd34';
 const FXS_SPONSOR = '0xb744bEA7E6892c380B781151554C7eBCc764910b';
 const SDT_SPONSOR = '0xAced00E50cb81377495ea40A1A44005fe6d2482d';
 const SPELL_SPONSOR = '0x8C54EbDD960056d2CfF5998df5695dACA1FC0190';
-const DAI_SPONSOR = '0x60FaAe176336dAb62e284Fe19B885B095d29fB7F';
+const DAI_SPONSOR = '0x837c20D568Dfcd35E74E5CC0B8030f9Cebe10A28';
 
 const parseDAI = (token: number) => BigNumber.from(token).mul(BigNumber.from(10).pow(18));
 const parseZUN = (token: number) => BigNumber.from(token).mul(BigNumber.from(10).pow(18));
@@ -41,7 +41,7 @@ const parseZUN = (token: number) => BigNumber.from(token).mul(BigNumber.from(10)
 describe('Recapitalization Manager', async () => {
     async function deployFixture() {
         // set block number of the fork
-        await reset(PROVIDER_URL, 19199332);
+        await reset(PROVIDER_URL, 19306367);
 
         const [owner, otherAccount, otherAccount1, earlyExitReceiver] = await ethers.getSigners();
 
@@ -503,10 +503,8 @@ describe('Recapitalization Manager', async () => {
 
             // then
             await expect(tx)
-                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(3, anyUint);
+                .to.emit(recapitalizationManager, 'DistributedRewards')
+                .withArgs(tx.blockNumber!);
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(expectedCRV);
             expect(await SDT.balanceOf(stakingRewardDistributor.address)).is.equal(expectedSDT);
         });
