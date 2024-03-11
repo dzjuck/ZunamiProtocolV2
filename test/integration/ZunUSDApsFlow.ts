@@ -397,7 +397,6 @@ describe('ZunUSD flow APS tests', () => {
         await strategy.connect(admin).deflate(parseUnits('0.6666666', 'ether'), 0);
         expect(await zunamiPoolAps.totalHoldings()).to.gt(holdingsAfterInflation);
 
-
         holdingsBefore = await zunamiPoolAps.totalHoldings();
         await strategy.connect(admin).inflate(parseUnits('1', 'ether'), 0);
         holdingsAfterInflation = await zunamiPoolAps.totalHoldings();

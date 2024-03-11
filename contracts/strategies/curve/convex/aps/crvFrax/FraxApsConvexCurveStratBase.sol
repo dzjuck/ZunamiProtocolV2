@@ -94,6 +94,7 @@ contract FraxApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
     function _inflate(uint256 ratioOfCrvLps, uint256 minInflatedAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
 
+        depositedLiquidity -= removingCrvLps;
         cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
 
         uint256 crvFraxAmount = pool.remove_liquidity_one_coin(
@@ -118,12 +119,14 @@ contract FraxApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
         zunamiStable.safeIncreaseAllowance(address(pool), zunStableAmount);
 
         uint256 poolTokenAmount = depositCurve(amounts2);
+        depositedLiquidity += poolTokenAmount;
         depositBooster(poolTokenAmount);
     }
 
     function _deflate(uint256 ratioOfCrvLps, uint256 minDeflateAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
 
+        depositedLiquidity -= removingCrvLps;
         cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
 
         uint256 tokenAmount = pool.remove_liquidity_one_coin(
@@ -157,6 +160,7 @@ contract FraxApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
         fraxUsdcPoolLp.safeIncreaseAllowance(address(pool), crvFraxAmount);
 
         uint256 poolTokenAmount = depositCurve(amounts2);
+        depositedLiquidity += poolTokenAmount;
         depositBooster(poolTokenAmount);
     }
 
