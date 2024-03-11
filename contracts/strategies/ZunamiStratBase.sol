@@ -20,7 +20,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
 
     uint256 public constant DEPOSIT_DENOMINATOR = 10000;
 
-    uint256 public minDepositAmount = 9975; // 99.75%
+    uint256 public minDepositAmount = 9950; // 99.50%
 
     IERC20[POOL_ASSETS] public tokens;
     uint256[POOL_ASSETS] public tokenDecimalsMultipliers;

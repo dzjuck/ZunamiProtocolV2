@@ -88,21 +88,6 @@ async function mintTokenTo(
     });
 }
 
-async function initCurveRegistryCache() {
-    const curvePools = ['0x8c24b3213fd851db80245fccc42c40b94ac9a745'];
-
-    const curveRegistryCacheAddress = '0x2E68bE71687469280319BCf9E635a8783Db5d238';
-
-    const curveRegistryCache = await ethers.getContractAt(
-        'CurveRegistryCache',
-        curveRegistryCacheAddress
-    );
-
-    for (const curvePool of curvePools) {
-        await curveRegistryCache.initPool(curvePool);
-    }
-}
-
 async function setOracleFixedPrice(
     genericOracle: GenericOracle,
     admin: string,
@@ -112,13 +97,22 @@ async function setOracleFixedPrice(
     const FixedOracleFactory = await ethers.getContractFactory('FixedOracle');
     const fixedOracle = await FixedOracleFactory.deploy(token, price);
 
-    await impersonateAccount(admin);
-    const impersonatedSigner = await ethers.getSigner(admin);
+    await setCustomOracle(genericOracle, admin, token, fixedOracle.address);
+}
 
-    // set balance to cover any tx costs
-    await setBalance(admin, ethers.utils.parseEther('2').toHexString());
+async function setCustomOracle(
+  genericOracle: GenericOracle,
+  admin: string,
+  token: string,
+  oracle: string
+) {
+  await impersonateAccount(admin);
+  const impersonatedSigner = await ethers.getSigner(admin);
 
-    await genericOracle.connect(impersonatedSigner).setCustomOracle(token, fixedOracle.address);
+  // set balance to cover any tx costs
+  await setBalance(admin, ethers.utils.parseEther('2').toHexString());
+
+  await genericOracle.connect(impersonatedSigner).setCustomOracle(token, oracle);
 }
 
 describe('ZunUSD flow APS tests', () => {
@@ -143,15 +137,6 @@ describe('ZunUSD flow APS tests', () => {
             genericOracleAddress
         )) as GenericOracle;
 
-        const zunamiDeploerAddress = '0xe9b2B067eE106A6E518fB0552F3296d22b82b32B';
-        const CRVZUNUSDPoolAddress = '0x8c24b3213fd851db80245fccc42c40b94ac9a745';
-        await setOracleFixedPrice(
-            genericOracle,
-            zunamiDeploerAddress,
-            CRVZUNUSDPoolAddress,
-            (1e18).toString()
-        );
-
         const zunUSDPoolAddress = '0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6';
         const zunUSDPoolControllerAddress = '0x618eee502CDF6b46A2199C21D1411f3F6065c940';
 
@@ -159,6 +144,52 @@ describe('ZunUSD flow APS tests', () => {
             zunUSDPoolAddress,
             zunUSDPoolControllerAddress
         );
+
+
+        const zunamiAdminAddress = '0xe9b2B067eE106A6E518fB0552F3296d22b82b32B';
+
+        const crvUsdAddress = '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E';
+
+        const CrvUsdOracleFactory = await ethers.getContractFactory('CrvUsdOracle');
+        const crvUsdOracle = await CrvUsdOracleFactory.deploy(genericOracleAddress);
+        await crvUsdOracle.deployed();
+
+        await setCustomOracle(
+          genericOracle,
+          zunamiAdminAddress,
+          crvUsdAddress,
+          crvUsdOracle.address
+        );
+
+        const ZunUsdOracleFactory = await ethers.getContractFactory('ZunUsdOracle');
+        const zunUsdOracle = await ZunUsdOracleFactory.deploy(genericOracleAddress);
+        await zunUsdOracle.deployed();
+
+        await setCustomOracle(
+          genericOracle,
+          zunamiAdminAddress,
+          zunUSDPoolAddress,
+          zunUsdOracle.address
+        );
+
+        const CRVZUNUSDPoolAddress = '0x8c24b3213fd851db80245fccc42c40b94ac9a745';
+
+        const StaticCurveLPOracleFactory = await ethers.getContractFactory('StaticCurveLPOracle');
+        const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+          genericOracleAddress,
+          [crvUsdAddress, zunUSDPoolAddress],
+          [18, 18],
+          CRVZUNUSDPoolAddress
+        );
+        await staticCurveLPOracle.deployed();
+
+        await setCustomOracle(
+          genericOracle,
+          zunamiAdminAddress,
+          CRVZUNUSDPoolAddress,
+          staticCurveLPOracle.address
+        );
+
 
         const { stableConverter: stableConverterAps, rewardManager: rewardManagerAps } =
             await createConvertersAndRewardManagerContracts(

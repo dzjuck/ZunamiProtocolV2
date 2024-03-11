@@ -43,7 +43,6 @@ abstract contract CurveNStratBase is ZunamiStratBase {
         uint256 amountsMin = (amountsTotal * minDepositAmount) / DEPOSIT_DENOMINATOR;
 
         uint256 depositedLp = pool.calc_token_amount(convertCurvePoolTokenAmounts(amounts), true);
-
         return (depositedLp * getLiquidityTokenPrice()) / PRICE_DENOMINATOR >= amountsMin;
     }
 
