@@ -33,6 +33,9 @@ library Constants {
     address internal constant ETH_frxETH_ADDRESS = 0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577;
     address internal constant ETH_frxETH_LP_ADDRESS = 0xf43211935C781D5ca1a41d2041F397B8A7366C7A;
 
+    address internal constant WETH_frxETH_ADDRESS = 0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc;
+    address internal constant WETH_frxETH_LP_ADDRESS = 0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc;
+
     address internal constant CRV_FRAX_USDC_POOL_ADDRESS =
         0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
     address internal constant CRV_FRAX_USDC_POOL_LP_ADDRESS =
