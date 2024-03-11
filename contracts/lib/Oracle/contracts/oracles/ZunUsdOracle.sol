@@ -42,10 +42,4 @@ contract ZunUsdOracle is IOracle {
 
         return tokenPrice_.mulDown(tokenPerZunUSD_);
     }
-
-    function _median(uint256 a, uint256 b, uint256 c) internal pure returns (uint256) {
-        if ((a >= b && a <= c) || (a >= c && a <= b)) return a;
-        if ((b >= a && b <= c) || (b >= c && b <= a)) return b;
-        return c;
-    }
 }

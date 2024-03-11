@@ -45,11 +45,17 @@ export async function createStrategies(
             await strategy.setPriceOracle(genericOracle.address);
         }
 
-        if (strategyName.includes('CrvUsdStakeDaoCurve')) {
+        if (
+            (stableConverter && strategyName.includes('CrvUsdStakeDaoCurve')) ||
+            strategyName.includes('ConvexCurve')
+        ) {
             await strategy.setStableConverter(stableConverter.address);
         }
 
-        if (strategyName.includes('frxETH') || strategyName.includes('stEth')) {
+        if (
+            (frxEthNativeConverter && strategyName.includes('frxETH')) ||
+            strategyName.includes('stEth')
+        ) {
             await strategy.setNativeConverter(frxEthNativeConverter.address);
         }
 

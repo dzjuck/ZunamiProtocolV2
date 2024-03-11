@@ -25,7 +25,12 @@ contract StaticCurveLPOracle is IOracle, Ownable2Step {
     uint256[] public decimals;
     address public pool;
 
-    constructor(address genericOracle_, address[] memory coins_, uint256[] memory decimals_, address pool_) Ownable(msg.sender) {
+    constructor(
+        address genericOracle_,
+        address[] memory coins_,
+        uint256[] memory decimals_,
+        address pool_
+    ) Ownable(msg.sender) {
         _genericOracle = IOracle(genericOracle_);
         require(coins_.length == decimals_.length, 'length mismatch');
         coins = coins_;
