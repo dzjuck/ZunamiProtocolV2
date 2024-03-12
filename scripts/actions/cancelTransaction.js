@@ -1,9 +1,9 @@
 const { ethers } = require('hardhat');
 
 async function main() {
-    const gasPrice = ethers.utils.parseUnits('20', 'gwei');
+    const gasPrice = ethers.utils.parseUnits('50', 'gwei');
 
-    const nonce = 0;
+    const nonce = 1188;
     const [sender] = await ethers.getSigners();
 
     const transactionObject = {

@@ -9,12 +9,14 @@ async function grantRoleTo(newAdmin, contract, roleName) {
         await contract.hasRole(role, newAdmin)
     );
 }
-async function grandStrategyAdministrationTo(newAdmin, stratName, stratAddr) {
+async function grandStrategyRolesTo(newAdmin, stratName, stratAddr, roles) {
     const StratFactory = await ethers.getContractFactory(stratName);
     const strategy = await StratFactory.attach(stratAddr);
     console.log(`${stratName} strategy attached to: ${strategy.address}`);
 
-    await grantRoleTo(newAdmin, strategy, 'DEFAULT_ADMIN_ROLE');
+    for (let i = 0; i < roles.length; i++) {
+        await grantRoleTo(newAdmin, strategy, roles[i]);
+    }
 }
 
 async function main() {
@@ -24,8 +26,8 @@ async function main() {
     const zunamiPool = await ZunamiPool.attach('0x28e487bbF6b64867C29e61DccbCD17aB64082889');
     console.log('ZunamiPoolApsZunUSD:', zunamiPool.address);
 
-    await grantRoleTo(newAdmin, zunamiPool, 'DEFAULT_ADMIN_ROLE');
-    await grantRoleTo(newAdmin, zunamiPool, 'EMERGENCY_ADMIN_ROLE');
+    // await grantRoleTo(newAdmin, zunamiPool, 'DEFAULT_ADMIN_ROLE');
+    // await grantRoleTo(newAdmin, zunamiPool, 'EMERGENCY_ADMIN_ROLE');
 
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunUSD');
     const zunamiPoolController = await ZunamiPoolController.attach(
@@ -33,12 +35,20 @@ async function main() {
     );
     console.log('ZunamiPoolControllerApsZunUSD:', zunamiPoolController.address);
 
-    await grantRoleTo(newAdmin, zunamiPoolController, 'DEFAULT_ADMIN_ROLE');
+    // await grantRoleTo(newAdmin, zunamiPoolController, 'DEFAULT_ADMIN_ROLE');
+    //
+    // await grandStrategyRolesTo(
+    //     newAdmin,
+    //     'ZunUSDApsVaultStrat',
+    //     '0xF859C621D7fF69DF1E283385DBdE04135EEA0276',
+    //     ['DEFAULT_ADMIN_ROLE']
+    // );
 
-    await grandStrategyAdministrationTo(
+    await grandStrategyRolesTo(
         newAdmin,
-        'ZunUSDApsVaultStrat',
-        '0xF859C621D7fF69DF1E283385DBdE04135EEA0276'
+        'ZunUsdCrvUsdApsConvexCurveStrat',
+        '0x770f991Ca9f3D1Db503024C7144498F4e5DC6CC9',
+        ['DEFAULT_ADMIN_ROLE','EMERGENCY_ADMIN_ROLE']
     );
 }
 

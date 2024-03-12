@@ -19,7 +19,7 @@ async function main() {
     await crvUsdOracle.deployed();
     console.log('CrvUsdOracle deployed to:', crvUsdOracle.address);
 
-    await genericOracle.setOracle(crvUsdAddress, crvUsdOracle.address);
+    await genericOracle.setCustomOracle(crvUsdAddress, crvUsdOracle.address);
     console.log('CrvUsd oracle set: ', crvUsdAddress, crvUsdOracle.address);
 
     const zunUSDAddress = '0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6';
@@ -29,7 +29,7 @@ async function main() {
     await zunUsdOracle.deployed();
     console.log('ZunUsdOracle deployed to:', zunUsdOracle.address);
 
-    await genericOracle.setOracle(zunUSDAddress, zunUsdOracle.address);
+    await genericOracle.setCustomOracle(zunUSDAddress, zunUsdOracle.address);
     console.log('ZunUsd oracle set: ', zunUSDAddress, zunUsdOracle.address);
 
     const CRVZUNUSDPoolAddress = '0x8c24b3213fd851db80245fccc42c40b94ac9a745';
@@ -43,7 +43,7 @@ async function main() {
     );
     await staticCurveLPOracle.deployed();
 
-    await genericOracle.setOracle(CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
+    await genericOracle.setCustomOracle(CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
     console.log('Static oracle set: ', CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
 }
 
