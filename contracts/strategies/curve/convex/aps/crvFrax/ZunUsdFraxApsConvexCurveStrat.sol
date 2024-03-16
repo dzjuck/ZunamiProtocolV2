@@ -8,7 +8,7 @@ contract ZunUsdFraxApsConvexCurveStrat is FraxApsConvexCurveStratBase {
     constructor()
         FraxApsConvexCurveStratBase(
             [
-                IERC20(Constants.zunUSD_ADDRESS),
+                IERC20(Constants.ZUNUSD_ADDRESS),
                 IERC20(address(0)),
                 IERC20(address(0)),
                 IERC20(address(0)),
@@ -21,7 +21,7 @@ contract ZunUsdFraxApsConvexCurveStrat is FraxApsConvexCurveStratBase {
             Constants.CVX_zunUSD_crvFRAX_REWARDS_ADDRESS,
             Constants.CVX_zunUSD_crvFRAX_PID,
             Constants.zunUSD_CONTROLLER_ADDRESS,
-            Constants.zunUSD_ADDRESS
+            Constants.ZUNUSD_ADDRESS
         )
     {}
 }

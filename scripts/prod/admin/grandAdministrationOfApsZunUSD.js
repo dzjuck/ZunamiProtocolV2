@@ -48,7 +48,7 @@ async function main() {
         newAdmin,
         'ZunUsdCrvUsdApsConvexCurveStrat',
         '0x770f991Ca9f3D1Db503024C7144498F4e5DC6CC9',
-        ['DEFAULT_ADMIN_ROLE','EMERGENCY_ADMIN_ROLE']
+        ['DEFAULT_ADMIN_ROLE', 'EMERGENCY_ADMIN_ROLE']
     );
 }
 

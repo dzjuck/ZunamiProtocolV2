@@ -15,7 +15,7 @@ library Constants {
     address internal constant SDT_ADDRESS = 0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F;
     address internal constant SFRXETH_ADDRESS = 0xac3E018457B222d93114458476f3E3416Abbe38F;
     // Will be added after deployment of zunUSD v2 pool
-    address internal constant zunUSD_ADDRESS = 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6;
+    address internal constant ZUNUSD_ADDRESS = 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6;
     // Will be added after deployment of zunUSD v2 pool controller
     address internal constant zunUSD_CONTROLLER_ADDRESS =
         0x618eee502CDF6b46A2199C21D1411f3F6065c940;
@@ -74,4 +74,6 @@ library Constants {
     address internal constant CVX_zunUSD_crvUSD_REWARDS_ADDRESS =
         0xB0408d1477554268Ece9b0a40290C345196fBf1B;
     uint256 internal constant CVX_zunUSD_crvUSD_PID = 309;
+
+    address internal constant CRV_USDT_crvUSD_ADDRESS = 0x390f3595bCa2Df7d23783dFd126427CCeb997BF4;
 }

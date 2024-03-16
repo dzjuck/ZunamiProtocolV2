@@ -68,6 +68,10 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
 
     function handle(address reward, uint256 amount, address feeToken) external {
         if (feeToken != Constants.FRX_ETH_ADDRESS) revert WrongFeeToken(feeToken);
+        if (reward == feeToken) {
+            IERC20(feeToken).safeTransfer(address(msg.sender), amount);
+            return;
+        }
         if (amount == 0) return;
 
         ICurveExchangePool rewardEthPool = ICurveExchangePool(rewardEthCurvePools[reward]);

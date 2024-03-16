@@ -68,6 +68,11 @@ contract SellingCurveRewardManager is IRewardManager {
     function handle(address reward, uint256 amount, address receivingToken) public {
         if (amount == 0) return;
 
+        if (reward == receivingToken) {
+            IERC20(receivingToken).safeTransfer(address(msg.sender), amount);
+            return;
+        }
+
         ICurveExchangePool rewardEthPool = ICurveExchangePool(rewardEthCurvePools[reward]);
 
         IERC20(reward).safeIncreaseAllowance(address(rewardEthPool), amount);

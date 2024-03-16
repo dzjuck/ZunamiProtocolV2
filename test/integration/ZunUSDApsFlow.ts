@@ -58,6 +58,7 @@ export async function createPoolAndCompoundController(token: string, rewardManag
         addrs.crypto.cvx,
         addrs.crypto.fxs,
         addrs.crypto.sdt,
+        addrs.stablecoins.zunUSD,
     ]);
     await zunamiPool.grantRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address);
     return { zunamiPool, zunamiPoolController };
@@ -202,7 +203,7 @@ describe('ZunUSD flow APS tests', () => {
             [1, 0, 0, 0, 0]
         );
 
-        const StableConverterFactory = await ethers.getContractFactory('StubStableConverter');
+        const StableConverterFactory = await ethers.getContractFactory('StableConverter');
         const stableConverterAps = (await StableConverterFactory.deploy()) as IStableConverter;
 
         const tokenApprovedAmount = '10000';
