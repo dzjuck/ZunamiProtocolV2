@@ -20,7 +20,8 @@ library Constants {
     address internal constant zunUSD_CONTROLLER_ADDRESS =
         0x618eee502CDF6b46A2199C21D1411f3F6065c940;
     // Will be added after deployment of zunETH v2 pool
-    address internal constant zunETH_ADDRESS = address(0);
+    address internal constant zunETH_ADDRESS = 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222;
+    address internal constant zunETH_CONTROLLER_ADDRESS = 0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF;
 
     address public constant CHAINLINK_FEED_REGISTRY_ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;

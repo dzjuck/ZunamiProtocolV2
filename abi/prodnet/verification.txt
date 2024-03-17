@@ -9,22 +9,47 @@ npx hardhat verify --network mainnet 0x4DA60AF547c24eBFD5ECC8325E7F24BDb69F1a48 
 npx hardhat verify --network mainnet 0x0236B7A3996d8c3597173aA95fD2a915c7A8A42E
 
 //0.8.23
-//OMNIPOOL
+//zunUSD OMNIPOOL
 npx hardhat verify --network mainnet 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6
 npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunamiPoolControllerZunUSD.sol:ZunamiPoolControllerZunUSD 0x618eee502CDF6b46A2199C21D1411f3F6065c940 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6
 npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunUSDVaultStrat.sol:ZunUSDVaultStrat 0x7Aa84C31BE1793f2dAb8Dbe36fAa9478aF8851a0
 
-//APS
+//zunUSD APS
 npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolApsZunUSD.sol:ZunamiPoolApsZunUSD 0x28e487bbF6b64867C29e61DccbCD17aB64082889
 npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolControllerApsZunUSD.sol:ZunamiPoolControllerApsZunUSD 0xd9F559280c9d308549e84946C0d668a817fcCFB5 0x28e487bbF6b64867C29e61DccbCD17aB64082889
 npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunUSDApsVaultStrat.sol:ZunUSDApsVaultStrat 0xF859C621D7fF69DF1E283385DBdE04135EEA0276
 
-//ZAP
+//zunUSD ZAP
 npx hardhat verify --network mainnet --constructor-args ./abi/ZunamiDepositZap_arguments.js 0x7aecF73B61a8579F7cf2Fe9b2a2d97339e9168Bf
 
-// OMNIPOOL STRATEGIES
+//zunUSD OMNIPOOL STRATEGIES
 npx hardhat verify --network mainnet --contract contracts/strategies/curve/stakeDao/crvUsdToken/usdc/UsdcCrvUsdStakeDaoCurve.sol:UsdcCrvUsdStakeDaoCurve 0x8D4D612D96D69C9DF83c2607f08f6E361983E598
 npx hardhat verify --network mainnet --contract contracts/strategies/curve/stakeDao/crvUsdToken/usdt/UsdtCrvUsdStakeDaoCurve.sol:UsdtCrvUsdStakeDaoCurve 0xadFa8e4C7004a9373426aC4F37F146a42aE699AB
 
-// APS STRATEGIES
+//zunUSD APS STRATEGIES
 npx hardhat verify --network mainnet --contract contracts/strategies/curve/convex/aps/crvUSD/ZunUsdCrvUsdApsConvexCurveStrat.sol:ZunUsdCrvUsdApsConvexCurveStrat 0x770f991Ca9f3D1Db503024C7144498F4e5DC6CC9
+
+// FraxETH Native Converter
+npx hardhat verify --network mainnet 0xeaf4e8AbfF20170Bf65b3866937c9aC608D303E4
+
+//zunETH OMNIPOOL
+npx hardhat verify --network mainnet 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222
+npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunamiPoolControllerZunETH.sol:ZunamiPoolControllerZunETH 0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222
+
+//zunETH Strats
+npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunETHVaultStrat.sol:ZunETHVaultStrat 0x5F8Fc0976FFE5457cCf7651D5FF4cfcA2e86b000
+npx hardhat verify --network mainnet --contract contracts/strategies/curve/convex/eth/stEthEthConvexCurveStrat.sol:stEthEthConvexCurveStrat 0x82685875f14bf1f76913df2F369a6cED74A725A8
+npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/eth/sfrxETHERC4626Strat.sol:sfrxETHERC4626Strat 0x342209D6ED7B851d366DfE15deC15689D55d72f6
+
+// FrxETH Oracle
+npx hardhat verify --network mainnet 0x594618fB84E6d5Ecbe876F4d9C9eD3cb4129A158 0x2E68bE71687469280319BCf9E635a8783Db5d238
+
+//zunETH APS
+npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolApsZunETH.sol:ZunamiPoolApsZunETH 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
+npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolControllerApsZunETH.sol:ZunamiPoolControllerApsZunETH 0x0bEB2B070d73A678a27ba044FEC11Ae9d116De60 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
+
+//zunETH APS Strats
+npx hardhat verify --network mainnet --contract  contracts/configs/aps/ZunETHApsVaultStrat.sol:ZunETHApsVaultStrat 0xcB17C25985E5873Ad5D1114B0E03947fC49e5654
+
+//zunUSD ZAP
+npx hardhat verify --network mainnet --constructor-args ./abi/ZunamiDepositZap_zunETH_arguments.js 0x96a8d8D36E1781d95a1a1262498E02486AA3c047
