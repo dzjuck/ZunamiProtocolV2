@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const {IRewardManager} = require("../../../typechain-types");
+const { IRewardManager } = require('../../../typechain-types');
 
 async function main() {
     console.log('Start deploy');
@@ -11,8 +11,12 @@ async function main() {
     console.log('StableConverter:', stableConverter.address);
 
     console.log('Deploy SellingCurveRewardManager:');
-    const SellingCurveRewardManagerFactory = await ethers.getContractFactory('SellingCurveRewardManager');
-    const sellingCurveRewardManager = await SellingCurveRewardManagerFactory.deploy(stableConverter.address);
+    const SellingCurveRewardManagerFactory = await ethers.getContractFactory(
+        'SellingCurveRewardManager'
+    );
+    const sellingCurveRewardManager = await SellingCurveRewardManagerFactory.deploy(
+        stableConverter.address
+    );
     await sellingCurveRewardManager.deployed();
     console.log('SellingCurveRewardManager:', sellingCurveRewardManager.address);
 }

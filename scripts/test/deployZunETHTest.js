@@ -6,37 +6,27 @@ async function main() {
 
     console.log('Deploy test tokens');
     const ERC20Factory = await ethers.getContractFactory('ERC20TokenNamed');
-    const daiTest = await ERC20Factory.deploy('Test DAI', 'tDAI', 18);
-    await daiTest.deployed();
-    console.log('daiTest deployed:', daiTest.address);
+    const wETHTest = await ERC20Factory.deploy('TEST WETH', 'tWETH', 18);
+    await wETHTest.deployed();
+    console.log('wETHTest deployed:', wETHTest.address);
 
-    const usdcTest = await ERC20Factory.deploy('Test USDC', 'tUSDC', 6);
-    await usdcTest.deployed();
-    console.log('usdcTest deployed:', usdcTest.address);
+    const frxETHTest = await ERC20Factory.deploy('TEST FRXETH', 'tFRXETH', 18);
+    await frxETHTest.deployed();
+    console.log('frxETHTest deployed:', frxETHTest.address);
 
-    const usdtTest = await ERC20Factory.deploy('Test USDT', 'tUSDT', 6);
-    await usdtTest.deployed();
-    console.log('usdtTest deployed:', usdtTest.address);
-
-    console.log('Deploy zunUSD omnipool:');
+    console.log('Deploy zunETH omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPool');
-    const zunamiPool = await ZunamiPool.deploy('Zunami USD Test', 'zunUSDTEST');
+    const zunamiPool = await ZunamiPool.deploy('Zunami ETH Test', 'zunETHTEST');
     await zunamiPool.deployed();
     console.log('ZunamiPool:', zunamiPool.address);
 
-    const tokens = [
-        daiTest.address,
-        usdcTest.address,
-        usdtTest.address,
-        ADDRESS_ZERO,
-        ADDRESS_ZERO,
-    ];
-    const tokensMultipliers = [1, 1e12, 1e12, 0, 0];
+    const tokens = [wETHTest.address, frxETHTest.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO];
+    const tokensMultipliers = [1, 1, 0, 0, 0];
     let result = await zunamiPool.setTokens(tokens, tokensMultipliers);
     await result.wait();
     console.log('ZunamiPool tokens set:', tokens, tokensMultipliers);
 
-    console.log('Deploy zunUSD pool controller:');
+    console.log('Deploy zunETH pool controller:');
     const ZunamiPoolThroughController = await ethers.getContractFactory(
         'ZunamiPoolThroughRedemptionFeeController'
     );

@@ -43,7 +43,7 @@ describe('ZunETH flow tests', () => {
             strategyNames,
             genericOracle,
             zunamiPool,
-            stableConverter,
+            undefined,
             frxEthNativeConverter,
             undefined,
             undefined

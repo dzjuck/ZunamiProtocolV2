@@ -1,8 +1,8 @@
 const { ethers } = require('hardhat');
 
 async function main() {
-    const omnipoolControllerAddr = '0x3694Db838a8cAf3b1c234529bB1b447bd849F357';
-    const apsControllerAddr = '0x1C4e36edBa364406f181fe9B3a4E6FC023DED0bc';
+    const omnipoolControllerAddr = '';
+    const apsControllerAddr = '';
 
     const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap');
     const zunamiDepositZap = await ZunamiDepositZapFactory.deploy(

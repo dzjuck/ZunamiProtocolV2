@@ -27,7 +27,7 @@ export async function createStrategies(
     strategyNames: string[],
     genericOracle: GenericOracle,
     zunamiPool: ZunamiPool,
-    stableConverter: IStableConverter,
+    stableConverter: IStableConverter | undefined,
     frxEthNativeConverter: INativeConverter | undefined,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
@@ -47,14 +47,14 @@ export async function createStrategies(
 
         if (
             (stableConverter && strategyName.includes('CrvUsdStakeDaoCurve')) ||
-            strategyName.includes('ConvexCurve')
+            (stableConverter && strategyName.includes('ConvexCurve'))
         ) {
             await strategy.setStableConverter(stableConverter.address);
         }
 
         if (
             (frxEthNativeConverter && strategyName.includes('frxETH')) ||
-            strategyName.includes('stEth')
+            (frxEthNativeConverter && strategyName.includes('stEth'))
         ) {
             await strategy.setNativeConverter(frxEthNativeConverter.address);
         }
