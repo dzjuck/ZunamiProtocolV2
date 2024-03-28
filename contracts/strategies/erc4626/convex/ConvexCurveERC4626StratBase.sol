@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import '../CurveStratBase.sol';
-import '../../../interfaces/IConvexRewards.sol';
+import '../ERC4626StratBase.sol';
 import '../../../interfaces/IConvexBooster.sol';
+import '../../../interfaces/IConvexRewards.sol';
 
-abstract contract ConvexCurveStratBase is CurveStratBase {
+abstract contract ConvexCurveERC4626StratBase is ERC4626StratBase {
     using SafeERC20 for IERC20;
 
     error WrongBoosterDepositAll();
@@ -17,12 +17,12 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
-        address _poolAddr,
-        address _poolTokenAddr,
+        address _vaultAddr,
+        address _vaultAssetAddr,
         address _cvxBooster,
         address _cvxRewardsAddr,
         uint256 _cvxPID
-    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr) {
+    ) ERC4626StratBase(_tokens, _tokenDecimalsMultipliers, _vaultAddr, _vaultAssetAddr) {
         if (_cvxBooster == address(0)) revert ZeroAddress();
         cvxBooster = IConvexBooster(_cvxBooster);
 
@@ -33,9 +33,12 @@ abstract contract ConvexCurveStratBase is CurveStratBase {
         cvxPID = _cvxPID;
     }
 
-    function depositBooster(uint256 amount) internal override {
-        poolToken.safeIncreaseAllowance(address(cvxBooster), amount);
-        if (!cvxBooster.deposit(cvxPID, amount, true)) revert WrongBoosterDepositAll();
+    function depositLiquidity(
+        uint256[POOL_ASSETS] memory amounts
+    ) internal override returns (uint256 liquidityAmount) {
+        liquidityAmount = super.depositLiquidity(amounts);
+        IERC20(vault).safeIncreaseAllowance(address(cvxBooster), liquidityAmount);
+        if (!cvxBooster.deposit(cvxPID, liquidityAmount, true)) revert WrongBoosterDepositAll();
     }
 
     function removeLiquidity(

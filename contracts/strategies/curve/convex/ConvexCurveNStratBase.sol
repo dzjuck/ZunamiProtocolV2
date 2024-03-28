@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 import '../CurveNStratBase.sol';
-import './interfaces/IConvexRewards.sol';
-import './interfaces/IConvexBooster.sol';
+import '../../../interfaces/IConvexRewards.sol';
+import '../../../interfaces/IConvexBooster.sol';
 
 abstract contract ConvexCurveNStratBase is CurveNStratBase {
     using SafeERC20 for IERC20;

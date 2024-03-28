@@ -2,6 +2,7 @@ import {
     GenericOracle,
     INativeConverter,
     IStableConverter,
+    ITokenConverter,
     ZunamiPool,
 } from '../../typechain-types';
 import { ethers } from 'hardhat';
@@ -29,6 +30,7 @@ export async function createStrategies(
     zunamiPool: ZunamiPool,
     stableConverter: IStableConverter | undefined,
     frxEthNativeConverter: INativeConverter | undefined,
+    tokenConverter: ITokenConverter | undefined,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
 ) {
@@ -43,6 +45,10 @@ export async function createStrategies(
 
         if (!strategyName.includes('Vault')) {
             await strategy.setPriceOracle(genericOracle.address);
+        }
+
+        if (tokenConverter && strategyName.includes('LlamalendCrvUsdERC4626Strat')) {
+            await strategy.setTokenConverter(tokenConverter.address);
         }
 
         if (

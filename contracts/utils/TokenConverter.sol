@@ -51,10 +51,9 @@ contract TokenConverter is ITokenConverter, Ownable2Step {
         address tokenOut_,
         uint256 amountIn_,
         uint256 minAmountOut_
-    ) public returns(uint256 amountOut) {
+    ) public returns (uint256 amountOut) {
         if (amountIn_ == 0) return 0;
 
-        IERC20(tokenIn_).safeTransferFrom(msg.sender, address(this), amountIn_);
         IERC20(tokenIn_).safeIncreaseAllowance(curveRouter, amountIn_);
 
         amountOut = ICurveRouterV1(curveRouter).exchange(
@@ -65,5 +64,20 @@ contract TokenConverter is ITokenConverter, Ownable2Step {
         );
         IERC20 tokenOut = IERC20(tokenOut_);
         tokenOut.safeTransfer(msg.sender, amountOut);
+    }
+
+    function valuate(
+        address tokenIn_,
+        address tokenOut_,
+        uint256 amountIn_
+    ) external view returns (uint256) {
+        if (amountIn_ == 0) return 0;
+
+        return
+            ICurveRouterV1(curveRouter).get_dy(
+                routes[tokenIn_][tokenOut_].route,
+                routes[tokenIn_][tokenOut_].swapParams,
+                amountIn_
+            );
     }
 }

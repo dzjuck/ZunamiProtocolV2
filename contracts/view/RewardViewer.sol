@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IConvexBooster } from '../strategies/curve/convex/interfaces/IConvexBooster.sol';
-import { IConvexMinter } from '../strategies/curve/convex/interfaces/IConvexMinter.sol';
-import { IConvexRewards } from '../strategies/curve/convex/interfaces/IConvexRewards.sol';
+import { IConvexBooster } from '../interfaces/IConvexBooster.sol';
+import { IConvexMinter } from '../interfaces/IConvexMinter.sol';
+import { IConvexRewards } from '../interfaces/IConvexRewards.sol';
 import { IStashTokenWrapper } from './interface/IStashTokenWrapper.sol';
 import { IFraxStakingVaultEarnedViewer } from './interface/IFraxStakingVaultEarnedViewer.sol';
 import { IRewardViewer } from './interface/IRewardViewer.sol';

@@ -31,30 +31,13 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         return (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(1e18)) / 1e18;
     }
 
-    function checkDepositSuccessful(
-        uint256[POOL_ASSETS] memory amounts
-    ) internal view override returns (bool) {
-        uint256[POOL_ASSETS] memory tokenDecimals = tokenDecimalsMultipliers;
-
-        uint256 amountsTotal;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            amountsTotal += amounts[i] * tokenDecimals[i];
-        }
-
-        uint256 amountsMin = (amountsTotal * minDepositAmount) / DEPOSIT_DENOMINATOR;
-
-        uint256 depositedLp = vault.convertToShares(convertVaultAssetAmounts(amounts));
-
-        return (depositedLp * getLiquidityTokenPrice()) / PRICE_DENOMINATOR >= amountsMin;
-    }
-
     function convertVaultAssetAmounts(
         uint256[POOL_ASSETS] memory amounts
     ) internal view virtual returns (uint256 amount);
 
     function depositLiquidity(
         uint256[POOL_ASSETS] memory amounts
-    ) internal override returns (uint256) {
+    ) internal virtual override returns (uint256) {
         uint256 amount = convertAndApproveTokens(address(vault), amounts);
         depositedAssets += amount;
         return vault.deposit(amount, address(this));
@@ -80,7 +63,10 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         vault.redeem(amount, address(this), address(this));
     }
 
-    function claimRewards(address receiver, IERC20[] memory) public override onlyZunamiPool {
+    function claimRewards(
+        address receiver,
+        IERC20[] memory
+    ) public virtual override onlyZunamiPool {
         uint256 redeemableAssets = vault.previewRedeem(depositedLiquidity);
         if (redeemableAssets > depositedAssets) {
             uint256 withdrawAssets = redeemableAssets - depositedAssets;

@@ -1,5 +1,10 @@
 import { ethers } from 'hardhat';
-import { IRewardManager, IStableConverter, INativeConverter } from '../../typechain-types';
+import {
+    IRewardManager,
+    IStableConverter,
+    INativeConverter,
+    ITokenConverter,
+} from '../../typechain-types';
 
 export async function createConvertersAndRewardManagerContracts(
     stableConverterName: string,
@@ -17,5 +22,9 @@ export async function createConvertersAndRewardManagerContracts(
     const frxEthNativeConverter =
         (await FraxEthNativeConverterFactory.deploy()) as INativeConverter;
 
-    return { stableConverter, rewardManager, frxEthNativeConverter };
+    const curveRouter = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';
+    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    const tokenConverter = (await TokenConverterFactory.deploy(curveRouter)) as ITokenConverter;
+
+    return { stableConverter, rewardManager, frxEthNativeConverter, tokenConverter };
 }

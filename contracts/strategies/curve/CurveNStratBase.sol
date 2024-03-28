@@ -30,22 +30,6 @@ abstract contract CurveNStratBase is ZunamiStratBase {
         uint256[POOL_ASSETS] memory amounts
     ) internal view virtual returns (uint256[] memory);
 
-    function checkDepositSuccessful(
-        uint256[POOL_ASSETS] memory amounts
-    ) internal view override returns (bool) {
-        uint256[POOL_ASSETS] memory tokenDecimals = tokenDecimalsMultipliers;
-
-        uint256 amountsTotal;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
-            amountsTotal += amounts[i] * tokenDecimals[i];
-        }
-
-        uint256 amountsMin = (amountsTotal * minDepositAmount) / DEPOSIT_DENOMINATOR;
-
-        uint256 depositedLp = pool.calc_token_amount(convertCurvePoolTokenAmounts(amounts), true);
-        return (depositedLp * getLiquidityTokenPrice()) / PRICE_DENOMINATOR >= amountsMin;
-    }
-
     function depositLiquidity(
         uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256 poolTokenAmount) {

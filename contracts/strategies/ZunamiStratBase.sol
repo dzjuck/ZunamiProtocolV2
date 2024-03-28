@@ -13,6 +13,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
 
     error WrongTokens();
     error WrongDecimalMultipliers();
+    error DepositLiquidityValueTooLow();
 
     uint8 public constant POOL_ASSETS = 5;
     uint256 public constant RATIO_MULTIPLIER = 1e18;
@@ -85,19 +86,27 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
 
     function deposit(
         uint256[POOL_ASSETS] memory amounts
-    ) external onlyZunamiPool returns (uint256) {
-        if (!checkDepositSuccessful(amounts)) {
-            return 0;
-        }
-
+    ) external onlyZunamiPool returns (uint256 liquidityValue) {
+        uint256 depositValue = valuateDeposit(amounts);
         uint256 liquidity = depositLiquidity(amounts);
         depositedLiquidity += liquidity;
-        return calcLiquidityValue(liquidity);
+        liquidityValue = calcLiquidityValue(liquidity);
+        if (liquidityValue < (depositValue * minDepositAmount) / DEPOSIT_DENOMINATOR)
+            revert DepositLiquidityValueTooLow();
     }
 
-    function checkDepositSuccessful(
+    function valuateDeposit(
         uint256[POOL_ASSETS] memory amounts
-    ) internal view virtual returns (bool);
+    ) internal view returns (uint256 value) {
+        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+            value +=
+                (oracle.getUSDPrice(address(tokens[i])) *
+                    amounts[i] *
+                    tokenDecimalsMultipliers[i]) /
+                PRICE_DENOMINATOR;
+        }
+        return value;
+    }
 
     function depositLiquidity(
         uint256[POOL_ASSETS] memory amounts
