@@ -27,6 +27,8 @@ import {
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
+const CRV_zunUSD_crvUSD_LP_ADDRESS = '0x8C24b3213FD851db80245FCCc42c40B94Ac9a745';
+const CRV_zunUSD_crvUSD_ADDRESS = '0x8C24b3213FD851db80245FCCc42c40B94Ac9a745';
 
 import * as addrs from '../address.json';
 import { attachPoolAndControllerZunUSD } from '../utils/AttachPoolAndControllerZunUSD';
@@ -285,16 +287,39 @@ describe('ZunUSD flow APS tests', () => {
         await zunamiPoolControllerAps.autoCompoundAll();
 
         expect(await zunamiPoolControllerAps.collectedManagementFee()).to.eq(0);
-
-        // "0xD533a949740bb3306d119CC777fa900bA034cd52", // CRV
-        // "0xF977814e90dA44bFA03b6295A0616a897441aceC", // CRV Vault
         await mintTokenTo(
-            zunamiPoolControllerAps.address, // zEthFrxEthCurveConvex
+            zunamiPoolControllerAps.address,
             admin,
-            '0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B', // CVX
-            '0x28C6c06298d514Db089934071355E5743bf21d60', // CVX Vault
+            '0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B', // CRV
+            '0x28C6c06298d514Db089934071355E5743bf21d60', // CRV Vault
             parseUnits('100', 'ether')
         );
+
+        await mintTokenTo(
+            zunamiPoolControllerAps.address,
+            admin,
+            '0xD533a949740bb3306d119CC777fa900bA034cd52', // CVX
+            '0xF977814e90dA44bFA03b6295A0616a897441aceC', // CVX Vault
+            parseUnits('100', 'ether')
+        );
+
+        await mintTokenTo(
+            zunamiPoolControllerAps.address,
+            admin,
+            '0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0', // fxs
+            '0xb744bEA7E6892c380B781151554C7eBCc764910b', // fxs Vault
+            parseUnits('100', 'ether')
+        );
+
+        await mintTokenTo(
+            zunamiPoolControllerAps.address,
+            admin,
+            '0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F', // sdt
+            '0xAced00E50cb81377495ea40A1A44005fe6d2482d', // sdt Vault
+            parseUnits('100', 'ether')
+        );
+
+        await zunamiPool.transfer(zunamiPoolControllerAps.address, parseUnits('100', 'ether')); // zunUSD
 
         await zunamiPool.transfer(
             stableConverterAps.address,
@@ -302,8 +327,33 @@ describe('ZunUSD flow APS tests', () => {
         );
 
         await zunamiPoolControllerAps.autoCompoundAll();
-
         expect(await zunamiPoolControllerAps.collectedManagementFee()).to.not.eq(0);
+
+        let collectedManagementFeeBefore = await zunamiPoolControllerAps.collectedManagementFee();
+        await zunamiPool.transfer(zunamiPoolControllerAps.address, parseUnits('10', 'ether'));
+        let balanceBefore = await zunamiPool.balanceOf(zunamiPoolControllerAps.address);
+        await zunamiPoolControllerAps.autoCompoundAll();
+        expect(
+            balanceBefore.sub(await zunamiPool.balanceOf(zunamiPoolControllerAps.address))
+        ).to.be.eq(parseUnits('8.5', 'ether'));
+        expect(
+            (await zunamiPoolControllerAps.collectedManagementFee()).sub(
+                collectedManagementFeeBefore
+            )
+        ).to.be.eq(parseUnits('1.5', 'ether'));
+
+        collectedManagementFeeBefore = await zunamiPoolControllerAps.collectedManagementFee();
+        await zunamiPool.transfer(zunamiPoolControllerAps.address, parseUnits('200', 'ether'));
+        balanceBefore = await zunamiPool.balanceOf(zunamiPoolControllerAps.address);
+        await zunamiPoolControllerAps.autoCompoundAll();
+        expect(
+            balanceBefore.sub(await zunamiPool.balanceOf(zunamiPoolControllerAps.address))
+        ).to.be.eq(parseUnits('170', 'ether'));
+        expect(
+            (await zunamiPoolControllerAps.collectedManagementFee()).sub(
+                collectedManagementFeeBefore
+            )
+        ).to.be.eq(parseUnits('30', 'ether'));
 
         expect(await zunamiPool.balanceOf(zunamiPoolControllerAps.address)).to.eq(
             await zunamiPoolControllerAps.collectedManagementFee()
@@ -349,6 +399,8 @@ describe('ZunUSD flow APS tests', () => {
     });
 
     it('should inflate and deflate', async () => {
+        const CRVZUNUSD = await ethers.getContractAt('ERC20Token', CRV_zunUSD_crvUSD_LP_ADDRESS);
+
         const {
             admin,
             alice,

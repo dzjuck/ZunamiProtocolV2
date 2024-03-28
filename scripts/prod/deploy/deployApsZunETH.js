@@ -34,9 +34,10 @@ async function main() {
 
     console.log('Deploy zunETH APS omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolApsZunETH');
-    const zunamiPool = await ZunamiPool.deploy();
-    await zunamiPool.deployed();
-    console.log('ZunamiPoolApszunETH:', zunamiPool.address);
+    const zunamiPool = await ZunamiPool.attach('0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2');
+    // const zunamiPool = await ZunamiPool.deploy();
+    // await zunamiPool.deployed();
+    console.log('ZunamiPoolApsZunETH:', zunamiPool.address);
 
     console.log('Deploy zunETH APS pool controller:');
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunETH');
@@ -53,7 +54,8 @@ async function main() {
         'ZunamiPoolController granted CONTROLLER_ROLE:',
         await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
     );
-    await createAndInitStrategy(zunamiPool, 'ZunETHApsVaultStrat', null, null);
+
+    // await createAndInitStrategy(zunamiPool, 'ZunETHApsVaultStrat', null, null);
 
     // const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
     // const stableConverterAddress = '0x0236B7A3996d8c3597173aA95fD2a915c7A8A42E';

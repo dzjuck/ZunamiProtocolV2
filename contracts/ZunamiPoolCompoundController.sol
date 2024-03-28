@@ -23,7 +23,7 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     uint256 public constant MINIMUM_LIQUIDITY = 1e3;
     address public constant MINIMUM_LIQUIDITY_LOCKER = 0x000000000000000000000000000000000000dEaD;
 
-    uint256 public managementFeePercent = 100; // 10%
+    uint256 public managementFeePercent = 150; // 15%
 
     uint256 public feeTokenId;
     address public feeDistributor;
@@ -118,9 +118,10 @@ contract ZunamiPoolCompoundController is ERC20Permit, ZunamiPoolControllerBase {
     }
 
     function sellRewards(IERC20 feeToken) internal virtual returns (uint256) {
-        uint256 received = _sellRewards(rewardManager, feeToken);
-        collectedManagementFee += calcManagementFee(received);
-        return received - collectedManagementFee;
+        uint256 received = _sellRewardsAll(rewardManager, feeToken, collectedManagementFee);
+        uint256 managementFee = calcManagementFee(received);
+        collectedManagementFee += managementFee;
+        return received - managementFee;
     }
 
     function calcManagementFee(uint256 amount) internal view returns (uint256) {
