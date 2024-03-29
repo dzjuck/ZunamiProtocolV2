@@ -46,10 +46,10 @@ npx hardhat verify --network mainnet 0x594618fB84E6d5Ecbe876F4d9C9eD3cb4129A158 
 
 //zunETH APS
 npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolApsZunETH.sol:ZunamiPoolApsZunETH 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
-npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolControllerApsZunETH.sol:ZunamiPoolControllerApsZunETH 0x0bEB2B070d73A678a27ba044FEC11Ae9d116De60 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
+npx hardhat verify --network mainnet --contract contracts/configs/aps/ZunamiPoolControllerApsZunETH.sol:ZunamiPoolControllerApsZunETH 0xD8132d8cfCA9Ed8C95e46Cb59ae6E2C9963dA61f 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
 
 //zunETH APS Strats
 npx hardhat verify --network mainnet --contract  contracts/configs/aps/ZunETHApsVaultStrat.sol:ZunETHApsVaultStrat 0xcB17C25985E5873Ad5D1114B0E03947fC49e5654
 
 //zunUSD ZAP
-npx hardhat verify --network mainnet --constructor-args ./abi/ZunamiDepositZap_zunETH_arguments.js 0x96a8d8D36E1781d95a1a1262498E02486AA3c047
+npx hardhat verify --network mainnet --constructor-args ./abi/ZunamiDepositZap_zunETH_arguments.js 0x1162C741bda2D0284E88D7C13c1B0BFEb4f81574

@@ -7,7 +7,7 @@ async function main() {
 
     // zunETH
     const omnipoolControllerAddr = '0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF';
-    const apsControllerAddr = '0x0bEB2B070d73A678a27ba044FEC11Ae9d116De60';
+    const apsControllerAddr = '0xD8132d8cfCA9Ed8C95e46Cb59ae6E2C9963dA61f';
 
     const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap');
     const zunamiDepositZap = await ZunamiDepositZapFactory.deploy(

@@ -31,7 +31,7 @@ async function main() {
 
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunETH');
     const zunamiPoolController = await ZunamiPoolController.attach(
-        '0x0bEB2B070d73A678a27ba044FEC11Ae9d116De60'
+        '0xD8132d8cfCA9Ed8C95e46Cb59ae6E2C9963dA61f'
     );
     console.log('ZunamiPoolControllerApsZunETH:', zunamiPoolController.address);
 
