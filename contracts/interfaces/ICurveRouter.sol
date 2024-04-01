@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 struct CurveRoute {
-    address[11] route;
-    uint256[5][5] swapParams;
+    address[] route;
+    uint256[5][] swapParams;
 }
 
 interface ICurveRouterV1 {

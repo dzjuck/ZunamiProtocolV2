@@ -25,8 +25,8 @@ contract TokenConverter is ITokenConverter, Ownable2Step {
     function setRoute(
         address tokenIn,
         address tokenOut,
-        address[11] memory route,
-        uint256[5][5] memory swapParams
+        address[] memory route,
+        uint256[5][] memory swapParams
     ) external onlyOwner {
         routes[tokenIn][tokenOut] = CurveRoute(route, swapParams);
     }
@@ -34,8 +34,8 @@ contract TokenConverter is ITokenConverter, Ownable2Step {
     function setRoutes(
         address[] memory tokenIn,
         address[] memory tokenOut,
-        address[11][] memory route,
-        uint256[5][5][] memory swapParams
+        address[][] memory route,
+        uint256[5][][] memory swapParams
     ) external onlyOwner {
         if (tokenIn.length != tokenOut.length) revert WrongLength();
         if (tokenIn.length != route.length) revert WrongLength();
@@ -56,9 +56,12 @@ contract TokenConverter is ITokenConverter, Ownable2Step {
 
         IERC20(tokenIn_).safeIncreaseAllowance(curveRouter, amountIn_);
 
+        address[11] memory routes_ = _fillRoutes(tokenIn_, tokenOut_);
+        uint256[5][5] memory swapParams_ = _fillSwapParams(tokenIn_, tokenOut_);
+
         amountOut = ICurveRouterV1(curveRouter).exchange(
-            routes[tokenIn_][tokenOut_].route,
-            routes[tokenIn_][tokenOut_].swapParams,
+            routes_,
+            swapParams_,
             amountIn_,
             minAmountOut_
         );
@@ -73,11 +76,27 @@ contract TokenConverter is ITokenConverter, Ownable2Step {
     ) external view returns (uint256) {
         if (amountIn_ == 0) return 0;
 
-        return
-            ICurveRouterV1(curveRouter).get_dy(
-                routes[tokenIn_][tokenOut_].route,
-                routes[tokenIn_][tokenOut_].swapParams,
-                amountIn_
-            );
+        address[11] memory routes_ = _fillRoutes(tokenIn_, tokenOut_);
+        uint256[5][5] memory swapParams_ = _fillSwapParams(tokenIn_, tokenOut_);
+
+        return ICurveRouterV1(curveRouter).get_dy(routes_, swapParams_, amountIn_);
+    }
+
+    function _fillRoutes(
+        address tokenIn_,
+        address tokenOut_
+    ) internal view returns (address[11] memory routes_) {
+        for (uint8 i; i < routes[tokenIn_][tokenOut_].route.length; ++i) {
+            routes_[i] = routes[tokenIn_][tokenOut_].route[i];
+        }
+    }
+
+    function _fillSwapParams(
+        address tokenIn_,
+        address tokenOut_
+    ) internal view returns (uint256[5][5] memory swapParams_) {
+        for (uint8 i; i < routes[tokenIn_][tokenOut_].swapParams.length; ++i) {
+            swapParams_[i] = routes[tokenIn_][tokenOut_].swapParams[i];
+        }
     }
 }
