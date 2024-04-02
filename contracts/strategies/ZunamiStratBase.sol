@@ -76,6 +76,10 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
 
     function getLiquidityTokenPrice() internal view virtual returns (uint256);
 
+    function getTokenPrice(address token) internal view virtual returns (uint256) {
+        return oracle.getUSDPrice(token);
+    }
+
     function totalHoldings() public view virtual returns (uint256) {
         return calcLiquidityValue(getLiquidityBalance());
     }
@@ -97,12 +101,10 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
 
     function valuateDeposit(
         uint256[POOL_ASSETS] memory amounts
-    ) internal view returns (uint256 value) {
+    ) internal view virtual returns (uint256 value) {
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             value +=
-                (oracle.getUSDPrice(address(tokens[i])) *
-                    amounts[i] *
-                    tokenDecimalsMultipliers[i]) /
+                (getTokenPrice(address(tokens[i])) * amounts[i] * tokenDecimalsMultipliers[i]) /
                 PRICE_DENOMINATOR;
         }
         return value;

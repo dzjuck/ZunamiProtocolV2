@@ -31,6 +31,12 @@ contract EthERC4626StratBase is ERC4626StratBase {
         emit SetNativeConverter(nativeConverterAddr);
     }
 
+    function getTokenPrice(address token) internal view override returns (uint256) {
+        return
+            (oracle.getUSDPrice(token) * PRICE_DENOMINATOR) /
+            oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);
+    }
+
     function getLiquidityTokenPrice() internal view override returns (uint256) {
         return
             (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(1e18)) /

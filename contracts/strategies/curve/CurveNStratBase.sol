@@ -50,7 +50,7 @@ abstract contract CurveNStratBase is ZunamiStratBase {
     function depositBooster(uint256 amount) internal virtual;
 
     function getLiquidityTokenPrice() internal view virtual override returns (uint256) {
-        return oracle.getUSDPrice(address(poolToken));
+        return getTokenPrice(address(poolToken));
     }
 
     function calcTokenAmount(
