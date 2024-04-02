@@ -5,6 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '../interfaces/IPoolController.sol';
 import '../interfaces/ITokenConverter.sol';
+import '../utils/Constants.sol';
 
 contract ZunamiDepositZap2 {
     using SafeERC20 for IERC20;
@@ -13,6 +14,11 @@ contract ZunamiDepositZap2 {
     error SameAddress();
 
     uint8 public constant POOL_ASSETS = 5;
+
+    uint256 constant ZUNAMI_CRVUSD_TOKEN_ID = 3;
+
+    uint256 public constant MIN_AMOUNT_DENOMINATOR = 10000;
+    uint256 public constant MIN_AMOUNT = 9950; // 99.50%
 
     IPool public immutable zunamiPool;
     IPoolController public immutable apsController;
@@ -38,12 +44,19 @@ contract ZunamiDepositZap2 {
         }
 
         IERC20[POOL_ASSETS] memory tokens = zunamiPool.tokens();
+        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = zunamiPool.tokenDecimalsMultipliers();
         for (uint256 i = 0; i < amounts.length; i++) {
+            uint256 amount = amounts[i];
             IERC20 token = tokens[i];
-            if (address(token) != address(0) && amounts[i] > 0) {
-                token.safeTransferFrom(msg.sender, address(this), amounts[i]);
-                token.safeTransfer(address(converter), amounts[i]);
-                converter.handle(address(token), address(zunamiPool), amounts[i], 0);
+            uint256 tokenDecimalsMultiplier = tokenDecimalsMultipliers[i];
+            if (i == ZUNAMI_CRVUSD_TOKEN_ID){
+                token = IERC20(Constants.CRVUSD_ADDRESS);
+                tokenDecimalsMultiplier = 1;
+            }
+            if (address(token) != address(0) && amount > 0) {
+                token.safeTransferFrom(msg.sender, address(this), amount);
+                token.safeTransfer(address(converter), amount);
+                converter.handle(address(token), address(zunamiPool), amount, amount * tokenDecimalsMultiplier * MIN_AMOUNT / MIN_AMOUNT_DENOMINATOR);
             }
         }
 

@@ -74,8 +74,8 @@ library Constants {
     address internal constant CRV_USDT_crvUSD_ADDRESS = 0x390f3595bCa2Df7d23783dFd126427CCeb997BF4;
 
     address internal constant LLAMALEND_CRVUSD_ADDRESS = 0xCeA18a8752bb7e7817F9AE7565328FE415C0f2cA;
-    address internal constant CVX_LLAMALEND_CRVUSD_REWARDS_ADDRESS = address(0);
-    uint256 internal constant CVX_LLAMALEND_CRVUSD_PID = 0;
+    address internal constant CVX_LLAMALEND_CRVUSD_REWARDS_ADDRESS = 0x4bf2d8484474170bff8a8c34475be3d87dFF28cA;
+    uint256 internal constant CVX_LLAMALEND_CRVUSD_PID = 325;
 
     // Will be added after deployment of zunUSD v2 pool and curve pool for zunUSD
     address internal constant CRV_zunUSD_crvFRAX_ADDRESS = address(0);

@@ -55,7 +55,8 @@ abstract contract ConvexCurveERC4626StratBase is ERC4626StratBase {
         super.removeLiquidity(amount, minTokenAmounts, removeAll);
     }
 
-    function claimCollectedRewards() internal virtual override {
+    function claimCollectedRewards() internal override {
         cvxRewards.getReward();
+        super.claimCollectedRewards();
     }
 }

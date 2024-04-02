@@ -63,14 +63,13 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         vault.redeem(amount, address(this), address(this));
     }
 
-    function claimRewards(
-        address receiver,
-        IERC20[] memory
-    ) public virtual override onlyZunamiPool {
+    function claimCollectedRewards() internal virtual override {
         uint256 redeemableAssets = vault.previewRedeem(depositedLiquidity);
         if (redeemableAssets > depositedAssets) {
-            uint256 withdrawAssets = redeemableAssets - depositedAssets;
-            uint256 withdrawnShares = vault.withdraw(withdrawAssets, receiver, address(this));
+            uint256 withdrawnAssets = redeemableAssets - depositedAssets;
+            uint256 withdrawnShares = vault.convertToShares(withdrawnAssets);
+            uint256[5] memory minTokenAmounts;
+            removeLiquidity(withdrawnShares, minTokenAmounts, false);
             depositedLiquidity -= withdrawnShares;
         }
     }

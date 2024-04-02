@@ -19,9 +19,8 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
     uint256 public constant RATIO_MULTIPLIER = 1e18;
     uint256 public constant PRICE_DENOMINATOR = 1e18;
 
-    uint256 public constant DEPOSIT_DENOMINATOR = 10000;
-
-    uint256 public minDepositAmount = 9950; // 99.50%
+    uint256 public constant SLIPPAGE_DENOMINATOR = 10000;
+    uint256 public slippage = 50; // 0.50%
 
     IERC20[POOL_ASSETS] public tokens;
     uint256[POOL_ASSETS] public tokenDecimalsMultipliers;
@@ -29,7 +28,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
 
     uint256 public depositedLiquidity;
 
-    event MinDepositAmountUpdated(uint256 oldAmount, uint256 newAmount);
+    event SlippageSet(uint256 oldSlippage, uint256 newSlippage);
     event PriceOracleSet(address oracleAddr);
 
     constructor(
@@ -57,12 +56,18 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
         emit PriceOracleSet(oracleAddr);
     }
 
-    function updateMinDepositAmount(
-        uint256 _minDepositAmount
+    function setSlippage(
+        uint256 _slippage
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_minDepositAmount > 0 && _minDepositAmount <= DEPOSIT_DENOMINATOR, 'Wrong amount!');
-        emit MinDepositAmountUpdated(minDepositAmount, _minDepositAmount);
-        minDepositAmount = _minDepositAmount;
+        require(_slippage > 0 && _slippage <= SLIPPAGE_DENOMINATOR, 'Wrong slippage number!');
+        emit SlippageSet(slippage, _slippage);
+        slippage = _slippage;
+    }
+
+    function applySlippage(
+        uint256 amount
+    ) internal view returns (uint256) {
+        return (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
     }
 
     function calcTokenAmount(
@@ -95,7 +100,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
         uint256 liquidity = depositLiquidity(amounts);
         depositedLiquidity += liquidity;
         liquidityValue = calcLiquidityValue(liquidity);
-        if (liquidityValue < (depositValue * minDepositAmount) / DEPOSIT_DENOMINATOR)
+        if (liquidityValue < applySlippage(depositValue))
             revert DepositLiquidityValueTooLow();
     }
 
