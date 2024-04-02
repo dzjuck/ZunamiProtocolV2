@@ -32,6 +32,7 @@ contract EthERC4626StratBase is ERC4626StratBase {
     }
 
     function getTokenPrice(address token) internal view override returns (uint256) {
+        if (token == address(Constants.WETH_ADDRESS)) return 1e18;
         return
             (oracle.getUSDPrice(token) * PRICE_DENOMINATOR) /
             oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);
