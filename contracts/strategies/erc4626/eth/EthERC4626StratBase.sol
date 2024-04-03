@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import '../../../utils/Constants.sol';
-import '../../../interfaces/INativeConverter.sol';
+import '../../../interfaces/ITokenConverter.sol';
 import '../ERC4626StratBase.sol';
 
 contract EthERC4626StratBase is ERC4626StratBase {
@@ -14,9 +14,9 @@ contract EthERC4626StratBase is ERC4626StratBase {
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
-    INativeConverter public nativeConverter;
+    ITokenConverter public converter;
 
-    event SetNativeConverter(address nativeConverter);
+    event SetTokenConverter(address converter);
 
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
@@ -25,10 +25,10 @@ contract EthERC4626StratBase is ERC4626StratBase {
         address vaultAssetAddr
     ) ERC4626StratBase(tokens_, tokenDecimalsMultipliers_, vaultAddr, vaultAssetAddr) {}
 
-    function setNativeConverter(address nativeConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(nativeConverterAddr) == address(0)) revert ZeroAddress();
-        nativeConverter = INativeConverter(nativeConverterAddr);
-        emit SetNativeConverter(nativeConverterAddr);
+    function setTokenConverter(address tokenConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(tokenConverterAddr) == address(0)) revert ZeroAddress();
+        converter = ITokenConverter(tokenConverterAddr);
+        emit SetTokenConverter(tokenConverterAddr);
     }
 
     function getTokenPrice(address token) internal view override returns (uint256) {
@@ -49,7 +49,11 @@ contract EthERC4626StratBase is ERC4626StratBase {
     ) internal view override returns (uint256 amount) {
         return
             amounts[ZUNAMI_FRXETH_TOKEN_ID] +
-            nativeConverter.valuate(true, amounts[ZUNAMI_WETH_TOKEN_ID]);
+            converter.valuate(
+                address(tokens[ZUNAMI_WETH_TOKEN_ID]),
+                address(tokens[ZUNAMI_FRXETH_TOKEN_ID]),
+                amounts[ZUNAMI_WETH_TOKEN_ID]
+            );
     }
 
     function convertAndApproveTokens(
@@ -59,11 +63,13 @@ contract EthERC4626StratBase is ERC4626StratBase {
         amount = amounts[ZUNAMI_FRXETH_TOKEN_ID];
         uint256 wethBalance = amounts[ZUNAMI_WETH_TOKEN_ID];
         if (wethBalance > 0) {
-            IERC20(tokens[ZUNAMI_WETH_TOKEN_ID]).safeTransfer(
-                address(nativeConverter),
-                wethBalance
+            IERC20(tokens[ZUNAMI_WETH_TOKEN_ID]).safeTransfer(address(converter), wethBalance);
+            amount += converter.handle(
+                address(tokens[ZUNAMI_WETH_TOKEN_ID]),
+                address(tokens[ZUNAMI_FRXETH_TOKEN_ID]),
+                wethBalance,
+                applySlippage(wethBalance)
             );
-            amount += nativeConverter.handle(true, wethBalance, 0);
         }
 
         tokens[ZUNAMI_FRXETH_TOKEN_ID].safeIncreaseAllowance(address(vault), amount);

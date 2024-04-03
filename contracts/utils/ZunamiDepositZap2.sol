@@ -44,19 +44,25 @@ contract ZunamiDepositZap2 {
         }
 
         IERC20[POOL_ASSETS] memory tokens = zunamiPool.tokens();
-        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = zunamiPool.tokenDecimalsMultipliers();
+        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = zunamiPool
+            .tokenDecimalsMultipliers();
         for (uint256 i = 0; i < amounts.length; i++) {
             uint256 amount = amounts[i];
             IERC20 token = tokens[i];
             uint256 tokenDecimalsMultiplier = tokenDecimalsMultipliers[i];
-            if (i == ZUNAMI_CRVUSD_TOKEN_ID){
+            if (i == ZUNAMI_CRVUSD_TOKEN_ID) {
                 token = IERC20(Constants.CRVUSD_ADDRESS);
                 tokenDecimalsMultiplier = 1;
             }
             if (address(token) != address(0) && amount > 0) {
                 token.safeTransferFrom(msg.sender, address(this), amount);
                 token.safeTransfer(address(converter), amount);
-                converter.handle(address(token), address(zunamiPool), amount, amount * tokenDecimalsMultiplier * MIN_AMOUNT / MIN_AMOUNT_DENOMINATOR);
+                converter.handle(
+                    address(token),
+                    address(zunamiPool),
+                    amount,
+                    (amount * tokenDecimalsMultiplier * MIN_AMOUNT) / MIN_AMOUNT_DENOMINATOR
+                );
             }
         }
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import '../../../../utils/Constants.sol';
-import '../../../../interfaces/INativeConverter.sol';
+import '../../../../interfaces/ITokenConverter.sol';
 import '../../../../interfaces/ICurvePool2Native.sol';
 import '../../../../interfaces/IWETH.sol';
 import '../ConvexCurveStratBase.sol';
@@ -21,9 +21,9 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
 
     IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
 
-    INativeConverter public nativeConverter;
+    ITokenConverter public converter;
 
-    event SetNativeConverter(address nativeConverter);
+    event SetTokenConverter(address converter);
 
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
@@ -49,10 +49,10 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
         // receive ETH on conversion
     }
 
-    function setNativeConverter(address nativeConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(nativeConverterAddr) == address(0)) revert ZeroAddress();
-        nativeConverter = INativeConverter(nativeConverterAddr);
-        emit SetNativeConverter(nativeConverterAddr);
+    function setTokenConverter(address tokenConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(tokenConverterAddr) == address(0)) revert ZeroAddress();
+        converter = ITokenConverter(tokenConverterAddr);
+        emit SetTokenConverter(tokenConverterAddr);
     }
 
     function getTokenPrice(address token) internal view override returns (uint256) {
@@ -70,7 +70,11 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
 
         return [
             amounts[ZUNAMI_WETH_TOKEN_ID] +
-                nativeConverter.valuate(false, amounts[ZUNAMI_FRXETH_TOKEN_ID]),
+                converter.valuate(
+        address(tokens[ZUNAMI_FRXETH_TOKEN_ID]),
+        address(tokens[ZUNAMI_WETH_TOKEN_ID]),
+                    amounts[ZUNAMI_FRXETH_TOKEN_ID]
+                ),
             0
         ];
     }
@@ -81,13 +85,14 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     ) internal override returns (uint256[2] memory amounts2) {
         if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
             IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).safeTransfer(
-                address(nativeConverter),
+                address(converter),
                 amounts[ZUNAMI_FRXETH_TOKEN_ID]
             );
-            amounts[ZUNAMI_WETH_TOKEN_ID] += nativeConverter.handle(
-                false,
+            amounts[ZUNAMI_WETH_TOKEN_ID] += converter.handle(
+            address(tokens[ZUNAMI_FRXETH_TOKEN_ID]),
+            address(tokens[ZUNAMI_WETH_TOKEN_ID]),
                 amounts[ZUNAMI_FRXETH_TOKEN_ID],
-                0
+                applySlippage(amounts[ZUNAMI_FRXETH_TOKEN_ID])
             );
         }
 

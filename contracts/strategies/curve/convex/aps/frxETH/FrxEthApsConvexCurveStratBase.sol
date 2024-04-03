@@ -143,7 +143,12 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
         uint256 wEthBalance = wEth.balanceOf(address(this));
         if (wEthBalance > 0) {
             wEth.safeTransfer(address(converter), wEthBalance);
-            converter.handle(address(wEth), address(frxEth), wEthBalance, applySlippage(wEthBalance));
+            converter.handle(
+                address(wEth),
+                address(frxEth),
+                wEthBalance,
+                applySlippage(wEthBalance)
+            );
         }
 
         uint256 frxEthAmount = frxEth.balanceOf(address(this));

@@ -72,7 +72,12 @@ contract CrvUsdERC4626StratBase is ConvexCurveERC4626StratBase {
         for (uint256 i = 0; i < POOL_ASSETS; i++) {
             if (amounts[i] > 0) {
                 tokens[i].safeTransfer(address(converter), amounts[i]);
-                converter.handle(address(tokens[i]), Constants.CRVUSD_ADDRESS, amounts[i], applySlippage(amounts[i]) * tokenDecimalsMultipliers[i]);
+                converter.handle(
+                    address(tokens[i]),
+                    Constants.CRVUSD_ADDRESS,
+                    amounts[i],
+                    applySlippage(amounts[i]) * tokenDecimalsMultipliers[i]
+                );
             }
         }
         amount = crvUSD.balanceOf(address(this));
@@ -88,6 +93,11 @@ contract CrvUsdERC4626StratBase is ConvexCurveERC4626StratBase {
 
         uint256 crvUSDBalance = crvUSD.balanceOf(address(this));
         crvUSD.safeTransfer(address(converter), crvUSDBalance);
-        converter.handle(Constants.CRVUSD_ADDRESS, Constants.USDT_ADDRESS, crvUSDBalance, applySlippage(crvUSDBalance) / tokenDecimalsMultipliers[ZUNAMI_USDT_TOKEN_ID]);
+        converter.handle(
+            Constants.CRVUSD_ADDRESS,
+            Constants.USDT_ADDRESS,
+            crvUSDBalance,
+            applySlippage(crvUSDBalance) / tokenDecimalsMultipliers[ZUNAMI_USDT_TOKEN_ID]
+        );
     }
 }

@@ -1,6 +1,4 @@
-import { ethers } from 'hardhat';
 import { Contract } from '@ethersproject/contracts';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import * as addresses from '../address.json';
 

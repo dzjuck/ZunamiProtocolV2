@@ -56,17 +56,13 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
         emit PriceOracleSet(oracleAddr);
     }
 
-    function setSlippage(
-        uint256 _slippage
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setSlippage(uint256 _slippage) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_slippage > 0 && _slippage <= SLIPPAGE_DENOMINATOR, 'Wrong slippage number!');
         emit SlippageSet(slippage, _slippage);
         slippage = _slippage;
     }
 
-    function applySlippage(
-        uint256 amount
-    ) internal view returns (uint256) {
+    function applySlippage(uint256 amount) internal view returns (uint256) {
         return (amount * (SLIPPAGE_DENOMINATOR - slippage)) / SLIPPAGE_DENOMINATOR;
     }
 
@@ -100,8 +96,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
         uint256 liquidity = depositLiquidity(amounts);
         depositedLiquidity += liquidity;
         liquidityValue = calcLiquidityValue(liquidity);
-        if (liquidityValue < applySlippage(depositValue))
-            revert DepositLiquidityValueTooLow();
+        if (liquidityValue < applySlippage(depositValue)) revert DepositLiquidityValueTooLow();
     }
 
     function valuateDeposit(
