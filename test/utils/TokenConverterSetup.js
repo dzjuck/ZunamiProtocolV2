@@ -1,8 +1,11 @@
-import { Contract } from '@ethersproject/contracts';
+const { ethers } = require('hardhat');
+const { Contract } = require('@ethersproject/contracts');
+const { SignerWithAddress } = require('@nomiclabs/hardhat-ethers/signers');
 
-import * as addresses from '../address.json';
+const addresses = require('../address.json');
+const { tokenify } = require('../unit/TokenConverter');
 
-export async function setupTokenConverter(tokenConverter: Contract) {
+async function setupTokenConverterStables(tokenConverter) {
     const tokenIns = [
         addresses.stablecoins.usdt,
         addresses.stablecoins.usdt,
@@ -182,3 +185,28 @@ export async function setupTokenConverter(tokenConverter: Contract) {
     ];
     await tokenConverter.setRoutes(tokenIns, tokenOuts, routes, swapParams);
 }
+
+async function setupTokenConverterETHs(tokenConverter) {
+    const tokenIns = [addresses.crypto.frxETH, addresses.crypto.WETH];
+    const tokenOuts = [addresses.crypto.WETH, addresses.crypto.frxETH];
+    const routes = [
+        [
+            '0x5e8422345238f34275888049021821e8e08caa1f',
+            '0x9c3b46c0ceb5b9e304fcd6d88fc50f7dd24b31bc',
+            '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+        ],
+        [
+            '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+            '0x9c3b46c0ceb5b9e304fcd6d88fc50f7dd24b31bc',
+            '0x5e8422345238f34275888049021821e8e08caa1f',
+        ],
+    ];
+    const swapParams = [[[1, 0, 1, 1, 2]], [[0, 1, 1, 1, 2]]];
+
+    await tokenConverter.setRoutes(tokenIns, tokenOuts, routes, swapParams);
+}
+
+module.exports = {
+    setupTokenConverterETHs,
+    setupTokenConverterStables,
+};
