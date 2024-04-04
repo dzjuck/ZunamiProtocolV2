@@ -14,7 +14,7 @@ import { createPoolAndControllerZunETH } from '../utils/CreatePoolAndControllerZ
 import { getMinAmountZunETH } from '../utils/GetMinAmountZunETH';
 import { createEthCoins } from '../utils/CreateEthCoins';
 import { mintEthCoins } from '../utils/MintEthCoins';
-import { setupTokenConverterETHs } from '../utils/TokenConverterSetup';
+import { setupTokenConverterETHs } from '../utils/SetupTokenConverter';
 
 const ETH_stETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 
@@ -53,7 +53,7 @@ describe('ZunETH flow tests', () => {
         );
 
         for (let i = 1; i < strategies.length; i++) {
-            await strategies[i].setSlippage(150);
+            await strategies[i].setSlippage(100);
         }
 
         const tokenApprovedAmount = '10000';

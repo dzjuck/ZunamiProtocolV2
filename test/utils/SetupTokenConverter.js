@@ -1,9 +1,4 @@
-const { ethers } = require('hardhat');
-const { Contract } = require('@ethersproject/contracts');
-const { SignerWithAddress } = require('@nomiclabs/hardhat-ethers/signers');
-
 const addresses = require('../address.json');
-const { tokenify } = require('../unit/TokenConverter');
 
 async function setupTokenConverterStables(tokenConverter) {
     const tokenIns = [

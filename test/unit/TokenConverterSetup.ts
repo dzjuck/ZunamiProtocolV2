@@ -5,7 +5,7 @@ import chai from 'chai';
 import { Contract } from '@ethersproject/contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { FakeContract, smock } from '@defi-wonderland/smock';
-import { setupTokenConverterStables } from '../utils/TokenConverterSetup.js';
+import { setupTokenConverterStables } from '../utils/SetupTokenConverter.js';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 

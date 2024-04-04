@@ -96,9 +96,9 @@ const config: HardhatUserConfig = {
         },
         development: {
             url: 'http://127.0.0.1:8545',
-            // gas: 12400000,
-            // gasPrice: 24000000000,
-            // timeout: 1000000,
+            gas: 12400000,
+            gasPrice: 48105966118,
+            timeout: 1000000,
         },
     },
     solidity: {
