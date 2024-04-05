@@ -5,7 +5,11 @@ import chai from 'chai';
 import { Contract } from '@ethersproject/contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { FakeContract, smock } from '@defi-wonderland/smock';
-import { setupTokenConverterStables } from '../utils/SetupTokenConverter.js';
+import {
+    setupTokenConverterStables,
+    setupTokenConverterETHs,
+    setupTokenConverterRewards,
+} from '../utils/SetupTokenConverter.js';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
@@ -57,6 +61,8 @@ describe('Token Converter', () => {
             '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D'
         );
         await setupTokenConverterStables(tokenConverter);
+        await setupTokenConverterETHs(tokenConverter);
+        await setupTokenConverterRewards(tokenConverter);
     });
 
     describe('USDT', () => {
@@ -376,6 +382,305 @@ describe('Token Converter', () => {
             await tokenConverter
                 .connect(alice)
                 .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('FrxETH', () => {
+        it('should swap FrxETH to WETH', async () => {
+            const tokenInAddr = addresses.crypto.frxETH;
+            const tokenOutAddr = addresses.crypto.WETH;
+            const impersonate = '0x12FaE9F7841766798C8Edd8363673B0b79D4712B';
+            const amount = tokenify('1');
+            const minAmountOut = tokenify('0.98');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap FrxETH to zunETH', async () => {
+            const tokenInAddr = addresses.crypto.frxETH;
+            const tokenOutAddr = addresses.crypto.zunETH;
+            const impersonate = '0x12FaE9F7841766798C8Edd8363673B0b79D4712B';
+            const amount = tokenify('1');
+            // const minAmountOut = tokenify('0.98');
+            const minAmountOut = 0;
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('WETH', () => {
+        it('should swap WETH to FrxETH', async () => {
+            const tokenInAddr = addresses.crypto.WETH;
+            const tokenOutAddr = addresses.crypto.frxETH;
+            const impersonate = '0x57757E3D981446D585Af0D9Ae4d7DF6D64647806';
+            const amount = tokenify('1');
+            const minAmountOut = tokenify('0.98');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap WETH to zunETH', async () => {
+            const tokenInAddr = addresses.crypto.WETH;
+            const tokenOutAddr = addresses.crypto.zunETH;
+            const impersonate = '0x57757E3D981446D585Af0D9Ae4d7DF6D64647806';
+            const amount = tokenify('1');
+            const minAmountOut = tokenify('0.98');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('zunETH', () => {
+        it('should swap zunETH to FrxETH', async () => {
+            const tokenInAddr = addresses.crypto.zunETH;
+            const tokenOutAddr = addresses.crypto.frxETH;
+            const impersonate = '0x12FaE9F7841766798C8Edd8363673B0b79D4712B';
+
+            await network.provider.request({
+                method: 'hardhat_impersonateAccount',
+                params: [impersonate],
+            });
+            const whale = await ethers.getSigner(impersonate);
+            await admin.sendTransaction({
+                to: whale.address,
+                value: ethers.utils.parseEther('10.0'),
+            });
+            const pool = await ethers.getContractAt('ICurvePoolN', '0x3a65cbaebbfecbea5d0cb523ab56fdbda7ff9aaa');
+            const token = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await token.connect(whale).approve(pool.address, ethers.constants.MaxUint256);
+            await pool.connect(whale).exchange(1, 0, tokenify('2.2'), 0);
+
+            const amount = tokenify('1');
+            const minAmountOut = tokenify('0.98');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap zunETH to WETH', async () => {
+            const tokenInAddr = addresses.crypto.zunETH;
+            const tokenOutAddr = addresses.crypto.WETH;
+            const impersonate = '0x12FaE9F7841766798C8Edd8363673B0b79D4712B';
+
+            const amount = tokenify('1');
+            const minAmountOut = tokenify('0.98');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, amount, admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('CRV', () => {
+        it('should swap CRV to zunETH', async () => {
+            const tokenInAddr = addresses.crypto.crv;
+            const tokenOutAddr = addresses.crypto.zunETH;
+            const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap CRV to zunUSD', async () => {
+            const tokenInAddr = addresses.crypto.crv;
+            const tokenOutAddr = addresses.stablecoins.zunUSD;
+            const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('60');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter
+                .connect(alice)
+                .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('CVX', () => {
+        it('should swap CVX to zunETH', async () => {
+            const tokenInAddr = addresses.crypto.cvx;
+            const tokenOutAddr = addresses.crypto.zunETH;
+            const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap CVX to zunUSD', async () => {
+            const tokenInAddr = addresses.crypto.cvx;
+            const tokenOutAddr = addresses.stablecoins.zunUSD;
+            const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('SDT', () => {
+        it('should swap SDT to zunETH', async () => {
+            const tokenInAddr = addresses.crypto.sdt;
+            const tokenOutAddr = addresses.crypto.zunETH;
+            const impersonate = '0xAced00E50cb81377495ea40A1A44005fe6d2482d';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap SDT to zunUSD', async () => {
+            const tokenInAddr = addresses.crypto.sdt;
+            const tokenOutAddr = addresses.stablecoins.zunUSD;
+            const impersonate = '0xAced00E50cb81377495ea40A1A44005fe6d2482d';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+    });
+
+    describe('FXS', () => {
+        it('should swap FXS to zunETH', async () => {
+            const tokenInAddr = addresses.crypto.fxs;
+            const tokenOutAddr = addresses.crypto.zunETH;
+            const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+            expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap FXS to zunUSD', async () => {
+            const tokenInAddr = addresses.crypto.fxs;
+            const tokenOutAddr = addresses.stablecoins.zunUSD;
+            const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
+            const amount = tokenify('100');
+            const minAmountOut = tokenify('0');
+
+            const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+            const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+            await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+            const balanceBefore = await tokenOut.balanceOf(alice.address);
+            await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+
+            await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
 
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
