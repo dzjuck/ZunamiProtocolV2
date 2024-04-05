@@ -10,8 +10,8 @@ import { IRewardViewer } from './interface/IRewardViewer.sol';
 import { IFraxStakingProxyVault } from './interface/IFraxStakingProxyVault.sol';
 import { Ownable2Step, Ownable } from '@openzeppelin/contracts/access/Ownable2Step.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import { IStakeDaoVault } from '../strategies/curve/stakeDao/interfaces/IStakeDaoVault.sol';
-import { IStakeDaoGauge } from '../strategies/curve/stakeDao/interfaces/IStakeDaoGauge.sol';
+import { IStakeDaoVault } from '../interfaces/IStakeDaoVault.sol';
+import { IStakeDaoGauge } from '../interfaces/IStakeDaoGauge.sol';
 
 contract RewardViewer is IRewardViewer, Ownable2Step {
     uint256 internal constant CLIFF_COUNT = 1000;

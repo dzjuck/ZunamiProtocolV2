@@ -8,7 +8,7 @@ const frxETH_minter_abi = [
 export async function mintEthCoins(admin: SignerWithAddress, wEth) {
     const frxETHMinter = new ethers.Contract(frxETH_minter_addr, frxETH_minter_abi, admin);
 
-    const ethAmount = ethers.utils.parseEther('10000');
+    const ethAmount = ethers.utils.parseEther('1000');
     await wEth.deposit({ value: ethAmount });
     await frxETHMinter.submit({ value: ethAmount });
 }

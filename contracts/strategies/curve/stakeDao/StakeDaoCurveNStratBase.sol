@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import '../CurveStratBase.sol';
+import '../CurveNStratBase.sol';
 import '../../../interfaces/IStakeDaoVault.sol';
 
-abstract contract StakeDaoCurveStratBase is CurveStratBase {
+abstract contract StakeDaoCurveNStratBase is CurveNStratBase {
     using SafeERC20 for IERC20;
 
     IStakeDaoVault public immutable vault;
@@ -15,7 +15,7 @@ abstract contract StakeDaoCurveStratBase is CurveStratBase {
         address _vaultAddr,
         address _poolAddr,
         address _poolTokenAddr
-    ) CurveStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr) {
+    ) CurveNStratBase(_tokens, _tokenDecimalsMultipliers, _poolAddr, _poolTokenAddr) {
         if (_vaultAddr == address(0)) revert ZeroAddress();
         vault = IStakeDaoVault(_vaultAddr);
     }

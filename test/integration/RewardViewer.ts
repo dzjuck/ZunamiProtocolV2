@@ -9,7 +9,7 @@ import {
 import * as addresses from '../address.json';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { createStablecoins } from '../utils/CreateStablecoins';
+import { attachTokens } from '../utils/AttachTokens';
 import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
@@ -102,7 +102,7 @@ describe('Reward Viewer', async () => {
                 deployFixture
             );
             const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
-            const { dai, usdt, usdc } = createStablecoins(owner);
+            const { dai, usdt, usdc } = attachTokens(owner);
             await mintStables(owner, usdc);
             const { genericOracle } = await createAndInitConicOracles([crvUSD_USDC_pool_addr]);
             const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
@@ -187,7 +187,7 @@ describe('Reward Viewer', async () => {
                 deployFixture
             );
             const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
-            const { dai, usdt, usdc } = createStablecoins(owner);
+            const { dai, usdt, usdc } = attachTokens(owner);
             await mintStables(owner, usdc);
             const { genericOracle } = await createAndInitConicOracles([crvUSD_USDT_pool_addr]);
             const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();

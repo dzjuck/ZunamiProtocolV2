@@ -1,5 +1,8 @@
 const { ethers } = require('hardhat');
-const { setupTokenConverterStables, setupTokenConverterETHs } = require('../../../test/utils/SetupTokenConverter.js');
+const {
+    setupTokenConverterStables,
+    setupTokenConverterETHs,
+} = require('../../../test/utils/SetupTokenConverter.js');
 
 async function main() {
     const curveRouterAddr = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';

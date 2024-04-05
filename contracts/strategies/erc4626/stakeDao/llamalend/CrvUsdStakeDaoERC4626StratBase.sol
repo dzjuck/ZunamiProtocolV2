@@ -3,9 +3,9 @@ pragma solidity ^0.8.23;
 
 import '../../../../utils/Constants.sol';
 import '../../../../interfaces/ITokenConverter.sol';
-import '../ConvexCurveERC4626StratBase.sol';
+import '../StakeDaoERC4626StratBase.sol';
 
-contract CrvUsdERC4626StratBase is ConvexCurveERC4626StratBase {
+contract CrvUsdStakeDaoERC4626StratBase is StakeDaoERC4626StratBase {
     using SafeERC20 for IERC20;
 
     uint256 public constant ZUNAMI_DAI_TOKEN_ID = 0;
@@ -21,20 +21,16 @@ contract CrvUsdERC4626StratBase is ConvexCurveERC4626StratBase {
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
-        address _vaultAddr,
+        address _vault4626Addr,
         address _vaultAssetAddr,
-        address _cvxBooster,
-        address _cvxRewardsAddr,
-        uint256 _cvxPID
+        address _vaultSdAddr
     )
-        ConvexCurveERC4626StratBase(
+        StakeDaoERC4626StratBase(
             _tokens,
             _tokenDecimalsMultipliers,
-            _vaultAddr,
+            _vault4626Addr,
             _vaultAssetAddr,
-            _cvxBooster,
-            _cvxRewardsAddr,
-            _cvxPID
+            _vaultSdAddr
         )
     {}
 

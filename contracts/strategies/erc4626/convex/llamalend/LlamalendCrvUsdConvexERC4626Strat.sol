@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 import '../../../../utils/Constants.sol';
-import './CrvUsdERC4626StratBase.sol';
+import './CrvUsdConvexERC4626StratBase.sol';
 
-contract LlamalendCrvUsdERC4626Strat is CrvUsdERC4626StratBase {
+contract LlamalendCrvUsdConvexERC4626Strat is CrvUsdConvexERC4626StratBase {
     constructor()
-        CrvUsdERC4626StratBase(
+        CrvUsdConvexERC4626StratBase(
             [
                 IERC20(Constants.DAI_ADDRESS),
                 IERC20(Constants.USDC_ADDRESS),

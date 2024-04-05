@@ -76,7 +76,7 @@ abstract contract ZunamiPoolControllerBase is
             receiver = _msgSender();
         }
 
-        IERC20[5] memory tokens = pool.tokens();
+        IERC20[POOL_ASSETS] memory tokens = pool.tokens();
         for (uint256 i = 0; i < amounts.length; i++) {
             IERC20 token = tokens[i];
             if (address(token) != address(0) && amounts[i] > 0) {

@@ -10,7 +10,7 @@ import { increaseChainTime } from '../utils/IncreaseChainTime';
 import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
-import { createStablecoins } from '../utils/CreateStablecoins';
+import { attachTokens } from '../utils/AttachTokens';
 import { createStrategies } from '../utils/CreateStrategies';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
@@ -24,7 +24,8 @@ describe('ZunUSD flow tests', () => {
         'UsdtCrvUsdStakeDaoCurve',
         'UsdcCrvUsdStakeDaoCurve',
         'ZunUSDVaultStrat',
-        'LlamalendCrvUsdERC4626Strat',
+        'LlamalendCrvUsdConvexERC4626Strat',
+        'LlamalendCrvUsdStakeDaoERC4626Strat',
     ];
 
     async function deployFixture() {
@@ -33,7 +34,7 @@ describe('ZunUSD flow tests', () => {
         // Contracts are deployed using the first signer/account by default
         const [admin, alice, bob, feeCollector] = await ethers.getSigners();
 
-        const { dai, usdt, usdc } = createStablecoins(admin);
+        const { dai, usdt, usdc } = attachTokens(admin);
 
         await mintStables(admin, usdc);
 

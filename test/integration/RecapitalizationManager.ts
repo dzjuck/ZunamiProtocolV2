@@ -22,7 +22,7 @@ import { FORK_BLOCK_NUMBER, PROVIDER_URL } from '../../hardhat.config';
 import { anyUint } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { createStrategies } from '../utils/CreateStrategies';
 import { createConvertersAndRewardManagerContracts } from '../utils/CreateConvertersAndRewardManagerContracts';
-import { createStablecoins } from '../utils/CreateStablecoins';
+import { attachTokens } from '../utils/AttachTokens';
 import { mintStables } from '../utils/MintStables';
 import { createAndInitConicOracles } from '../utils/CreateAndInitConicOracles';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
@@ -1312,7 +1312,7 @@ describe('Recapitalization Manager', async () => {
 async function deployZunUSDPoolWithStrategies() {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount, otherAccount2] = await ethers.getSigners();
-    const { dai, usdt, usdc } = createStablecoins(owner);
+    const { dai, usdt, usdc } = attachTokens(owner);
 
     await mintStables(owner, usdc);
 

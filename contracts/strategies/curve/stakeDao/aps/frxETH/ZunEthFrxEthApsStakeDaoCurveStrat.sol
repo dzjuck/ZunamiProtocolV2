@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 import '../../../../../utils/Constants.sol';
-import './FrxEthApsConvexCurveStratBase.sol';
+import './FrxEthApsStakeDaoCurveStratBase.sol';
 
-contract ZunEthFrxEthApsConvexCurveStratBase is FrxEthApsConvexCurveStratBase {
+contract ZunEthFrxEthApsStakeDaoCurveStrat is FrxEthApsStakeDaoCurveStratBase {
     constructor()
-        FrxEthApsConvexCurveStratBase(
+        FrxEthApsStakeDaoCurveStratBase(
             [
                 IERC20(Constants.zunETH_ADDRESS),
                 IERC20(address(0)),
@@ -15,11 +15,9 @@ contract ZunEthFrxEthApsConvexCurveStratBase is FrxEthApsConvexCurveStratBase {
                 IERC20(address(0))
             ],
             [uint256(1), 0, 0, 0, 0],
+            Constants.SDT_zunETH_frxETH_VAULT_ADDRESS,
             Constants.CRV_zunETH_frxETH_ADDRESS,
             Constants.CRV_zunETH_frxETH_LP_ADDRESS,
-            Constants.CRV_BOOSTER_ADDRESS,
-            Constants.CVX_zunETH_frxETH_REWARDS_ADDRESS,
-            Constants.CVX_zunETH_frxETH_PID,
             Constants.zunETH_CONTROLLER_ADDRESS,
             Constants.zunETH_ADDRESS
         )

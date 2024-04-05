@@ -38,14 +38,16 @@ async function main() {
     const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
     // const tokenConverter = await TokenConverterFactory.deploy();
     // await tokenConverter.deployed();
-    const tokenConverter = await TokenConverterFactory.attach("0xf48A59434609b6e934c2cF091848FA2D28b34bfc");
+    const tokenConverter = await TokenConverterFactory.attach(
+        '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
+    );
     console.log('TokenConverter:', tokenConverter.address);
 
     console.log('Deploy zunETH omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunETH');
     // const zunamiPool = await ZunamiPool.deploy();
     // await zunamiPool.deployed();
-    const zunamiPool = await ZunamiPool.attach("0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222");
+    const zunamiPool = await ZunamiPool.attach('0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222');
     console.log('ZunamiPoolZunETH:', zunamiPool.address);
 
     // console.log('Deploy zunETH pool controller:');
