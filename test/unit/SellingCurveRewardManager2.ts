@@ -226,6 +226,7 @@ describe('SellingCurveRewardManager2 tests', () => {
 
     describe('FXS', () => {
         it('should swap FXS to zunETH', async () => {
+            await sellingCurveRewardManager.setDefaultSlippage(400);
             const tokenInAddr = addresses.crypto.fxs;
             const tokenOutAddr = addresses.crypto.zunETH;
             const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
@@ -241,11 +242,11 @@ describe('SellingCurveRewardManager2 tests', () => {
             await sellingCurveRewardManager
                 .connect(alice)
                 .handle(tokenInAddr, amount, tokenOutAddr);
-
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
 
         it('should swap FXS to zunUSD', async () => {
+            await sellingCurveRewardManager.setDefaultSlippage(700);
             const tokenInAddr = addresses.crypto.fxs;
             const tokenOutAddr = addresses.stablecoins.zunUSD;
             const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
@@ -261,7 +262,6 @@ describe('SellingCurveRewardManager2 tests', () => {
             await sellingCurveRewardManager
                 .connect(alice)
                 .handle(tokenInAddr, amount, tokenOutAddr);
-
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
     });

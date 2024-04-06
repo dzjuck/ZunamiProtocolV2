@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-
+import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '../../utils/Constants.sol';
 import './interfaces/ICurveExchangePool.sol';
 import './interfaces/AggregatorV2V3Interface.sol';
@@ -11,24 +11,31 @@ import '../../interfaces/IRewardManager.sol';
 import '../../interfaces/ITokenConverter.sol';
 import '../../lib/Oracle/interfaces/IOracle.sol';
 
-contract SellingCurveRewardManager2 is IRewardManager {
+contract SellingCurveRewardManager2 is IRewardManager, Ownable2Step {
     using SafeERC20 for IERC20;
 
     error MinAmount();
 
     uint256 public constant SLIPPAGE_DENOMINATOR = 10_000;
 
-    uint256 public constant defaultSlippage = 300; // 3%
+    uint256 public defaultSlippage = 300; // 3%
 
     ITokenConverter public immutable tokenConverter;
     IOracle public immutable oracle;
 
-    constructor(address tokenConverterAddr, address oracleAddr) {
+    event SetDefaultSlippage(uint256 newDefaultSlippage);
+
+    constructor(address tokenConverterAddr, address oracleAddr) Ownable(msg.sender) {
         require(tokenConverterAddr != address(0), 'TokenConverter');
         tokenConverter = ITokenConverter(tokenConverterAddr);
 
         require(oracleAddr != address(0), 'Oracle');
         oracle = IOracle(oracleAddr);
+    }
+
+    function setDefaultSlippage(uint256 defaultSlippage_) external onlyOwner {
+        defaultSlippage = defaultSlippage_;
+        emit SetDefaultSlippage(defaultSlippage_);
     }
 
     function handle(address reward, uint256 amount, address receivingToken) public {
