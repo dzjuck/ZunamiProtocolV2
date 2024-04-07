@@ -86,7 +86,8 @@ library Constants {
         0x756d67A10974Fa0e0cE63F82AF4E7ef0d46d452D;
     uint256 internal constant CVX_zunETH_frxETH_PID = 330;
 
-    address internal constant SDT_zunETH_frxETH_VAULT_ADDRESS = 0xAaE1Ae12d4C8b811DDa1188b01be23b4ab7C62D2;
+    address internal constant SDT_zunETH_frxETH_VAULT_ADDRESS =
+        0xAaE1Ae12d4C8b811DDa1188b01be23b4ab7C62D2;
 
     address internal constant SDT_LLAMALEND_CRVUSD_VAULT_ADDRESS =
         0xfa6D40573082D797CB3cC378c0837fB90eB043e5;

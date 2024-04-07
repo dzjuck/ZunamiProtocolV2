@@ -15,17 +15,18 @@ import { attachTokens } from '../utils/AttachTokens';
 import { createStrategies } from '../utils/CreateStrategies';
 import { mintEthCoins } from '../utils/MintEthCoins';
 import { attachPoolAndControllerZunETH } from '../utils/AttachPoolAndControllerZunETH';
-import {getMinAmountZunETH} from "../utils/GetMinAmountZunETH";
+import { getMinAmountZunETH } from '../utils/GetMinAmountZunETH';
 
 import {
-  ZunamiPool,
-  ZunamiPoolCompoundController,
-  ZunamiDepositZap,
-  GenericOracle,
-  IStableConverter, ITokenConverter,
+    ZunamiPool,
+    ZunamiPoolCompoundController,
+    ZunamiDepositZap,
+    GenericOracle,
+    IStableConverter,
+    ITokenConverter,
 } from '../../typechain-types';
 
-import * as addresses from "../address.json";
+import * as addresses from '../address.json';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
@@ -104,7 +105,11 @@ async function setCustomOracle(
 }
 
 describe('ZunETH flow APS tests', () => {
-    const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunEthFrxEthApsConvexCurveStrat', 'ZunEthFrxEthApsStakeDaoCurveStrat'];
+    const strategyApsNames = [
+        'ZunUSDApsVaultStrat',
+        'ZunEthFrxEthApsConvexCurveStrat',
+        'ZunEthFrxEthApsStakeDaoCurveStrat',
+    ];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -179,7 +184,9 @@ describe('ZunETH flow APS tests', () => {
 
         const curveRouterAddr = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';
         const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-        const tokenConverterAps = (await TokenConverterFactory.deploy(curveRouterAddr)) as ITokenConverter;
+        const tokenConverterAps = (await TokenConverterFactory.deploy(
+            curveRouterAddr
+        )) as ITokenConverter;
 
         const tokenApprovedAmount = '10000';
 
@@ -455,9 +462,9 @@ describe('ZunETH flow APS tests', () => {
         await wEth
             .connect(admin)
             .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'ether'));
-      await frxEth
-        .connect(admin)
-        .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'ether'));
+        await frxEth
+            .connect(admin)
+            .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'ether'));
 
         await zunamiDepositZap
             .connect(admin)

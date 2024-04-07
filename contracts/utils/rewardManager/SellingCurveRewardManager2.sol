@@ -9,7 +9,7 @@ import './interfaces/ICurveExchangePool.sol';
 import './interfaces/AggregatorV2V3Interface.sol';
 import '../../interfaces/IRewardManager.sol';
 import '../../interfaces/ITokenConverter.sol';
-import "../../lib/Oracle/interfaces/IOracle.sol";
+import '../../lib/Oracle/interfaces/IOracle.sol';
 
 contract SellingCurveRewardManager2 is IRewardManager {
     using SafeERC20 for IERC20;
@@ -40,7 +40,12 @@ contract SellingCurveRewardManager2 is IRewardManager {
         }
 
         IERC20(reward).safeTransfer(address(tokenConverter), amount);
-        tokenConverter.handle(reward, receivingToken, amount, calcMinAmount(reward, amount, receivingToken));
+        tokenConverter.handle(
+            reward,
+            receivingToken,
+            amount,
+            calcMinAmount(reward, amount, receivingToken)
+        );
 
         uint256 feeTokenAmount = IERC20(receivingToken).balanceOf(address(this));
         IERC20(receivingToken).safeTransfer(address(msg.sender), feeTokenAmount);
@@ -57,9 +62,15 @@ contract SellingCurveRewardManager2 is IRewardManager {
         if (valuatedAmount < calcMinAmount(reward, amount, feeToken)) revert MinAmount();
     }
 
-    function calcMinAmount(address tokenIn, uint256 amountIn, address tokenOut) internal view returns (uint256 amountOutMin) {
-        uint256 value = oracle.getUSDPrice(tokenIn) * amountIn / 1e18; //TODO: multiply by reward decimals in < 18
+    function calcMinAmount(
+        address tokenIn,
+        uint256 amountIn,
+        address tokenOut
+    ) internal view returns (uint256 amountOutMin) {
+        uint256 value = (oracle.getUSDPrice(tokenIn) * amountIn) / 1e18; //TODO: multiply by reward decimals in < 18
         uint256 feeTokenPrice = oracle.getUSDPrice(tokenOut);
-        amountOutMin = (value * (SLIPPAGE_DENOMINATOR - defaultSlippage)) * 1e18 / (SLIPPAGE_DENOMINATOR * feeTokenPrice);
+        amountOutMin =
+            ((value * (SLIPPAGE_DENOMINATOR - defaultSlippage)) * 1e18) /
+            (SLIPPAGE_DENOMINATOR * feeTokenPrice);
     }
 }

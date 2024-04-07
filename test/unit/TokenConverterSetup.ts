@@ -487,7 +487,10 @@ describe('Token Converter', () => {
                 to: whale.address,
                 value: ethers.utils.parseEther('10.0'),
             });
-            const pool = await ethers.getContractAt('ICurvePoolN', '0x3a65cbaebbfecbea5d0cb523ab56fdbda7ff9aaa');
+            const pool = await ethers.getContractAt(
+                'ICurvePoolN',
+                '0x3a65cbaebbfecbea5d0cb523ab56fdbda7ff9aaa'
+            );
             const token = await ethers.getContractAt('ERC20Token', tokenOutAddr);
             await token.connect(whale).approve(pool.address, ethers.constants.MaxUint256);
             await pool.connect(whale).exchange(1, 0, tokenify('2.2'), 0);
