@@ -7,8 +7,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '../../interfaces/ICurvePoolN.sol';
 import '../ZunamiStratBase.sol';
 
-import 'hardhat/console.sol';
-
 abstract contract CurveNStratBase is ZunamiStratBase {
     using SafeERC20 for IERC20;
 
@@ -46,8 +44,6 @@ abstract contract CurveNStratBase is ZunamiStratBase {
     ) internal virtual returns (uint256[] memory amountsN);
 
     function depositCurve(uint256[] memory amountsN) internal virtual returns (uint256 deposited) {
-        console.log('CurveNStratBase.depositCurve amountsN 0', amountsN[0]);
-        console.log('CurveNStratBase.depositCurve amountsN 1', amountsN[1]);
         return pool.add_liquidity(amountsN, 0);
     }
 

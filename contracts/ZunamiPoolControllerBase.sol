@@ -80,7 +80,7 @@ abstract contract ZunamiPoolControllerBase is
         for (uint256 i = 0; i < amounts.length; i++) {
             IERC20 token = tokens[i];
             if (address(token) != address(0) && amounts[i] > 0) {
-                IERC20(tokens[i]).safeTransferFrom(_msgSender(), address(pool), amounts[i]);
+                token.safeTransferFrom(_msgSender(), address(pool), amounts[i]);
             }
         }
 

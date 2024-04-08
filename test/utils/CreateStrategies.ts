@@ -47,16 +47,20 @@ export async function createStrategies(
         }
 
         if (
-            (tokenConverter && strategyName.includes('LlamalendCrvUsdERC4626Strat')) ||
-            (tokenConverter && strategyName.includes('frxETH')) ||
-            (tokenConverter && strategyName.includes('stEth'))
+            (tokenConverter && strategyName.includes('LlamalendCrvUsdStakeDaoERC4626Strat')) ||
+            (tokenConverter && strategyName.includes('LlamalendCrvUsdConvexERC4626Strat')) ||
+            (tokenConverter && strategyName.includes('sfrxETHERC4626Strat')) ||
+            (tokenConverter && strategyName.includes('stEthEthConvexCurveStrat')) ||
+            (tokenConverter && strategyName.includes('ZunEthFrxEthApsConvexCurveStrat')) ||
+            (tokenConverter && strategyName.includes('ZunEthFrxEthApsStakeDaoCurveStrat'))
         ) {
             await strategy.setTokenConverter(tokenConverter.address);
         }
 
         if (
-            (stableConverter && strategyName.includes('CrvUsdStakeDaoCurve')) ||
-            (stableConverter && strategyName.includes('ConvexCurve'))
+            (stableConverter && strategyName.includes('ZunUsdCrvUsdApsConvexCurveStrat')) ||
+            (stableConverter && strategyName.includes('UsdtCrvUsdStakeDaoCurve')) ||
+            (stableConverter && strategyName.includes('UsdcCrvUsdStakeDaoCurve'))
         ) {
             await strategy.setStableConverter(stableConverter.address);
         }

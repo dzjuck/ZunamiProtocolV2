@@ -1,10 +1,5 @@
 import { ethers } from 'hardhat';
-import {
-    IRewardManager,
-    IStableConverter,
-    INativeConverter,
-    ITokenConverter,
-} from '../../typechain-types';
+import { IRewardManager, IStableConverter, ITokenConverter } from '../../typechain-types';
 
 export async function createConvertersAndRewardManagerContracts(
     stableConverterName: string,

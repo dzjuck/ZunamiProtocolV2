@@ -13,7 +13,7 @@ const REPORT_GAS = !!process.env.REPORT_GAS;
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 export const PROVIDER_URL = process.env.PROVIDER_URL;
-export const FORK_BLOCK_NUMBER = 19569677;
+export const FORK_BLOCK_NUMBER = 19608500;
 
 const config: HardhatUserConfig = {
     defaultNetwork: 'hardhat',

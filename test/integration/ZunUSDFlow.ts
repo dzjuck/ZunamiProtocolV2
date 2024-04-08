@@ -21,11 +21,11 @@ const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
 describe('ZunUSD flow tests', () => {
     const strategyNames = [
+        'LlamalendCrvUsdConvexERC4626Strat',
+        'LlamalendCrvUsdStakeDaoERC4626Strat',
         'UsdtCrvUsdStakeDaoCurve',
         'UsdcCrvUsdStakeDaoCurve',
         'ZunUSDVaultStrat',
-        'LlamalendCrvUsdConvexERC4626Strat',
-        'LlamalendCrvUsdStakeDaoERC4626Strat',
     ];
 
     async function deployFixture() {
@@ -60,6 +60,9 @@ describe('ZunUSD flow tests', () => {
             undefined,
             undefined
         );
+
+        await strategies[0].setSlippage(100);
+        await strategies[1].setSlippage(100);
 
         const tokenApprovedAmount = '1000000';
 

@@ -60,9 +60,9 @@ contract FrxEthApsStakeDaoCurveStratBase is EmergencyAdminStakeDaoCurveNStratBas
         emit SetTokenConverter(converterAddr);
     }
 
-    function getLiquidityTokenPrice() internal view override returns (uint256) {
+    function getTokenPrice(address token) internal view override returns (uint256) {
         return
-            (oracle.getUSDPrice(address(poolToken)) * 1e18) /
+            (oracle.getUSDPrice(token) * 1e18) /
             oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);
     }
 
