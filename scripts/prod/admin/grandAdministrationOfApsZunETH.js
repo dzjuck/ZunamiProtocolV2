@@ -22,26 +22,33 @@ async function grandStrategyRolesTo(newAdmin, stratName, stratAddr, roles) {
 async function main() {
     const newAdmin = '0xb056B9A45f09b006eC7a69770A65339586231a34';
 
-    const ZunamiPool = await ethers.getContractFactory('ZunamiPoolApsZunETH');
-    const zunamiPool = await ZunamiPool.attach('0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2');
-    console.log('ZunamiPoolApsZunETH:', zunamiPool.address);
-
-    await grantRoleTo(newAdmin, zunamiPool, 'DEFAULT_ADMIN_ROLE');
-    await grantRoleTo(newAdmin, zunamiPool, 'EMERGENCY_ADMIN_ROLE');
-
-    const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunETH');
-    const zunamiPoolController = await ZunamiPoolController.attach(
-        '0xD8132d8cfCA9Ed8C95e46Cb59ae6E2C9963dA61f'
-    );
-    console.log('ZunamiPoolControllerApsZunETH:', zunamiPoolController.address);
-
-    await grantRoleTo(newAdmin, zunamiPoolController, 'DEFAULT_ADMIN_ROLE');
+    // const ZunamiPool = await ethers.getContractFactory('ZunamiPoolApsZunETH');
+    // const zunamiPool = await ZunamiPool.attach('0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2');
+    // console.log('ZunamiPoolApsZunETH:', zunamiPool.address);
+    //
+    // await grantRoleTo(newAdmin, zunamiPool, 'DEFAULT_ADMIN_ROLE');
+    // await grantRoleTo(newAdmin, zunamiPool, 'EMERGENCY_ADMIN_ROLE');
+    //
+    // const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunETH');
+    // const zunamiPoolController = await ZunamiPoolController.attach(
+    //     '0xD8132d8cfCA9Ed8C95e46Cb59ae6E2C9963dA61f'
+    // );
+    // console.log('ZunamiPoolControllerApsZunETH:', zunamiPoolController.address);
+    //
+    // await grantRoleTo(newAdmin, zunamiPoolController, 'DEFAULT_ADMIN_ROLE');
+    //
+    // await grandStrategyRolesTo(
+    //     newAdmin,
+    //     'ZunETHApsVaultStrat',
+    //     '0xcB17C25985E5873Ad5D1114B0E03947fC49e5654',
+    //     ['DEFAULT_ADMIN_ROLE']
+    // );
 
     await grandStrategyRolesTo(
         newAdmin,
-        'ZunETHApsVaultStrat',
-        '0xcB17C25985E5873Ad5D1114B0E03947fC49e5654',
-        ['DEFAULT_ADMIN_ROLE']
+        'ZunEthFrxEthApsStakeDaoCurveStrat',
+        '0x92cCC61730971Fe2321823aB64f3BC89F5421C5e',
+        ['DEFAULT_ADMIN_ROLE', 'EMERGENCY_ADMIN_ROLE']
     );
 }
 

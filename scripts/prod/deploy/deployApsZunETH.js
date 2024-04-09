@@ -13,7 +13,7 @@ async function createAndInitStrategy(zunamiPool, stratName, oracleAddress, token
     }
 
     if (!!tokenConverterAddress) {
-        result = await strategy.setStableConverter(tokenConverterAddress);
+        result = await strategy.setTokenConverter(tokenConverterAddress);
         await result.wait();
         console.log(
             `Set stable converter address ${tokenConverterAddress} in ${stratName} strategy`
@@ -39,32 +39,32 @@ async function main() {
     // await zunamiPool.deployed();
     console.log('ZunamiPoolApsZunETH:', zunamiPool.address);
 
-    console.log('Deploy zunETH APS pool controller:');
-    const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunETH');
-    const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
-    await zunamiPoolController.deployed();
-    console.log('ZunamiPoolControllerApsZunETH:', zunamiPoolController.address);
-
-    let result = await zunamiPool.grantRole(
-        await zunamiPool.CONTROLLER_ROLE(),
-        zunamiPoolController.address
-    );
-    await result.wait();
-    console.log(
-        'ZunamiPoolController granted CONTROLLER_ROLE:',
-        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
-    );
+    // console.log('Deploy zunETH APS pool controller:');
+    // const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerApsZunETH');
+    // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
+    // await zunamiPoolController.deployed();
+    // console.log('ZunamiPoolControllerApsZunETH:', zunamiPoolController.address);
+    //
+    // let result = await zunamiPool.grantRole(
+    //     await zunamiPool.CONTROLLER_ROLE(),
+    //     zunamiPoolController.address
+    // );
+    // await result.wait();
+    // console.log(
+    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
+    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    // );
 
     // await createAndInitStrategy(zunamiPool, 'ZunETHApsVaultStrat', null, null);
 
-    // const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
-    // const stableConverterAddress = '0x0236B7A3996d8c3597173aA95fD2a915c7A8A42E';
-    // await createAndInitStrategy(
-    //     zunamiPool,
-    //     'zunETHCrvUsdApsConvexCurveStrat',
-    //     genericOracleAddress,
-    //     stableConverterAddress
-    // );
+    const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
+    const tokenConverterAddress = '0xf48A59434609b6e934c2cF091848FA2D28b34bfc';
+    await createAndInitStrategy(
+        zunamiPool,
+        'ZunEthFrxEthApsStakeDaoCurveStrat',
+        genericOracleAddress,
+        tokenConverterAddress
+    );
 }
 
 main()

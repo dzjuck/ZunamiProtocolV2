@@ -53,3 +53,15 @@ npx hardhat verify --network mainnet --contract  contracts/configs/aps/ZunETHAps
 
 //zunUSD ZAP
 npx hardhat verify --network mainnet --constructor-args ./abi/ZunamiDepositZap_zunETH_arguments.js 0x1162C741bda2D0284E88D7C13c1B0BFEb4f81574
+
+// TokenConverter
+npx hardhat verify --network mainnet 0xf48A59434609b6e934c2cF091848FA2D28b34bfc 0xF0d4c12A5768D806021F80a262B4d39d26C58b8D
+
+// ZunUSD Zap2
+npx hardhat verify --network mainnet 0x9b6042c50a0AF6cc657eB8512b47A919351Fcce1 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6 0xd9F559280c9d308549e84946C0d668a817fcCFB5 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+
+// ZunEthFrxEthApsStakeDaoCurveStrat
+npx hardhat verify --network mainnet 0x92cCC61730971Fe2321823aB64f3BC89F5421C5e
+
+// ZunEthAps Oracles
+npx hardhat verify --network mainnet 0x64298A70C43D865BEdb22FD95fC1f81C3f64BE4B 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
