@@ -10,6 +10,8 @@ import '../ZunamiStratBase.sol';
 abstract contract CurveNStratBase is ZunamiStratBase {
     using SafeERC20 for IERC20;
 
+    uint256 public constant CURVENG_MAX_COINS = 8;
+
     ICurvePoolN public immutable pool;
     IERC20 public immutable poolToken;
 

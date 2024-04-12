@@ -31,7 +31,7 @@ contract VaultStrat is IStrategy, ZunamiPoolAccessControl {
         uint256[POOL_ASSETS] calldata amounts
     ) external onlyZunamiPool returns (uint256) {
         uint256 depositedAmount;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             if (amounts[i] > 0) {
                 depositedAmount += amounts[i] * tokenDecimalsMultipliers[i];
                 depositedTokens[i] += amounts[i];
@@ -60,7 +60,7 @@ contract VaultStrat is IStrategy, ZunamiPoolAccessControl {
 
     function totalHoldings() external view returns (uint256) {
         uint256 tokensHoldings = 0;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             IERC20 token = tokens[i];
             if (address(token) == address(0)) break;
             tokensHoldings += depositedTokens[i] * tokenDecimalsMultipliers[i];
@@ -75,7 +75,7 @@ contract VaultStrat is IStrategy, ZunamiPoolAccessControl {
         bool
     ) external view returns (uint256) {
         uint256 amount = 0;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             if (tokenAmounts[i] == 0) continue;
             amount += tokenAmounts[i] * tokenDecimalsMultipliers[i];
         }
@@ -85,7 +85,7 @@ contract VaultStrat is IStrategy, ZunamiPoolAccessControl {
     function transferPortionTokensTo(address receiver, uint256 userDepositRatio) internal {
         uint256 transferAmountOut;
         IERC20 token_;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             token_ = tokens[i];
             if (address(token_) == address(0)) break;
             transferAmountOut = userDepositRatio == RATIO_MULTIPLIER

@@ -125,7 +125,7 @@ contract RewardViewer is IRewardViewer, Ownable2Step {
 
         address[] memory tokenAddresses = new address[](rewardCount);
         uint256[] memory tokenEarned = new uint256[](rewardCount);
-        for (uint256 i = 0; i < rewardCount; i++) {
+        for (uint256 i = 0; i < rewardCount; ++i) {
             address rewardTokenAddress = strategyStakeDaoGauge.reward_tokens(i);
             uint256 earned = strategyStakeDaoGauge.claimable_reward(
                 _strategyAddress,

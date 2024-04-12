@@ -15,7 +15,7 @@ contract ZunamiPoolAccessControl is AccessControl {
     event ZunamiPoolSet(address zunamiPoolAddr);
 
     modifier onlyZunamiPool() {
-        if (_msgSender() != address(zunamiPool)) revert MustBeCalledByZunamiPool();
+        if (msg.sender != address(zunamiPool)) revert MustBeCalledByZunamiPool();
         _;
     }
 

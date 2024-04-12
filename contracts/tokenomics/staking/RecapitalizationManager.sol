@@ -33,7 +33,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         address rewardManager,
         uint256 rewardDistributionBlock
     );
-    event WithdrawnStuckToken(address token, uint256 amount);
+    event WithdrawnEmergency(address token, uint256 amount);
 
     error WrongRewardDistributionBlock(uint256 rewardDistributionBlock, uint256 nowBlock);
     error WrongTid(uint256 tid);
@@ -92,7 +92,8 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
 
         uint256 transferAmount;
         IERC20 token_;
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
+        uint256 rewardTokensLength = rewardTokens.length;
+        for (uint256 i = 0; i < rewardTokensLength; ++i) {
             token_ = rewardTokens[i];
             if (address(token_) == address(0)) break;
             transferAmount = token_.balanceOf(address(this));
@@ -178,28 +179,25 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     }
 
     /**
-     * @dev Allows the owner to withdraw stuck tokens from the contract.
+     * @dev Allows the owner to emergency withdraw tokens from the contract.
      * @param _token The IERC20 token to withdraw from.
-     * @param _amount The amount of tokens to withdraw. Use type(uint256).max to withdraw all tokens.
      * @notice Only the account with the DEFAULT_ADMIN_ROLE can withdraw tokens.
-     * @notice If _amount is set to type(uint256).max, it withdraws all tokens held by the contract.
      */
-    function withdrawStuckToken(
-        IERC20 _token,
-        uint256 _amount
+    function withdrawEmergency(
+        IERC20 _token
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 withdrawAmount = _amount == type(uint256).max
-            ? _token.balanceOf(address(this))
-            : _amount;
-        if (withdrawAmount > 0) {
-            _token.safeTransfer(_msgSender(), withdrawAmount);
+        uint256 tokenBalance = _token.balanceOf(address(this));
+        if (tokenBalance > 0) {
+            _token.safeTransfer(msg.sender, tokenBalance);
         }
 
-        emit WithdrawnStuckToken(address(_token), withdrawAmount);
+        emit WithdrawnEmergency(address(_token), tokenBalance);
     }
 
     function _depositToken(IPool pool, uint256 sid, uint256 tid, IERC20 depositedToken) internal {
         uint256 depositedTokenBalance = depositedToken.balanceOf(address(this));
+        if (depositedTokenBalance == 0) return;
+
         depositedToken.safeTransfer(address(pool), depositedTokenBalance);
 
         uint256[5] memory amounts;

@@ -684,34 +684,17 @@ describe('ZunDistributor tests', () => {
         expect(gaugeItem.finalizedVotes).to.eq(0);
     });
 
-    it('withdraw stuck token distributor', async () => {
+    it('withdraw emergency distributor', async () => {
         const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
             await loadFixture(deployFixture);
 
         await expect(
-            distributor.withdrawStuckToken(ZUN.address, parseUnits('32000000', 'ether'))
+            distributor.withdrawEmergency(ZUN.address)
         ).to.be.revertedWithCustomError(distributor, 'OwnableUnauthorizedAccount');
 
         expect(await ZUN.balanceOf(dao.address)).to.eq(0);
 
-        await distributor
-            .connect(dao)
-            .withdrawStuckToken(ZUN.address, parseUnits('32000000', 'ether'));
-
-        expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
-    });
-
-    it('withdraw all stuck token distributor', async () => {
-        const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
-            await loadFixture(deployFixture);
-
-        await expect(
-            distributor.withdrawStuckToken(ZUN.address, ethers.constants.MaxUint256)
-        ).to.be.revertedWithCustomError(distributor, 'OwnableUnauthorizedAccount');
-
-        expect(await ZUN.balanceOf(dao.address)).to.eq(0);
-
-        await distributor.connect(dao).withdrawStuckToken(ZUN.address, ethers.constants.MaxUint256);
+        await distributor.connect(dao).withdrawEmergency(ZUN.address);
 
         expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
     });
@@ -720,7 +703,7 @@ describe('ZunDistributor tests', () => {
         const { voter, approveGauge, transferGauge, ZUN, vlZUN, distributor, dao } =
             await loadFixture(deployFixture);
 
-        await expect(approveGauge.withdrawStuckToken(ZUN.address)).to.be.revertedWithCustomError(
+        await expect(approveGauge.withdrawEmergency(ZUN.address)).to.be.revertedWithCustomError(
             approveGauge,
             'OwnableUnauthorizedAccount'
         );
@@ -729,7 +712,7 @@ describe('ZunDistributor tests', () => {
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(parseUnits('32000000', 'ether'));
 
         expect(await ZUN.balanceOf(dao.address)).to.eq(0);
-        await approveGauge.connect(dao).withdrawStuckToken(ZUN.address);
+        await approveGauge.connect(dao).withdrawEmergency(ZUN.address);
 
         expect(await ZUN.balanceOf(dao.address)).to.eq(parseUnits('32000000', 'ether'));
     });

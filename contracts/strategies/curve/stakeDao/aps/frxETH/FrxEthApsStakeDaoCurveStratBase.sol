@@ -69,7 +69,7 @@ contract FrxEthApsStakeDaoCurveStratBase is EmergencyAdminStakeDaoCurveNStratBas
     function convertCurvePoolTokenAmounts(
         uint256[POOL_ASSETS] memory amounts
     ) internal pure override returns (uint256[] memory) {
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[FRXETH_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_STABLE_TOKEN_ID];
         return amountsN;
     }
@@ -78,7 +78,7 @@ contract FrxEthApsStakeDaoCurveStratBase is EmergencyAdminStakeDaoCurveNStratBas
         address pool,
         uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256[] memory) {
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[FRXETH_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_STABLE_TOKEN_ID];
         zunamiStable.safeIncreaseAllowance(pool, amountsN[FRXETH_TOKEN_POOL_TOKEN_ID]);
         return amountsN;
@@ -113,7 +113,7 @@ contract FrxEthApsStakeDaoCurveStratBase is EmergencyAdminStakeDaoCurveNStratBas
             revert InsufficientAmount();
         }
 
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[FRXETH_TOKEN_POOL_TOKEN_ID] = zunStableAmount;
         zunamiStable.safeIncreaseAllowance(address(pool), zunStableAmount);
 
@@ -153,7 +153,7 @@ contract FrxEthApsStakeDaoCurveStratBase is EmergencyAdminStakeDaoCurveNStratBas
             revert InsufficientAmount();
         }
 
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[FRXETH_TOKEN_POOL_FRXETH_ID] = frxEthAmount;
         frxEth.safeIncreaseAllowance(address(pool), frxEthAmount);
 

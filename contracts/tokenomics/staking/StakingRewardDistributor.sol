@@ -20,9 +20,10 @@ contract StakingRewardDistributor is BaseStakingRewardDistributor {
             _receiver = msg.sender;
         }
 
-        _checkpointRewards(_receiver, totalSupply(), false, address(0));
+        uint256[] memory distributions = _updateDistributions();
+        _checkpointRewards(_receiver, distributions, false, address(0));
 
-        token.safeTransferFrom(address(msg.sender), address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
 
         totalAmount += _amount;
         _mint(_receiver, _amount);
@@ -42,7 +43,8 @@ contract StakingRewardDistributor is BaseStakingRewardDistributor {
 
         if (balanceOf(msg.sender) < _amount) revert WrongAmount();
 
-        _checkpointRewards(msg.sender, totalSupply(), _claimRewards, address(0));
+        uint256[] memory distributions = _updateDistributions();
+        _checkpointRewards(msg.sender, distributions, _claimRewards, address(0));
 
         if (_amount > 0) {
             _burn(msg.sender, _amount);

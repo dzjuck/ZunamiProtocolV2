@@ -89,7 +89,7 @@ contract SellingCurveRewardManagerFrxEth is IRewardManager {
 
         checkSlippage(reward, amount, frxEthAmount);
 
-        IERC20(Constants.FRX_ETH_ADDRESS).safeTransfer(address(msg.sender), frxEthAmount);
+        IERC20(Constants.FRX_ETH_ADDRESS).safeTransfer(msg.sender, frxEthAmount);
     }
 
     function getExchangeIndexes(address reward) internal pure returns (uint256, uint256) {

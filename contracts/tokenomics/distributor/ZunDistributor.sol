@@ -96,11 +96,12 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         lastDistributionBlock = _startBlock;
         lastFinalizeBlock = _startBlock;
 
+        uint256 gaugesLength_ = _gaugeAddrs.length;
         // init gauges
-        if (_gaugeAddrs.length != _gaugeVotes.length) {
+        if (gaugesLength_ != _gaugeVotes.length) {
             revert WrongLength();
         }
-        for (uint256 i; i < _gaugeAddrs.length; ++i) {
+        for (uint256 i; i < gaugesLength_; ++i) {
             address gaugeAddr = _gaugeAddrs[i];
             if (gaugeAddr == address(0)) revert ZeroAddress();
             gauges.push(Gauge(gaugeAddr, _gaugeVotes[i], 0));
@@ -157,7 +158,8 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         uint256[] calldata gaugeIds,
         uint256[] calldata amounts
     ) internal returns (uint256 totalVotes) {
-        if (gaugeIds.length != amounts.length) {
+        uint256 gaugeIdsLength_ = gauges.length;
+        if (gaugeIdsLength_ != amounts.length) {
             revert WrongLength();
         }
         if (_isPeriodPassed(lastFinalizeBlock)) {
@@ -165,7 +167,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         }
 
         // update votes' counters
-        for (uint256 i; i < gaugeIds.length; ++i) {
+        for (uint256 i; i < gaugeIdsLength_; ++i) {
             uint256 gaugeId = gaugeIds[i];
             uint256 amount = amounts[i];
             if (gaugeId >= gauges.length) {
@@ -238,7 +240,8 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
             revert InvalidGaugeImplementation(newGauge);
         }
 
-        for (uint256 i = 0; i < gauges.length; i++) {
+        uint256 gaugesLength_ = gauges.length;
+        for (uint256 i = 0; i < gaugesLength_; ++i) {
             if (gauges[i].addr == newGauge) {
                 revert GaugeAlreadyExists(newGauge);
             }
@@ -254,7 +257,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         if (gaugeId >= gaugesLength_) {
             revert WrongGaugeId();
         }
-        for (uint256 i = gaugeId; i < gaugesLength_ - 1; i++) {
+        for (uint256 i = gaugeId; i < gaugesLength_ - 1; ++i) {
             gauges[i] = gauges[i + 1];
         }
         gauges.pop();
@@ -270,18 +273,14 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
     }
 
     /**
-     * @dev Allows the owner to withdraw stuck tokens from the contract.
+     * @dev Allows the owner to emergency withdraw tokens from the contract.
      * @param _token The ERC20 token to withdraw from.
-     * @param _amount The amount of tokens to withdraw. Use type(uint256).max to withdraw all tokens.
      * @notice Only the owner can withdraw tokens.
-     * @notice If _amount is set to type(uint256).max, it withdraws all tokens held by the contract.
      */
-    function withdrawStuckToken(ERC20 _token, uint256 _amount) external onlyOwner {
-        uint256 withdrawAmount = _amount == type(uint256).max
-            ? _token.balanceOf(address(this))
-            : _amount;
-        if (withdrawAmount > 0) {
-            _token.safeTransfer(msg.sender, withdrawAmount);
+    function withdrawEmergency(ERC20 _token) external onlyOwner {
+        uint256 tokenBalance = _token.balanceOf(address(this));
+        if (tokenBalance > 0) {
+            _token.safeTransfer(msg.sender, tokenBalance);
         }
     }
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 
 import './BaseStakingRewardDistributor.sol';
 import './IZUNStakingRewardDistributor.sol';
@@ -17,13 +18,14 @@ contract ZUNStakingRewardDistributor is
 
     error LockDoesNotExist();
     error Unlocked();
+    error NotTransferable();
 
     bytes32 public constant RECAPITALIZATION_ROLE = keccak256('RECAPITALIZATION_ROLE');
 
     uint16 public constant EXIT_PERCENT = 150; // 15%
     uint16 public constant PERCENT_DENOMINATOR = 1e3;
 
-    uint256 public constant RATION_DENOMINATOR = 1e18;
+    uint256 public constant RATIO_DENOMINATOR = 1e18;
 
     uint32 public constant BLOCKS_IN_4_MONTHS = (4 * 30 * 24 * 60 * 60) / 12;
 
@@ -72,9 +74,9 @@ contract ZUNStakingRewardDistributor is
 
     function getRecapitalizationRatio() public view returns (uint256) {
         if (recapitalizedAmount == 0) {
-            return RATION_DENOMINATOR;
+            return RATIO_DENOMINATOR;
         }
-        return ((totalAmount - recapitalizedAmount) * RATION_DENOMINATOR) / totalAmount;
+        return ((totalAmount - recapitalizedAmount) * RATIO_DENOMINATOR) / totalAmount;
     }
 
     function _reduceByStakedAmount(
@@ -131,13 +133,14 @@ contract ZUNStakingRewardDistributor is
             _receiver = msg.sender;
         }
 
-        _checkpointRewards(_receiver, totalSupply(), false, address(0));
+        uint256[] memory distributions = _updateDistributions();
+        _checkpointRewards(_receiver, distributions, false, address(0));
 
-        token.safeTransferFrom(address(msg.sender), address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 ratio = getRecapitalizationRatio();
-        if (ratio < RATION_DENOMINATOR) {
-            uint256 amountReduced = (_amount * ratio) / RATION_DENOMINATOR;
+        if (ratio < RATIO_DENOMINATOR) {
+            uint256 amountReduced = (_amount * ratio) / RATIO_DENOMINATOR;
             recapitalizedAmount += _amount - amountReduced;
         }
         totalAmount += _amount;
@@ -164,19 +167,16 @@ contract ZUNStakingRewardDistributor is
         if (untilBlock == 0) revert Unlocked();
         uint256 amount = lock.amount;
 
-        if (_tokenReceiver == address(0)) {
-            _tokenReceiver = msg.sender;
-        }
-
-        _checkpointRewards(msg.sender, totalSupply(), _claimRewards, address(0));
+        uint256[] memory distributions = _updateDistributions();
+        _checkpointRewards(msg.sender, distributions, _claimRewards, _tokenReceiver);
 
         uint256 ratio = getRecapitalizationRatio();
         _burn(msg.sender, amount);
         totalAmount -= amount;
 
         uint256 amountReduced = amount;
-        if (ratio < RATION_DENOMINATOR) {
-            amountReduced = (amount * ratio) / RATION_DENOMINATOR;
+        if (ratio < RATIO_DENOMINATOR) {
+            amountReduced = (amount * ratio) / RATIO_DENOMINATOR;
             if (amount - amountReduced > recapitalizedAmount) {
                 recapitalizedAmount = 0;
             } else {
@@ -195,6 +195,10 @@ contract ZUNStakingRewardDistributor is
 
             token.safeTransfer(earlyExitReceiver, amountReduced - transferredAmount);
         }
+
+        if (_tokenReceiver == address(0)) {
+            _tokenReceiver = msg.sender;
+        }
         token.safeTransfer(address(_tokenReceiver), transferredAmount);
 
         emit Withdrawn(msg.sender, _lockIndex, amount, amountReduced, transferredAmount);
@@ -204,7 +208,7 @@ contract ZUNStakingRewardDistributor is
         address recipient,
         uint256 amount
     ) public override(BaseStakingRewardDistributor, ERC20Upgradeable) returns (bool) {
-        return super.transfer(recipient, amount);
+        revert NotTransferable();
     }
 
     function transferFrom(
@@ -212,7 +216,7 @@ contract ZUNStakingRewardDistributor is
         address recipient,
         uint256 amount
     ) public override(BaseStakingRewardDistributor, ERC20Upgradeable) returns (bool) {
-        return super.transferFrom(sender, recipient, amount);
+        revert NotTransferable();
     }
 
     function _update(

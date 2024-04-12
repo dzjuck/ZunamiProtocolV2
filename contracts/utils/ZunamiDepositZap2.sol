@@ -46,7 +46,7 @@ contract ZunamiDepositZap2 {
         IERC20[POOL_ASSETS] memory tokens = zunamiPool.tokens();
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = zunamiPool
             .tokenDecimalsMultipliers();
-        for (uint256 i = 0; i < amounts.length; i++) {
+        for (uint256 i = 0; i < amounts.length; ++i) {
             uint256 amount = amounts[i];
             IERC20 token = tokens[i];
             uint256 tokenDecimalsMultiplier = tokenDecimalsMultipliers[i];

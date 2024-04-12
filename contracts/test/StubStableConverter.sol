@@ -51,7 +51,7 @@ contract StubStableConverter is IStableConverter {
         return amountNorm;
     }
 
-    function withdrawStuckToken(IERC20Metadata _token) external {
+    function withdrawEmergency(IERC20Metadata _token) external {
         uint256 tokenBalance = _token.balanceOf(address(this));
         if (tokenBalance > 0) {
             _token.safeTransfer(msg.sender, tokenBalance);

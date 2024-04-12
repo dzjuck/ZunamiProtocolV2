@@ -27,7 +27,7 @@ contract StubRewardToZunManager is IRewardManager {
      */
     function handle(address, uint256 _amount, address _receivingToken) external override {
         if (_receivingToken != address(ZUN_TOKEN)) revert('Receiving token should be zun token');
-        IERC20(_receivingToken).safeTransferFrom(ZUN_TOKEN_HOLDER, address(msg.sender), _amount);
+        IERC20(_receivingToken).safeTransferFrom(ZUN_TOKEN_HOLDER, msg.sender, _amount);
     }
 
     function valuate(

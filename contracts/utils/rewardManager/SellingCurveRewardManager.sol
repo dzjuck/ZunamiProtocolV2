@@ -102,7 +102,7 @@ contract SellingCurveRewardManager is IRewardManager {
         }
 
         uint256 feeTokenAmount = IERC20(receivingToken).balanceOf(address(this));
-        IERC20(receivingToken).safeTransfer(address(msg.sender), feeTokenAmount);
+        IERC20(receivingToken).safeTransfer(msg.sender, feeTokenAmount);
     }
 
     function getExchangeIndexes(address reward) internal pure returns (uint256, uint256) {

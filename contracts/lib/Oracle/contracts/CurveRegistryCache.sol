@@ -48,7 +48,7 @@ contract CurveRegistryCache is ICurveRegistryCache {
         if (basePool_ != address(0)) {
             _initPool(basePool_);
             address[] memory basePoolCoins_ = _coins[basePool_];
-            for (uint256 i; i < basePoolCoins_.length; i++) {
+            for (uint256 i; i < basePoolCoins_.length; ++i) {
                 address coin_ = basePoolCoins_[i];
                 _hasCoinAnywhere[pool_][coin_] = true;
             }
@@ -58,7 +58,7 @@ contract CurveRegistryCache is ICurveRegistryCache {
         address[8] memory staticCoins_ = _CURVE_REGISTRY.get_coins(pool_);
         uint256[8] memory staticDecimals_ = _CURVE_REGISTRY.get_decimals(pool_);
         address[] memory coins_ = new address[](nCoins_);
-        for (uint256 i; i < nCoins_; i++) {
+        for (uint256 i; i < nCoins_; ++i) {
             address coin_ = staticCoins_[i];
             require(coin_ != address(0), 'CurveRegistryCache: invalid coin');
             coins_[i] = coin_;

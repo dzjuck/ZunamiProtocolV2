@@ -69,7 +69,7 @@ contract CrvUsdConvexERC4626StratBase is ConvexCurveERC4626StratBase {
         address vault,
         uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256 amount) {
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             if (amounts[i] > 0) {
                 tokens[i].safeTransfer(address(converter), amounts[i]);
                 converter.handle(

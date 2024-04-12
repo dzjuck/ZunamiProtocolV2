@@ -74,7 +74,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_
     ) internal {
         bool otherZeros = false;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             if (otherZeros && address(tokens_[i]) != address(0)) revert WrongTokens();
             if (address(tokens_[i]) == address(0)) otherZeros = true;
             if (
@@ -110,7 +110,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         _mintExtraGains();
         _claimExtraGains(receiver);
 
-        for (uint256 i = 0; i < _strategyInfo.length; i++) {
+        uint256 length = _strategyInfo.length;
+        for (uint256 i = 0; i < length; ++i) {
             StrategyInfo memory strategyInfo_ = _strategyInfo[i];
             if (strategyInfo_.minted > 0 && strategyInfo_.enabled) {
                 strategyInfo_.strategy.claimRewards(receiver, rewardTokens);
@@ -126,7 +127,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
         uint256 gains;
         uint256 strategyGains_;
-        for (uint256 sid = 0; sid < _strategyInfo.length; sid++) {
+        uint256 length = _strategyInfo.length;
+        for (uint256 sid = 0; sid < length; sid++) {
             StrategyInfo storage strategyInfo_ = _strategyInfo[sid];
             if (strategyInfo_.minted > 0 && strategyInfo_.enabled) {
                 uint256 holdings = strategyInfo_.strategy.totalHoldings();
@@ -189,7 +191,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         _checkStrategyEnabled(sid);
 
         if (receiver == address(0)) {
-            receiver = _msgSender();
+            receiver = msg.sender;
         }
 
         _mintExtraGains();
@@ -214,7 +216,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
     ) internal returns (uint256 depositedValue) {
         IStrategy strategy = _strategyInfo[sid].strategy;
 
-        for (uint256 i = 0; i < amounts.length; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             if (amounts[i] > 0) {
                 IERC20(_tokens[i]).safeTransfer(address(strategy), amounts[i]);
             }
@@ -259,7 +261,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
         _checkStrategyEnabled(sid);
 
         IStrategy strategy = _strategyInfo[sid].strategy;
-        address controllerAddr = _msgSender();
+        address controllerAddr = msg.sender;
 
         if (balanceOf(controllerAddr) < stableAmount) revert WrongAmount();
 
@@ -296,7 +298,8 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
      */
     function addStrategy(address _strategyAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_strategyAddr == address(0)) revert ZeroAddress();
-        for (uint256 i = 0; i < _strategyInfo.length; i++) {
+        uint256 length = _strategyInfo.length;
+        for (uint256 i = 0; i < length; ++i) {
             if (_strategyAddr == address(_strategyInfo[i].strategy)) revert DuplicatedStrategy();
         }
 
@@ -337,14 +340,15 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
         uint256 sid;
         uint256 zunamiStables;
-        for (uint256 i = 0; i < _strategies.length; i++) {
+        uint256 length = _strategyInfo.length;
+        for (uint256 i = 0; i < length; ++i) {
             sid = _strategies[i];
             zunamiStables += _moveFunds(sid, _withdrawalsPercents[i], _minAmounts[i]);
         }
         _strategyInfo[_receiverStrategy].minted += zunamiStables;
 
         uint256[POOL_ASSETS] memory tokensRemainder;
-        for (uint256 i = 0; i < POOL_ASSETS; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             IERC20 token_ = _tokens[i];
             if (address(token_) == address(0)) break;
             tokensRemainder[i] = token_.balanceOf(address(this));

@@ -10,7 +10,7 @@ import '../../../../../interfaces/ICurvePool2.sol';
 contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     using SafeERC20 for IERC20;
 
-    uint256 constant ZUNAMI_ZUNUSD_TOKEN_ID = 0;
+    uint256 public constant ZUNAMI_ZUNUSD_TOKEN_ID = 0;
 
     uint128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID = 0;
     int128 public constant CRVUSD_TOKEN_POOL_CRVUSD_ID_INT = int128(CRVUSD_TOKEN_POOL_CRVUSD_ID);
@@ -72,7 +72,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     function convertCurvePoolTokenAmounts(
         uint256[POOL_ASSETS] memory amounts
     ) internal pure override returns (uint256[] memory) {
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_ZUNUSD_TOKEN_ID];
         return amountsN;
     }
@@ -81,7 +81,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
         address pool,
         uint256[POOL_ASSETS] memory amounts
     ) internal override returns (uint256[] memory) {
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID] = amounts[ZUNAMI_ZUNUSD_TOKEN_ID];
         zunamiStable.safeIncreaseAllowance(pool, amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID]);
         return amountsN;
@@ -122,7 +122,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
         usdc.safeIncreaseAllowance(address(zunamiController), usdcAmount);
         uint256 zunStableAmount = zunamiController.deposit([0, usdcAmount, 0, 0, 0], address(this));
 
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[CRVUSD_TOKEN_POOL_TOKEN_ID] = zunStableAmount;
         zunamiStable.safeIncreaseAllowance(address(pool), zunStableAmount);
 
@@ -164,7 +164,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
 
         IERC20 crvUsd = IERC20(Constants.CRVUSD_ADDRESS);
 
-        uint256[] memory amountsN = new uint256[](8);
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
         amountsN[CRVUSD_TOKEN_POOL_CRVUSD_ID] = crvUsdAmount;
         crvUsd.safeIncreaseAllowance(address(pool), crvUsdAmount);
 

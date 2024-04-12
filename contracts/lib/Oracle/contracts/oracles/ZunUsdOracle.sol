@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 import '../../interfaces/IOracle.sol';
+import '../../interfaces/ICurvePriceOracleNG.sol';
 import '../../libraries/ScaledMath.sol';
-
-interface ICurvePriceOracleNG {
-    function price_oracle(uint256 i) external view returns (uint256);
-}
 
 contract ZunUsdOracle is IOracle {
     using ScaledMath for uint256;
+
+    error ZeroAddress();
+    error UnsupportedToken();
 
     // Tokens
     address internal constant _CRVUSD = address(0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E);
@@ -21,11 +21,12 @@ contract ZunUsdOracle is IOracle {
     IOracle internal immutable _genericOracle;
 
     constructor(address genericOracle_) {
+        if (genericOracle_ == address(0)) revert ZeroAddress();
         _genericOracle = IOracle(genericOracle_);
     }
 
     function getUSDPrice(address token_) external view override returns (uint256) {
-        require(isTokenSupported(token_), 'token not supported');
+        if (!isTokenSupported(token_)) revert UnsupportedToken();
         return _getZunUSDPriceForCurvePool(_CRVUSD_ZUNUSD, _CRVUSD);
     }
 

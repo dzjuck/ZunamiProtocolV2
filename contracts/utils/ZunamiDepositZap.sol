@@ -34,7 +34,7 @@ contract ZunamiDepositZap {
 
         IPool omnipool = omnipoolController.pool();
         IERC20[POOL_ASSETS] memory tokens = omnipool.tokens();
-        for (uint256 i = 0; i < amounts.length; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             IERC20 token = tokens[i];
             if (address(token) != address(0) && amounts[i] > 0) {
                 IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), amounts[i]);
@@ -42,9 +42,7 @@ contract ZunamiDepositZap {
             }
         }
 
-        omnipoolController.deposit(amounts, address(this));
-
-        uint256 zunStableAmount = IERC20(address(omnipool)).balanceOf(address(this));
+        uint256 zunStableAmount = omnipoolController.deposit(amounts, address(this));
 
         IERC20(address(omnipool)).safeIncreaseAllowance(address(apsController), zunStableAmount);
         return apsController.deposit([zunStableAmount, 0, 0, 0, 0], receiver);

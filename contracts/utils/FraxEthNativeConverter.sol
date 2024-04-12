@@ -46,7 +46,7 @@ contract FraxEthNativeConverter is INativeConverter {
                 applySlippage(amount, slippage)
             );
 
-            frxETH.safeTransfer(address(msg.sender), tokenAmount);
+            frxETH.safeTransfer(msg.sender, tokenAmount);
         } else {
             frxETH.safeIncreaseAllowance(address(fraxEthPool), amount);
             tokenAmount = fraxEthPool.exchange(
@@ -56,7 +56,7 @@ contract FraxEthNativeConverter is INativeConverter {
                 applySlippage(amount, slippage)
             );
 
-            weth.safeTransfer(address(msg.sender), tokenAmount);
+            weth.safeTransfer(msg.sender, tokenAmount);
         }
     }
 

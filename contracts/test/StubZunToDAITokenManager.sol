@@ -29,7 +29,7 @@ contract StubZunToDAITokenManager is IRewardManager {
     function handle(address _reward, uint256 _amount, address _receivingToken) external override {
         if (_reward != address(ZUN_TOKEN)) revert('Reward should be zun token');
         if (_receivingToken != Constants.DAI_ADDRESS) revert('Receiving token should be DAI');
-        IERC20(_receivingToken).safeTransferFrom(SPONSOR, address(msg.sender), _amount);
+        IERC20(_receivingToken).safeTransferFrom(SPONSOR, msg.sender, _amount);
     }
 
     function valuate(

@@ -73,14 +73,14 @@ abstract contract ZunamiPoolControllerBase is
         address receiver
     ) external whenNotPaused nonReentrant returns (uint256 shares) {
         if (receiver == address(0)) {
-            receiver = _msgSender();
+            receiver = msg.sender;
         }
 
         IERC20[POOL_ASSETS] memory tokens = pool.tokens();
-        for (uint256 i = 0; i < amounts.length; i++) {
+        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
             IERC20 token = tokens[i];
             if (address(token) != address(0) && amounts[i] > 0) {
-                token.safeTransferFrom(_msgSender(), address(pool), amounts[i]);
+                tokens[i].safeTransferFrom(msg.sender, address(pool), amounts[i]);
             }
         }
 
@@ -105,9 +105,9 @@ abstract contract ZunamiPoolControllerBase is
         address receiver
     ) external whenNotPaused nonReentrant {
         if (receiver == address(0)) {
-            receiver = _msgSender();
+            receiver = msg.sender;
         }
-        withdrawPool(_msgSender(), shares, minTokenAmounts, receiver);
+        withdrawPool(msg.sender, shares, minTokenAmounts, receiver);
     }
 
     function withdrawDefaultPool(

@@ -18,9 +18,10 @@ abstract contract RewardTokenManager {
     event SetRewardTokens(IERC20[] rewardTokens);
 
     function _setRewardTokens(IERC20[] memory rewardTokens_) internal virtual {
-        if (rewardTokens_.length == 0) revert WrongRewardTokens(rewardTokens_);
+        uint256 rewardsLength_ = rewardTokens_.length;
+        if (rewardsLength_ == 0) revert WrongRewardTokens(rewardTokens_);
 
-        for (uint256 i = 0; i < rewardTokens_.length; i++) {
+        for (uint256 i = 0; i < rewardsLength_; ++i) {
             if (address(rewardTokens_[i]) == address(0)) revert ZeroTokenAddress(i);
         }
 
@@ -39,7 +40,7 @@ abstract contract RewardTokenManager {
         uint256[] memory rewardBalances = new uint256[](rewardsLength_);
         bool allRewardsEmpty = true;
 
-        for (uint256 i = 0; i < rewardsLength_; i++) {
+        for (uint256 i = 0; i < rewardsLength_; ++i) {
             IERC20 rewardToken = rewardTokens[i];
             rewardBalances[i] = rewardToken.balanceOf(address(this));
             if (feeToken == rewardToken) {
@@ -76,8 +77,9 @@ abstract contract RewardTokenManager {
     ) private returns (uint256) {
         uint256 feeTokenBalanceBefore = feeToken.balanceOf(address(this));
 
+        uint256 rewardsLength_ = rewardTokens.length;
         IERC20 rewardToken_;
-        for (uint256 i = 0; i < rewardsLength; i++) {
+        for (uint256 i = 0; i < rewardsLength_; ++i) {
             if (rewardAmounts[i] == 0) continue;
             rewardToken_ = rewardTokens[i];
             //don't sell fee token itself as reward

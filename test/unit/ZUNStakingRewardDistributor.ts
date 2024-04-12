@@ -1075,55 +1075,70 @@ describe('ZUNStakingRewardDistributor tests', () => {
         );
     });
 
-    it('should distribute reward token if user send some LP to another', async () => {
+    it('should revert transfer vlZun to another user', async () => {
         const fixture = await loadFixture(deployFixture);
 
         const depositAmount1 = 1000;
-        const { tid1, tid2 } = await depositByTwoUsersState(depositAmount1, 0, fixture);
-        const { stakingRewardDistributor, ZUN, REWARD, REWARD2, users, earlyExitReceiver } =
-            fixture;
+        const depositAmount2 = 0;
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const { stakingRewardDistributor, ZUN, users, earlyExitReceiver } = fixture;
 
-        const distributionAmount = ethUnits('3000000');
-        const distributionAmount2 = ethUnits('30000');
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(
+            ethUnits(depositAmount1)
+        );
+        await expect(
+            stakingRewardDistributor
+                .connect(users[0])
+                .transfer(users[1].address, ethUnits(depositAmount1))
+        ).to.be.revertedWithCustomError(stakingRewardDistributor, 'NotTransferable');
+    });
 
-        await REWARD.approve(stakingRewardDistributor.address, distributionAmount.div(3));
-        await stakingRewardDistributor.distribute(REWARD.address, distributionAmount.div(3));
-        await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2.div(3));
-        await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2.div(3));
+    it("shouldn't revert if totalAmount reduced", async () => {
+        const fixture = await loadFixture(deployFixture);
+        const { stakingRewardDistributor, ZUN, REWARD, users, admin, earlyExitReceiver } = fixture;
 
-        await stakingRewardDistributor
-            .connect(users[0])
-            .transfer(users[1].address, ethUnits(depositAmount1));
+        await stakingRewardDistributor.grantRole(
+            await stakingRewardDistributor.DISTRIBUTOR_ROLE(),
+            admin.address
+        );
 
-        await REWARD.approve(stakingRewardDistributor.address, distributionAmount.div(3));
-        await stakingRewardDistributor.distribute(REWARD.address, distributionAmount.div(3));
-        await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2.div(3));
-        await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2.div(3));
+        const depositAmount1 = 1000;
+        const depositAmount2 = 3000;
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        const distributionAmount = 10000;
+        await REWARD.approve(stakingRewardDistributor.address, ethUnits(distributionAmount));
+        await stakingRewardDistributor.distribute(REWARD.address, ethUnits(distributionAmount));
+        expect(await REWARD.balanceOf(stakingRewardDistributor.address)).to.eq(
+            ethUnits(distributionAmount)
+        );
 
+        await stakingRewardDistributor.withdrawEmergency(REWARD.address);
+        await REWARD.transfer(stakingRewardDistributor.address, ethUnits(distributionAmount).sub(1));
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await REWARD.balanceOf(users[0].address)).to.be.eq(distributionAmount.div(3));
-        expect(await REWARD.balanceOf(users[1].address)).to.be.eq(distributionAmount.div(3));
-        expect(await REWARD2.balanceOf(users[0].address)).to.be.eq(distributionAmount2.div(3));
-        expect(await REWARD2.balanceOf(users[1].address)).to.be.eq(distributionAmount2.div(3));
+        const balanceAfter0 = await REWARD.balanceOf(users[0].address);
+        const balanceAfter1 = await REWARD.balanceOf(users[1].address);
 
-        await stakingRewardDistributor
-            .connect(users[1])
-            .transfer(users[0].address, ethUnits(depositAmount1 / 2));
+        expect(balanceAfter0).to.be.gte(ethUnits(distributionAmount - 1).div(4));
+        expect(balanceAfter1).to.be.gte(
+            ethUnits(distributionAmount).div(4).mul(3).sub(ethUnits('1'))
+        );
 
-        await REWARD.approve(stakingRewardDistributor.address, distributionAmount.div(3));
-        await stakingRewardDistributor.distribute(REWARD.address, distributionAmount.div(3));
-        await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2.div(3));
-        await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2.div(3));
-
+        await REWARD.approve(stakingRewardDistributor.address, ethUnits(distributionAmount));
+        await stakingRewardDistributor.distribute(REWARD.address, ethUnits(distributionAmount));
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await REWARD.balanceOf(users[0].address)).to.be.eq(distributionAmount.div(2));
-        expect(await REWARD.balanceOf(users[1].address)).to.be.eq(distributionAmount.div(2));
-        expect(await REWARD2.balanceOf(users[0].address)).to.be.eq(distributionAmount2.div(2));
-        expect(await REWARD2.balanceOf(users[1].address)).to.be.eq(distributionAmount2.div(2));
+        expect(await REWARD.balanceOf(users[0].address)).to.be.gte(
+            ethUnits(distributionAmount).div(4).mul(2)
+        );
+        expect(await REWARD.balanceOf(users[1].address)).to.be.gte(
+            ethUnits(distributionAmount - 1)
+                .div(4)
+                .mul(3)
+                .mul(2)
+        );
     });
 
     async function addRewardToken(
@@ -1302,117 +1317,6 @@ describe('Votes Tests', () => {
     });
 
     describe('transfers', function () {
-        it('no delegation', async function () {
-            const { token, users } = await loadFixture(deployVotesFixture);
-            const holder = users[0];
-            const recipient = users[1];
-            await token.mint(holder.address, supply);
-
-            await expect(token.connect(holder).transfer(recipient.address, 1))
-                .to.emit(token, 'Transfer')
-                .withArgs(holder.address, recipient.address, 1)
-                .to.not.emit(token, 'DelegateVotesChanged');
-
-            const holderVotes = 0;
-            const recipientVotes = 0;
-
-            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
-            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
-
-            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
-            const timepoint = await time.latestBlock();
-            await mine();
-            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
-            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
-        });
-
-        it('sender delegation', async function () {
-            const { token, users } = await loadFixture(deployVotesFixture);
-            const holder = users[0];
-            const recipient = users[1];
-            await token.mint(holder.address, supply);
-
-            await token.connect(holder).delegate(holder.address);
-
-            const tx = await token.connect(holder).transfer(recipient.address, 1);
-            await expect(tx)
-                .to.emit(token, 'Transfer')
-                .withArgs(holder.address, recipient.address, 1)
-                .to.emit(token, 'DelegateVotesChanged')
-                .withArgs(holder.address, supply, supply.sub(1));
-
-            const holderVotes = supply.sub(1);
-            const recipientVotes = 0;
-
-            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
-            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
-
-            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
-            const timepoint = await time.latestBlock();
-            await mine();
-            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
-            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
-        });
-
-        it('receiver delegation', async function () {
-            const { token, users } = await loadFixture(deployVotesFixture);
-            const holder = users[0];
-            const recipient = users[1];
-            await token.mint(holder.address, supply);
-            await token.connect(recipient).delegate(recipient.address);
-
-            const tx = await token.connect(holder).transfer(recipient.address, 1);
-            await expect(tx)
-                .to.emit(token, 'Transfer')
-                .withArgs(holder.address, recipient.address, 1)
-                .to.emit(token, 'DelegateVotesChanged')
-                .withArgs(recipient.address, 0, 1);
-
-            const holderVotes = 0;
-            const recipientVotes = 1;
-
-            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
-            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
-
-            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
-            const timepoint = await time.latestBlock();
-            await mine();
-            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
-            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
-        });
-
-        it('full delegation', async function () {
-            const { token, users } = await loadFixture(deployVotesFixture);
-            const holder = users[0];
-            const recipient = users[1];
-            await token.mint(holder.address, supply);
-            await token.connect(recipient).delegate(recipient.address);
-
-            await token.connect(holder).delegate(holder.address);
-            await token.connect(recipient).delegate(recipient.address);
-
-            const tx = await token.connect(holder).transfer(recipient.address, 1);
-            await expect(tx)
-                .to.emit(token, 'Transfer')
-                .withArgs(holder.address, recipient.address, 1)
-                .to.emit(token, 'DelegateVotesChanged')
-                .withArgs(holder.address, supply, supply.sub(1))
-                .to.emit(token, 'DelegateVotesChanged')
-                .withArgs(recipient.address, 0, 1);
-
-            const holderVotes = supply.sub(1);
-            const recipientVotes = 1;
-
-            expect(await token.getVotes(holder.address)).to.equal(holderVotes);
-            expect(await token.getVotes(recipient.address)).to.equal(recipientVotes);
-
-            // need to advance 2 blocks to see the effect of a transfer on "getPastVotes"
-            const timepoint = await time.latestBlock();
-            await mine();
-            expect(await token.getPastVotes(holder.address, timepoint)).to.equal(holderVotes);
-            expect(await token.getPastVotes(recipient.address, timepoint)).to.equal(recipientVotes);
-        });
-
         describe('getPastTotalSupply', function () {
             it('reverts if block number >= current block', async function () {
                 const { token, users } = await loadFixture(deployVotesFixture);

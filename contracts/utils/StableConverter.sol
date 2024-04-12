@@ -100,7 +100,7 @@ contract StableConverter is IStableConverter {
         }
 
         IERC20 to_ = IERC20(to);
-        to_.safeTransfer(address(msg.sender), to_.balanceOf(address(this)));
+        to_.safeTransfer(msg.sender, to_.balanceOf(address(this)));
     }
 
     function valuate(

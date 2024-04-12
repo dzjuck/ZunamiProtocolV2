@@ -34,7 +34,8 @@ contract CurveLPOracle is IOracle, Ownable2Step {
         address pool = _getCurvePool(token);
         if (!curveRegistryCache.isRegistered(pool)) return false;
         address[] memory coins = curveRegistryCache.coins(pool);
-        for (uint256 i; i < coins.length; i++) {
+        uint256 coinsLength = coins.length;
+        for (uint256 i; i < coinsLength; ++i) {
             if (!_genericOracle.isTokenSupported(coins[i])) return false;
         }
         return true;
@@ -52,7 +53,7 @@ contract CurveLPOracle is IOracle, Ownable2Step {
         uint256 numberOfCoins = curveRegistryCache.nCoins(pool);
         uint256[] memory prices = new uint256[](numberOfCoins);
         uint256[] memory thresholds = new uint256[](numberOfCoins);
-        for (uint256 i; i < numberOfCoins; i++) {
+        for (uint256 i; i < numberOfCoins; ++i) {
             address coin = coins[i];
             uint256 price = _genericOracle.getUSDPrice(coin);
             prices[i] = price;

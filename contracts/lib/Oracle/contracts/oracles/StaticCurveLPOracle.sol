@@ -7,13 +7,18 @@ import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '../../libraries/ScaledMath.sol';
 import '../../libraries/CurvePoolUtils.sol';
 import '../../interfaces/IOracle.sol';
-import '../../interfaces/vendor/ICurvePoolV0.sol';
 import '../../interfaces/vendor/ICurvePoolV1.sol';
 
 contract StaticCurveLPOracle is IOracle, Ownable2Step {
     using ScaledMath for uint256;
 
     error ZeroAddress();
+    error LengthMismatch();
+    error ZeroPool();
+    error TokenNotSupported();
+    error ZeroPrice();
+    error ZeroBalance();
+    error ThresholdTooHigh();
 
     event ImbalanceThresholdUpdated(address indexed token, uint256 threshold);
 
@@ -25,45 +30,44 @@ contract StaticCurveLPOracle is IOracle, Ownable2Step {
     uint256[] public decimals;
     address public pool;
 
-    constructor(
-        address genericOracle_,
-        address[] memory coins_,
-        uint256[] memory decimals_,
-        address pool_
-    ) Ownable(msg.sender) {
+    constructor(address genericOracle_, address[] memory coins_, uint256[] memory decimals_, address pool_) Ownable(msg.sender) {
+        if (genericOracle_ == address(0)) revert ZeroAddress();
         _genericOracle = IOracle(genericOracle_);
-        require(coins_.length == decimals_.length, 'length mismatch');
+
+        if (coins_.length != decimals_.length) revert LengthMismatch();
+
         coins = coins_;
         decimals = decimals_;
 
-        require(pool_ != address(0), 'zero pool');
+        if(pool_ == address(0)) revert ZeroPool();
         pool = pool_;
     }
 
     function isTokenSupported(address token) external view override returns (bool) {
         if (token != pool) return false;
-        for (uint256 i; i < coins.length; i++) {
+        uint256 numberOfCoins = coins.length;
+        for (uint256 i; i < numberOfCoins; ++i) {
             if (!_genericOracle.isTokenSupported(coins[i])) return false;
         }
         return true;
     }
 
     function getUSDPrice(address token) external view returns (uint256) {
-        require(token == pool, 'token not supported');
+        if (token != pool) revert TokenNotSupported();
 
         // Adding up the USD value of all the coins in the pool
         uint256 value;
         uint256 numberOfCoins = coins.length;
         uint256[] memory prices = new uint256[](numberOfCoins);
         uint256[] memory thresholds = new uint256[](numberOfCoins);
-        for (uint256 i; i < numberOfCoins; i++) {
+        for (uint256 i; i < numberOfCoins; ++i) {
             address coin = coins[i];
             uint256 price = _genericOracle.getUSDPrice(coin);
             prices[i] = price;
             thresholds[i] = imbalanceThresholds[token];
-            require(price > 0, 'price is 0');
+            if (price == 0) revert ZeroPrice();
             uint256 balance = _getBalance(pool, i);
-            require(balance > 0, 'balance is 0');
+            if (balance == 0) revert ZeroBalance();
             value += balance.convertScale(uint8(decimals[i]), 18).mulDown(price);
         }
 
@@ -84,7 +88,7 @@ contract StaticCurveLPOracle is IOracle, Ownable2Step {
     }
 
     function setImbalanceThreshold(address token, uint256 threshold) external onlyOwner {
-        require(threshold <= _MAX_IMBALANCE_THRESHOLD, 'threshold too high');
+        if (threshold > _MAX_IMBALANCE_THRESHOLD) revert ThresholdTooHigh();
         imbalanceThresholds[token] = threshold;
         emit ImbalanceThresholdUpdated(token, threshold);
     }

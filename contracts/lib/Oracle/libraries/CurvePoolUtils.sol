@@ -31,7 +31,7 @@ library CurvePoolUtils {
         uint256 fromDecimals = poolMeta.decimals[0];
         uint256 fromBalance = 10 ** fromDecimals;
         uint256 fromPrice = poolMeta.prices[0];
-        for (uint256 i = 1; i < poolMeta.numberOfCoins; i++) {
+        for (uint256 i = 1; i < poolMeta.numberOfCoins; ++i) {
             uint256 toDecimals = poolMeta.decimals[i];
             uint256 toPrice = poolMeta.prices[i];
             uint256 toExpectedUnscaled = (fromBalance * fromPrice) / toPrice;

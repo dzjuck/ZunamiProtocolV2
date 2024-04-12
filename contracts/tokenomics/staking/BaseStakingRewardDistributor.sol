@@ -5,7 +5,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
@@ -32,6 +31,8 @@ abstract contract BaseStakingRewardDistributor is
 
     // Create a new role identifier for the distributor role
     bytes32 public constant DISTRIBUTOR_ROLE = keccak256('DISTRIBUTOR_ROLE');
+
+    uint256 public constant DISTRIBUTION_DENOMINATOR = 1e18;
 
     struct RewardTokenInfo {
         IERC20 token;
@@ -120,7 +121,7 @@ abstract contract BaseStakingRewardDistributor is
 
     function _checkpointRewards(
         address _user,
-        uint256 _totalSupply,
+        uint256[] memory _distributions,
         bool _claim,
         address _receiver
     ) internal {
@@ -137,9 +138,18 @@ abstract contract BaseStakingRewardDistributor is
         // calculate new user reward distribution and transfer any owed rewards
         uint256 userBalance = balanceOf(_user);
         uint256 length = rewardTokenInfo.length;
-        for (uint256 i = 0; i < length; i++) {
-            _checkpointReward(i, _user, receiver, userBalance, _totalSupply, _claim);
+        for (uint256 i = 0; i < length; ++i) {
+            _checkpointReward(i, _user, receiver, userBalance, _distributions[i], _claim);
         }
+    }
+
+    function _updateDistributions() internal returns (uint256[] memory) {
+        uint256 length = rewardTokenInfo.length;
+        uint256[] memory distributions = new uint256[](length);
+        for (uint256 i = 0; i < length; ++i) {
+            distributions[i] = _updateDistribution(i);
+        }
+        return distributions;
     }
 
     function _reduceByStakedAmount(
@@ -153,27 +163,33 @@ abstract contract BaseStakingRewardDistributor is
         address _user,
         address _receiver,
         uint256 _userBalance,
-        uint256 _totalSupply,
+        uint256 _distribution,
         bool _claim
     ) internal {
-        uint256 distribution = _updateDistribution(_tid, _totalSupply);
-
         uint256 userDistribution = userRewardDistribution[_user][_tid];
         uint256 newClaimable = 0;
-        if (userDistribution < distribution) {
-            userRewardDistribution[_user][_tid] = distribution;
-            emit UserDistributionUpdated(_tid, _user, distribution);
-            newClaimable = (_userBalance * (distribution - userDistribution)) / 1e18;
+        if (userDistribution < _distribution) {
+            userRewardDistribution[_user][_tid] = _distribution;
+            emit UserDistributionUpdated(_tid, _user, _distribution);
+            newClaimable =
+                (_userBalance * (_distribution - userDistribution)) /
+                DISTRIBUTION_DENOMINATOR;
         }
 
         uint256 totalClaimable = claimableRewards[_tid][_user] + newClaimable;
         if (totalClaimable > 0) {
             if (_claim) {
-                _safeRewardTransfer(rewardTokenInfo[_tid].token, _receiver, totalClaimable);
-                rewardTokenInfo[_tid].balance -= totalClaimable;
+                uint256 transferred = _safeRewardTransfer(
+                    rewardTokenInfo[_tid].token,
+                    _receiver,
+                    totalClaimable
+                );
+                rewardTokenInfo[_tid].balance -= transferred;
                 // update amount claimed
-                claimedRewards[_tid][_user] += totalClaimable;
-                claimableRewards[_tid][_user] = 0;
+                claimedRewards[_tid][_user] += transferred;
+                if (claimableRewards[_tid][_user] != 0) {
+                    claimableRewards[_tid][_user] -= transferred;
+                }
                 emit Claimed(_receiver, _tid, totalClaimable);
             } else if (newClaimable > 0) {
                 // update total_claimable
@@ -182,19 +198,21 @@ abstract contract BaseStakingRewardDistributor is
         }
     }
 
-    function _updateDistribution(
-        uint256 _tid,
-        uint256 _totalSupply
-    ) internal returns (uint256 distribution) {
+    function _updateDistribution(uint256 _tid) internal returns (uint256 distribution) {
         RewardTokenInfo storage rewardInfo = rewardTokenInfo[_tid];
         address token_ = address(rewardInfo.token);
         uint256 dI = 0;
-        if (_totalSupply != 0) {
+        uint256 totalSupply_ = totalSupply();
+        if (totalSupply_ != 0) {
             uint256 tokenBalance = IERC20(token_).balanceOf(address(this));
             if (token_ == address(token)) {
                 tokenBalance = _reduceByStakedAmount(tokenBalance);
             }
-            dI = (1e18 * (tokenBalance - rewardInfo.balance)) / _totalSupply;
+            if (tokenBalance > rewardInfo.balance) {
+                dI =
+                    (DISTRIBUTION_DENOMINATOR * (tokenBalance - rewardInfo.balance)) /
+                    totalSupply_;
+            }
             rewardInfo.balance = tokenBalance;
         }
 
@@ -214,12 +232,13 @@ abstract contract BaseStakingRewardDistributor is
         uint256 tid = rewardTokenTidByAddress[_token];
 
         rewardTokenInfo[tid].token.safeTransferFrom(msg.sender, address(this), _amount);
-        _updateDistribution(tid, totalSupply());
+        _updateDistribution(tid);
     }
 
     // claim rewards
     function claim(address _receiver) external nonReentrant {
-        _checkpointRewards(msg.sender, totalSupply(), true, _receiver);
+        uint256[] memory distributions = _updateDistributions();
+        _checkpointRewards(msg.sender, distributions, true, _receiver);
     }
 
     // Safe rewardToken transfer function.
@@ -243,7 +262,12 @@ abstract contract BaseStakingRewardDistributor is
 
     function isRewardTokenAdded(address _token) public view returns (bool) {
         uint256 tid = rewardTokenTidByAddress[_token];
-        return rewardTokenInfo.length > tid && address(rewardTokenInfo[tid].token) == _token;
+        if (
+            tid > 0 || (rewardTokenInfo.length > 0 && address(rewardTokenInfo[tid].token) == _token)
+        ) {
+            return true;
+        }
+        return false;
     }
 
     function getPendingReward(uint256 _tid, address _user) external view returns (uint256) {
@@ -252,28 +276,21 @@ abstract contract BaseStakingRewardDistributor is
             newClaimable =
                 (balanceOf(_user) *
                     (rewardTokenInfo[_tid].distribution - userRewardDistribution[_user][_tid])) /
-                1e18;
+                DISTRIBUTION_DENOMINATOR;
         }
 
         return claimableRewards[_tid][_user] + newClaimable;
     }
 
     /**
-     * @dev Allows the owner to withdraw stuck tokens from the contract.
-     * @param _token The IERC20 token to withdraw from.
-     * @param _amount The amount of tokens to withdraw. Use type(uint256).max to withdraw all tokens.
-     * @notice Only the account with the DEFAULT_ADMIN_ROLE can withdraw tokens.
-     * @notice If _amount is set to type(uint256).max, it withdraws all tokens held by the contract.
+     * @dev Allows the owner to withdraw emergency tokens from the contract.
+     * @param _token The ERC20 token to withdraw from.
+     * @notice Only the owner can withdraw tokens.
      */
-    function withdrawStuckToken(
-        IERC20 _token,
-        uint256 _amount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 withdrawAmount = _amount == type(uint256).max
-            ? _token.balanceOf(address(this))
-            : _amount;
-        if (withdrawAmount > 0) {
-            _token.safeTransfer(_msgSender(), withdrawAmount);
+    function withdrawEmergency(IERC20 _token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 tokenBalance = _token.balanceOf(address(this));
+        if (tokenBalance > 0) {
+            _token.safeTransfer(msg.sender, tokenBalance);
         }
     }
 
@@ -298,9 +315,9 @@ abstract contract BaseStakingRewardDistributor is
         uint256 value
     ) internal virtual override(ERC20Upgradeable) {
         if (value > 0) {
-            uint256 totalSupply = totalSupply();
-            _checkpointRewards(from, totalSupply, false, address(0));
-            _checkpointRewards(to, totalSupply, false, address(0));
+            uint256[] memory distributions = _updateDistributions();
+            _checkpointRewards(from, distributions, false, address(0));
+            _checkpointRewards(to, distributions, false, address(0));
         }
         super._update(from, to, value);
     }

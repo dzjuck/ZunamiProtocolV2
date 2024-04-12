@@ -23,7 +23,7 @@ contract ApproveGauge is IGauge, Ownable2Step {
         TOKEN.safeIncreaseAllowance(RECEIVER, amount);
     }
 
-    function withdrawStuckToken(ERC20 _token) external onlyOwner {
+    function withdrawEmergency(ERC20 _token) external onlyOwner {
         uint256 tokenBalance = _token.balanceOf(address(this));
         if (tokenBalance > 0) {
             _token.safeTransfer(msg.sender, tokenBalance);
