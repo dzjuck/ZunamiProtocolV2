@@ -2,6 +2,7 @@ const { ethers } = require('hardhat');
 const {
     setupTokenConverterStables,
     setupTokenConverterETHs,
+    setupTokenConverterRewards,
 } = require('../../../test/utils/SetupTokenConverter.js');
 
 async function main() {
@@ -9,17 +10,22 @@ async function main() {
 
     console.log('Start deploy');
     const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    const tokenConverter = await TokenConverterFactory.deploy(curveRouterAddr);
-    await tokenConverter.deployed();
+    // const tokenConverter = await TokenConverterFactory.deploy(curveRouterAddr);
+    // await tokenConverter.deployed();
+    const tokenConverter = await TokenConverterFactory.attach('0xf48A59434609b6e934c2cF091848FA2D28b34bfc');
     console.log('TokenConverter deployed to:', tokenConverter.address);
 
-    console.log('Starting setup token converter for stables');
-    await setupTokenConverterStables(tokenConverter);
-    console.log('Token сonverter configured for stables');
+    // console.log('Starting setup token converter for stables');
+    // await setupTokenConverterStables(tokenConverter);
+    // console.log('Token сonverter configured for stables');
+    //
+    // console.log('Starting setup token converter for eths');
+    // await setupTokenConverterETHs(tokenConverter);
+    // console.log('Token сonverter configured for eths');
 
-    console.log('Starting setup token converter for eths');
-    await setupTokenConverterETHs(tokenConverter);
-    console.log('Token сonverter configured for eths');
+    console.log('Starting setup token converter for rewards');
+    await setupTokenConverterRewards(tokenConverter);
+    console.log('Token сonverter configured for rewards');
 }
 
 main()
