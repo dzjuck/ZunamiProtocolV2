@@ -187,8 +187,8 @@ abstract contract BaseStakingRewardDistributor is
                 rewardTokenInfo[_tid].balance -= transferred;
                 // update amount claimed
                 claimedRewards[_tid][_user] += transferred;
-                if (claimableRewards[_tid][_user] != 0) {
-                    claimableRewards[_tid][_user] -= transferred;
+                if (claimableRewards[_tid][_user] != 0 || totalClaimable > transferred) {
+                    claimableRewards[_tid][_user] = totalClaimable - transferred;
                 }
                 emit Claimed(_receiver, _tid, totalClaimable);
             } else if (newClaimable > 0) {
