@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-
 contract LlamaSale is Ownable, ReentrancyGuard {
     error WrongBlock();
     error ZeroAmount();
@@ -44,12 +43,12 @@ contract LlamaSale is Ownable, ReentrancyGuard {
     function deposit() public payable nonReentrant returns (bool success) {
         if (!checkRound(firstRound) && !checkRound(secondRound)) revert WrongBlock();
         if (!holders[msg.sender]) revert WrongHolder();
-        if (msg.sender.balance < msg.value || msg.value == 0) revert WrongAmount();
+        if (msg.value == 0) revert WrongAmount();
         if (
             checkRound(firstRound) &&
             (msg.value + collectedAmounts[msg.sender] > maxPersonalBalance)
         ) revert WrongPersonalBalance();
-        if (msg.value + address(this).balance > maxTotalBalance) revert WrongTotalBalance();
+        if (address(this).balance > maxTotalBalance) revert WrongTotalBalance();
         collectedAmounts[msg.sender] += msg.value;
         emit Deposit(msg.sender, msg.value);
         return true;

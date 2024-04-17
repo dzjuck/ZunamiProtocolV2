@@ -12,18 +12,18 @@ async function main() {
 
     console.log('Admin:', admin.address);
 
-    const block = 19661576;
-    const timestamp = 1713192167;
+    const block = 5757741;
+    const timestamp = 1713845844;
 
-    const holders = ['0xe9b2B067eE106A6E518fB0552F3296d22b82b32B'];
+    const holders = ['0xe9b2B067eE106A6E518fB0552F3296d22b82b32B', '0xaeE0Cbb0F1b484F60b5B197f232BA104505B56c2'];
     const round0 = {
-        startBlock: Math.round(block + (1713139200 - timestamp) / 12), // 1713139200 // Friday, April 15, 2024 12:00:00 AM
-        endBlock: Math.round(block + (1713312000 - timestamp) / 12) // 1713657600 // Sunday, April 17, 2024 12:00:00 AM
+        startBlock: Math.round(block + (1713816000 - timestamp) / 12), // 1713816000 // Friday, April 23, 2024 12:00:00 AM
+        endBlock: Math.round(block + (1713988800 - timestamp) / 12) // 1713988800 // Sunday, April 25, 2024 12:00:00 AM
     };
 
     const round1 = {
-        startBlock: Math.round(block + (1713484800 - timestamp) / 12), // 1713744000 // Monday, April 19, 2024 12:00:00 AM
-        endBlock: Math.round(block + (1713657600 - timestamp) / 12)// 1713916800 // Wednesday, April 21, 2024 12:00:00 AM
+        startBlock: Math.round(block + (1714075200 - timestamp) / 12), // 1714075200 // Monday, April 26, 2024 12:00:00 AM
+        endBlock: Math.round(block + (1714161600 - timestamp) / 12)// 1714161600 // Wednesday, April 27, 2024 12:00:00 AM
     };
 
 
