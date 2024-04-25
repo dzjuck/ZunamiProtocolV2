@@ -16,8 +16,8 @@ contract LlamaSale is Ownable, ReentrancyGuard {
         uint256 endBlock;
     }
 
-    uint256 public constant maxTotalBalance = 95 ether;
-    uint256 public constant maxPersonalBalance = 6 ether;
+    uint256 public constant MAX_TOTAL_BALANCE = 95 ether;
+    uint256 public constant MAX_PERSONAL_BALANCE = 8 ether;
 
     mapping(address => uint256) public collectedAmounts;
     mapping(address => bool) public holders;
@@ -46,9 +46,9 @@ contract LlamaSale is Ownable, ReentrancyGuard {
         if (msg.value == 0) revert WrongAmount();
         if (
             checkRound(firstRound) &&
-            (msg.value + collectedAmounts[msg.sender] > maxPersonalBalance)
+            (msg.value + collectedAmounts[msg.sender] > MAX_PERSONAL_BALANCE)
         ) revert WrongPersonalBalance();
-        if (address(this).balance > maxTotalBalance) revert WrongTotalBalance();
+        if (address(this).balance > MAX_TOTAL_BALANCE) revert WrongTotalBalance();
         collectedAmounts[msg.sender] += msg.value;
         emit Deposit(msg.sender, msg.value);
         return true;
