@@ -14,8 +14,6 @@ import '../../interfaces/ICurveRegistryCache.sol';
 contract CurveLPOracle is IOracle, Ownable2Step {
     using ScaledMath for uint256;
 
-    error ZeroAddress();
-
     event ImbalanceThresholdUpdated(address indexed token, uint256 threshold);
     event CurveRegistryCacheSet(address indexed curveRegistryCache);
 

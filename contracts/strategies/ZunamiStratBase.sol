@@ -31,6 +31,9 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
     event SlippageSet(uint256 oldSlippage, uint256 newSlippage);
     event PriceOracleSet(address oracleAddr);
 
+    error WrongSlippage();
+    error WrongRatio();
+
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_
@@ -57,9 +60,20 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
     }
 
     function setSlippage(uint256 _slippage) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_slippage > 0 && _slippage <= SLIPPAGE_DENOMINATOR, 'Wrong slippage number!');
+        if (!(_slippage > 0 && _slippage <= SLIPPAGE_DENOMINATOR)) revert WrongSlippage();
         emit SlippageSet(slippage, _slippage);
         slippage = _slippage;
+    }
+
+    function applySlippageDifferentPrice(
+        uint256 amount,
+        address tokenIn,
+        address tokenOut
+    ) internal view returns (uint256) {
+        return
+            (amount * getTokenPrice(tokenIn) * (SLIPPAGE_DENOMINATOR - slippage)) /
+            SLIPPAGE_DENOMINATOR /
+            getTokenPrice(tokenOut);
     }
 
     function applySlippage(uint256 amount) internal view returns (uint256) {
@@ -118,6 +132,7 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
         uint256 poolTokenRatio // multiplied by 1e18
     ) internal view returns (uint256) {
         require(poolTokenRatio > 0 && poolTokenRatio <= RATIO_MULTIPLIER, 'Wrong PoolToken Ratio');
+        if (!(poolTokenRatio > 0 && poolTokenRatio <= RATIO_MULTIPLIER)) revert WrongRatio();
         return (getLiquidityBalance() * poolTokenRatio) / RATIO_MULTIPLIER;
     }
 

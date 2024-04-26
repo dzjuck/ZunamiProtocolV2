@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '../../interfaces/IOracle.sol';
 
 contract GenericOracle is IOracle, Ownable2Step {
-    error ZeroAddress();
 
     event CustomOracleAdded(address token, address oracle);
 

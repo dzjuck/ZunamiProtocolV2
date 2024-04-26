@@ -250,23 +250,22 @@ describe('ZunETH flow tests', () => {
         await expect(
             zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst, [[0, 0, 0, 0, 0]])
         );
-        await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
-        await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
-
         console.log(
-            '(await zunamiPool.strategyInfo(poolSrc)).minted',
+          '(await zunamiPool.strategyInfo(poolSrc)).minted',
             (await zunamiPool.strategyInfo(poolSrc)).minted
         );
         console.log(
-            '(await zunamiPool.strategyInfo(poolDst)).minted',
-            (await zunamiPool.strategyInfo(poolDst)).minted
+          '(await zunamiPool.strategyInfo(poolDst)).minted',
+          (await zunamiPool.strategyInfo(poolDst)).minted
         );
+
+        await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
+        await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
+
 
         await expect(
             zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc, [[0, 0, 0, 0, 0]])
         );
-        await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
-        await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
 
         console.log(
             '(await zunamiPool.strategyInfo(poolSrc)).minted',
@@ -276,5 +275,8 @@ describe('ZunETH flow tests', () => {
             '(await zunamiPool.strategyInfo(poolDst)).minted',
             (await zunamiPool.strategyInfo(poolDst)).minted
         );
+
+        await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
+        await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
     });
 });

@@ -340,7 +340,7 @@ contract ZunamiPool is IPool, ERC20, Pausable, AccessControl {
 
         uint256 sid;
         uint256 zunamiStables;
-        uint256 length = _strategyInfo.length;
+        uint256 length = _strategies.length;
         for (uint256 i = 0; i < length; ++i) {
             sid = _strategies[i];
             zunamiStables += _moveFunds(sid, _withdrawalsPercents[i], _minAmounts[i]);

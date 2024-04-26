@@ -12,7 +12,7 @@ contract CrvUsdStakeDaoERC4626StratBase is StakeDaoERC4626StratBase {
     uint256 public constant ZUNAMI_USDC_TOKEN_ID = 1;
     uint256 public constant ZUNAMI_USDT_TOKEN_ID = 2;
 
-    IERC20 public constant crvUSD = IERC20(Constants.CRVUSD_ADDRESS);
+    IERC20 public constant CRVUSD = IERC20(Constants.CRVUSD_ADDRESS);
 
     ITokenConverter public converter;
 
@@ -72,12 +72,16 @@ contract CrvUsdStakeDaoERC4626StratBase is StakeDaoERC4626StratBase {
                     address(tokens[i]),
                     Constants.CRVUSD_ADDRESS,
                     amounts[i],
-                    applySlippage(amounts[i]) * tokenDecimalsMultipliers[i]
+                    applySlippageDifferentPrice(
+                        amounts[i],
+                        address(tokens[i]),
+                        Constants.CRVUSD_ADDRESS
+                    ) * tokenDecimalsMultipliers[i]
                 );
             }
         }
-        amount = crvUSD.balanceOf(address(this));
-        crvUSD.safeIncreaseAllowance(address(vault), amount);
+        amount = CRVUSD.balanceOf(address(this));
+        CRVUSD.safeIncreaseAllowance(address(vault), amount);
     }
 
     function removeLiquidity(
@@ -87,13 +91,17 @@ contract CrvUsdStakeDaoERC4626StratBase is StakeDaoERC4626StratBase {
     ) internal override {
         super.removeLiquidity(amount, minAmounts, isHarvest);
 
-        uint256 crvUSDBalance = crvUSD.balanceOf(address(this));
-        crvUSD.safeTransfer(address(converter), crvUSDBalance);
+        uint256 crvUSDBalance = CRVUSD.balanceOf(address(this));
+        CRVUSD.safeTransfer(address(converter), crvUSDBalance);
         converter.handle(
             Constants.CRVUSD_ADDRESS,
             Constants.USDT_ADDRESS,
             crvUSDBalance,
-            applySlippage(crvUSDBalance) / tokenDecimalsMultipliers[ZUNAMI_USDT_TOKEN_ID]
+            applySlippageDifferentPrice(
+                crvUSDBalance,
+                Constants.CRVUSD_ADDRESS,
+                Constants.USDT_ADDRESS
+            ) / tokenDecimalsMultipliers[ZUNAMI_USDT_TOKEN_ID]
         );
     }
 }

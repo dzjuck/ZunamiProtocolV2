@@ -15,6 +15,8 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
 
     uint256 public depositedAssets;
 
+    uint256 internal constant SHARES = 1e18;
+
     constructor(
         IERC20[POOL_ASSETS] memory tokens_,
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers_,
@@ -28,7 +30,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
     }
 
     function getLiquidityTokenPrice() internal view virtual override returns (uint256) {
-        return (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(1e18)) / 1e18;
+        return (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(SHARES)) / SHARES;
     }
 
     function convertVaultAssetAmounts(
@@ -40,6 +42,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
     ) internal virtual override returns (uint256) {
         uint256 amount = convertAndApproveTokens(address(vault), amounts);
         depositedAssets += amount;
+
         return vault.deposit(amount, address(this));
     }
 
@@ -60,7 +63,12 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         uint256[POOL_ASSETS] memory,
         bool
     ) internal virtual override {
-        vault.redeem(amount, address(this), address(this));
+        uint256 assets = vault.redeem(amount, address(this), address(this));
+        if(depositedAssets > assets) {
+            depositedAssets -= assets;
+        } else {
+            depositedAssets = 0;
+        }
     }
 
     function claimCollectedRewards() internal virtual override {
@@ -68,7 +76,7 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         if (redeemableAssets > depositedAssets) {
             uint256 withdrawnAssets = redeemableAssets - depositedAssets;
             uint256 withdrawnShares = vault.convertToShares(withdrawnAssets);
-            uint256[5] memory minTokenAmounts;
+            uint256[POOL_ASSETS] memory minTokenAmounts;
             removeLiquidity(withdrawnShares, minTokenAmounts, false);
             depositedLiquidity -= withdrawnShares;
         }

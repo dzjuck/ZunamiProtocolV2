@@ -4,9 +4,7 @@ pragma solidity ^0.8.23;
 import '../../interfaces/IOracle.sol';
 
 contract FixedOracle is IOracle {
-    error ZeroAddress();
     error ZeroUsdPrice();
-    error WrongToken();
 
     address public immutable token;
     uint256 public immutable usdPrice;
@@ -24,7 +22,7 @@ contract FixedOracle is IOracle {
 
     // Prices are always provided with 18 decimals pecision
     function getUSDPrice(address _token) external view returns (uint256) {
-        if (_token != token) revert WrongToken();
+        if (_token != token) revert UnsupportedToken();
         return usdPrice;
     }
 }

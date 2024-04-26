@@ -3,10 +3,8 @@ pragma solidity ^0.8.23;
 
 import '../../interfaces/IOracle.sol';
 import '../../libraries/ScaledMath.sol';
+import '../../interfaces/ICurvePriceOracleNG.sol';
 
-interface ICurvePriceOracleNG {
-    function price_oracle(uint256 i) external view returns (uint256);
-}
 
 contract ZunEthOracle is IOracle {
     using ScaledMath for uint256;
@@ -21,19 +19,20 @@ contract ZunEthOracle is IOracle {
     IOracle internal immutable _genericOracle;
 
     constructor(address genericOracle_) {
+        if (genericOracle_ == address(0)) revert ZeroAddress();
         _genericOracle = IOracle(genericOracle_);
     }
 
     function getUSDPrice(address token_) external view override returns (uint256) {
-        require(isTokenSupported(token_), 'token not supported');
-        return _getZunUSDPriceForCurvePool(_ZUNETH_FRXETH, _FRXETH);
+        if (!isTokenSupported(token_)) revert UnsupportedToken();
+        return _getZunETHPriceForCurvePool(_ZUNETH_FRXETH, _FRXETH);
     }
 
     function isTokenSupported(address token_) public pure override returns (bool) {
         return token_ == _ZUNETH;
     }
 
-    function _getZunUSDPriceForCurvePool(
+    function _getZunETHPriceForCurvePool(
         address curvePool_,
         address token_
     ) internal view returns (uint256) {

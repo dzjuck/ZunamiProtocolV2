@@ -12,10 +12,8 @@ import '../../interfaces/vendor/ICurvePoolV1.sol';
 contract StaticCurveLPOracle is IOracle, Ownable2Step {
     using ScaledMath for uint256;
 
-    error ZeroAddress();
     error LengthMismatch();
     error ZeroPool();
-    error TokenNotSupported();
     error ZeroPrice();
     error ZeroBalance();
     error ThresholdTooHigh();
@@ -53,7 +51,7 @@ contract StaticCurveLPOracle is IOracle, Ownable2Step {
     }
 
     function getUSDPrice(address token) external view returns (uint256) {
-        if (token != pool) revert TokenNotSupported();
+        if (token != pool) revert UnsupportedToken();
 
         // Adding up the USD value of all the coins in the pool
         uint256 value;

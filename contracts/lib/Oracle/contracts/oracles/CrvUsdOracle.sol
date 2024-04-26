@@ -8,8 +8,6 @@ import '../../libraries/ScaledMath.sol';
 contract CrvUsdOracle is IOracle {
     using ScaledMath for uint256;
 
-    error ZeroAddress();
-    error UnsupportedToken();
 
     // Tokens
     address internal constant _CRVUSD = address(0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E);

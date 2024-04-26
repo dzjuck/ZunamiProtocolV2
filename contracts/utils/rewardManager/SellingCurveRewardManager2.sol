@@ -4,9 +4,6 @@ pragma solidity ^0.8.23;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/access/Ownable2Step.sol';
-import '../../utils/Constants.sol';
-import './interfaces/ICurveExchangePool.sol';
-import './interfaces/AggregatorV2V3Interface.sol';
 import '../../interfaces/IRewardManager.sol';
 import '../../interfaces/ITokenConverter.sol';
 import '../../lib/Oracle/interfaces/IOracle.sol';
@@ -25,20 +22,24 @@ contract SellingCurveRewardManager2 is IRewardManager, Ownable2Step {
 
     event SetDefaultSlippage(uint256 newDefaultSlippage);
 
+    error ZeroAddress();
+    error ZeroSlippage();
+
     constructor(address tokenConverterAddr, address oracleAddr) Ownable(msg.sender) {
-        require(tokenConverterAddr != address(0), 'TokenConverter');
+        if (tokenConverterAddr == address(0)) revert ZeroAddress();
         tokenConverter = ITokenConverter(tokenConverterAddr);
 
-        require(oracleAddr != address(0), 'Oracle');
+        if (oracleAddr == address(0)) revert ZeroAddress();
         oracle = IOracle(oracleAddr);
     }
 
     function setDefaultSlippage(uint256 defaultSlippage_) external onlyOwner {
+        if (defaultSlippage == 0) revert ZeroSlippage();
         defaultSlippage = defaultSlippage_;
         emit SetDefaultSlippage(defaultSlippage_);
     }
 
-    function handle(address reward, uint256 amount, address receivingToken) public {
+    function handle(address reward, uint256 amount, address receivingToken) external {
         if (amount == 0) return;
 
         if (reward == receivingToken) {
@@ -54,15 +55,15 @@ contract SellingCurveRewardManager2 is IRewardManager, Ownable2Step {
             calcMinAmount(reward, amount, receivingToken)
         );
 
-        uint256 feeTokenAmount = IERC20(receivingToken).balanceOf(address(this));
-        IERC20(receivingToken).safeTransfer(address(msg.sender), feeTokenAmount);
+        uint256 receivingTokenAmount = IERC20(receivingToken).balanceOf(address(this));
+        IERC20(receivingToken).safeTransfer(msg.sender, receivingTokenAmount);
     }
 
     function valuate(
         address reward,
         uint256 amount,
         address feeToken
-    ) public view returns (uint256 valuatedAmount) {
+    ) external view returns (uint256 valuatedAmount) {
         if (amount == 0) return 0;
 
         valuatedAmount = tokenConverter.valuate(reward, feeToken, amount);

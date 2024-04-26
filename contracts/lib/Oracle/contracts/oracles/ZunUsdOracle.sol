@@ -8,9 +8,6 @@ import '../../libraries/ScaledMath.sol';
 contract ZunUsdOracle is IOracle {
     using ScaledMath for uint256;
 
-    error ZeroAddress();
-    error UnsupportedToken();
-
     // Tokens
     address internal constant _CRVUSD = address(0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E);
     address internal constant _ZUNUSD = address(0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6);
