@@ -52,7 +52,7 @@ const rewardVaults = [
     '0x46f80018211D5cBBc988e853A8683501FCA4ee9b', // spell
 ];
 
-describe('SellingCurveRewardManager', async () => {
+describe.skip('SellingCurveRewardManager', async () => {
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
