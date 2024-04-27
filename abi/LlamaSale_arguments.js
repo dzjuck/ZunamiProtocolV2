@@ -1,13 +1,6 @@
-const { ethers } = require('hardhat');
-
-async function main() {
-    console.log('Start deploy');
-
-    const [admin] = await ethers.getSigners();
-
-    console.log('Admin:', admin.address);
-
-    const holders = [
+module.exports = [
+    "0xe9b2B067eE106A6E518fB0552F3296d22b82b32B",
+    [
         "0x73eb240a06f0e0747c698a219462059be6aaccc8",
         "0xa0aa45c41dd92a3ae0fca91f3af3c14a8d9343bd",
         "0x4cc25e0366c564847546f2feda3d7f0d9155b9ac",
@@ -577,30 +570,8 @@ async function main() {
         "0x02d489cfdf7b406630263ed659c0e0449c6c1c0c",
         "0xb978c8da8729c514bb08b40d2409e5d5f6982e1f",
         "0x40f7eb376c8b53d43f32e33348ebacd1222bee5e",
-        "0xe9b2B067eE106A6E518fB0552F3296d22b82b32B", // Zunami Deployer for test purpose
-    ];
-    const round0 = {
-        startBlock: 19762900, // April 29 2024 19:00 UTC
-        endBlock: 19784310, // May 2 2024 19:00 UTC
-    };
-
-    console.log("round0", round0);
-
-    const round1 = {
-        startBlock: 19791450, // May 3 2024 19:00 UTC
-        endBlock: 19812900, // May 6 2024 19:00 UTC
-    };
-
-    console.log("round1", round1);
-
-    const LlamaSaleFactory = await ethers.getContractFactory('LlamaSale');
-    const llamaSale = await LlamaSaleFactory.deploy(admin.address, holders, round0, round1);
-    console.log('LlamaSale deployed to:', llamaSale.address);
-}
-
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+        "0xe9b2B067eE106A6E518fB0552F3296d22b82b32B"
+    ],
+    { startBlock: 19762900, endBlock: 19784310 },
+    { startBlock: 19791450, endBlock: 19812900 }
+];

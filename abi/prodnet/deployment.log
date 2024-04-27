@@ -177,3 +177,9 @@ SellingCurveRewardManager2: 0x4D271aFe204a32A06a916Ab536b67f1A306a2286
 TokenConverter deployed to: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
 Starting setup token converter for rewards
 Token сonverter configured for rewards
+
+
+Admin: 0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
+round0 { startBlock: 19762900, endBlock: 19784310 }
+round1 { startBlock: 19791450, endBlock: 19812900 }
+LlamaSale deployed to: 0x8c2346f74D15b27402C39d26D58dABA57bDd1dc6
