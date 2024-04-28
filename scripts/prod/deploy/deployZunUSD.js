@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 
-async function createAndInitStrategy(zunamiPool, stratName, oracle, stableConverter) {
+async function createAndInitStrategy(zunamiPool, stratName, oracle, tokenConverter) {
     const StratFactory = await ethers.getContractFactory(stratName);
     const strategy = await StratFactory.deploy();
     await strategy.deployed();
@@ -12,11 +12,19 @@ async function createAndInitStrategy(zunamiPool, stratName, oracle, stableConver
         console.log(`Set price oracle address ${oracle} in ${stratName} strategy`);
     }
 
-    if (!!stableConverter) {
-        result = await strategy.setStableConverter(stableConverter.address);
+    // if (!!stableConverter) {
+    //     result = await strategy.setStableConverter(stableConverter.address);
+    //     await result.wait();
+    //     console.log(
+    //         `Set stable converter address ${stableConverter.address} in ${stratName} strategy`
+    //     );
+    // }
+
+    if (!!tokenConverter) {
+        result = await strategy.setTokenConverter(tokenConverter.address);
         await result.wait();
         console.log(
-            `Set stable converter address ${stableConverter.address} in ${stratName} strategy`
+            `Set token converter address ${tokenConverter.address} in ${stratName} strategy`
         );
     }
 
@@ -81,6 +89,20 @@ async function main() {
     //     'UsdtCrvUsdStakeDaoCurve',
     //     genericOracleAddr,
     //     stableConverter
+    // );
+
+    // console.log('Attach TokenConverter:');
+    // const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    // const tokenConverter = await TokenConverterFactory.attach(
+    //     '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
+    // );
+    // console.log('TokenConverter:', tokenConverter.address);
+
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'LlamalendCrvUsdStakeDaoERC4626Strat',
+    //     genericOracleAddr,
+    //     tokenConverter
     // );
 }
 
