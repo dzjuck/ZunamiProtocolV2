@@ -24,6 +24,7 @@ contract SellingCurveRewardManager2 is IRewardManager, Ownable2Step {
 
     error ZeroAddress();
     error ZeroSlippage();
+    error WrongSlippage();
 
     constructor(address tokenConverterAddr, address oracleAddr) Ownable(msg.sender) {
         if (tokenConverterAddr == address(0)) revert ZeroAddress();
@@ -34,7 +35,8 @@ contract SellingCurveRewardManager2 is IRewardManager, Ownable2Step {
     }
 
     function setDefaultSlippage(uint256 defaultSlippage_) external onlyOwner {
-        if (defaultSlippage == 0) revert ZeroSlippage();
+        if (defaultSlippage_ == 0) revert ZeroSlippage();
+        if (defaultSlippage_ > SLIPPAGE_DENOMINATOR) revert WrongSlippage();
         defaultSlippage = defaultSlippage_;
         emit SetDefaultSlippage(defaultSlippage_);
     }
