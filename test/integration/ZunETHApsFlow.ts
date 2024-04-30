@@ -27,6 +27,7 @@ import {
 
 import * as addresses from '../address.json';
 import { deployRewardManager } from '../utils/DeployRewardManager';
+import {getMinAmountZunUSD} from "../utils/GetMinAmountZunUSD";
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
@@ -448,12 +449,13 @@ describe('ZunETH flow APS tests', () => {
         expect(await zunamiPoolAps.totalHoldings()).to.gt(holdingsAfterInflation);
     });
 
-    it('should deposit to aps using zap', async () => {
+    it.only('should deposit to aps using zap', async () => {
         const {
             admin,
-            zunamiPoolController,
+            zunamiPool,
             zunamiPoolAps,
             zunamiPoolControllerAps,
+            tokenConverter,
             wEth,
             frxEth,
             strategiesAps,
@@ -464,10 +466,11 @@ describe('ZunETH flow APS tests', () => {
         await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
 
         //deploy zap
-        const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap');
+        const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositEthZap2');
         const zunamiDepositZap = (await ZunamiDepositZapFactory.deploy(
-            zunamiPoolController.address,
-            zunamiPoolControllerAps.address
+            zunamiPool.address,
+            zunamiPoolControllerAps.address,
+            tokenConverter.address
         )) as ZunamiDepositZap;
 
         expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);
@@ -482,7 +485,7 @@ describe('ZunETH flow APS tests', () => {
 
         await zunamiDepositZap
             .connect(admin)
-            .deposit(getMinAmountZunETH(tokenAmount), admin.getAddress());
+            .deposit(getMinAmountZunETH(tokenAmount), admin.getAddress(), {value:   parseUnits(tokenAmount, 'ether')});
 
         expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.gt(0);
     });

@@ -68,3 +68,6 @@ npx hardhat verify --network mainnet 0x64298A70C43D865BEdb22FD95fC1f81C3f64BE4B 
 
 // ZunUSD strategy LlamalendCrvUsdStakeDaoERC4626Strat
 npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/stakeDao/llamalend/LlamalendCrvUsdStakeDaoERC4626Strat.sol:LlamalendCrvUsdStakeDaoERC4626Strat 0x8dfcD34b074517C446a7885c271AFD365981Ed47
+
+// ZunETH Zap2
+npx hardhat verify --network mainnet 0xdD38c58c8F8202C9581Ff16296aB778E223c0ED6 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222 0xD8132d8cfCA9Ed8C95e46Cb59ae6E2C9963dA61f 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
