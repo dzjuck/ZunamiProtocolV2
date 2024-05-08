@@ -449,7 +449,7 @@ describe('ZunETH flow APS tests', () => {
         expect(await zunamiPoolAps.totalHoldings()).to.gt(holdingsAfterInflation);
     });
 
-    it.only('should deposit to aps using zap', async () => {
+    it('should deposit to aps using zap', async () => {
         const {
             admin,
             zunamiPool,

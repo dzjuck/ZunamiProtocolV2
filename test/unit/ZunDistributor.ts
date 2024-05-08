@@ -163,8 +163,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 50_400 blocks
-        await mine(50_400);
+        // wait a week - 100_800 blocks
+        await mine(100_800);
 
         // distribute
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(0);
@@ -180,15 +180,15 @@ describe('ZunDistributor tests', () => {
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('287179487179487179487179', 'wei')
         );
         expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
         expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('287179487179487179487179', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('71794871794871794871794', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
     });
 
@@ -220,8 +220,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('100', 'ether'));
 
-        // wait a week - 50_400 blocks
-        await mine(50_400);
+        // wait a week - 100_800 blocks
+        await mine(100_800);
 
         // distribute
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(0);
@@ -237,15 +237,15 @@ describe('ZunDistributor tests', () => {
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('71794871794871794871794', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
         expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('71794871794871794871794', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('71794871794871794871794', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
     });
 
@@ -305,20 +305,20 @@ describe('ZunDistributor tests', () => {
             [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
         );
 
-        // wait a week - 50_400 blocks
-        await mine(50_400);
+        // wait a week - 100_800 blocks
+        await mine(100_800);
 
         // distribute
         await distributor.distribute();
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('287179487179487179487179', 'wei')
         );
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('287179487179487179487179', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('71794871794871794871794', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
 
         await expect(distributor.distribute()).to.be.revertedWithCustomError(
@@ -351,8 +351,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 50_400 blocks
-        await mine(50_400);
+        // wait a week - 100_800 blocks
+        await mine(100_800);
 
         // finalize voting on vote
         gaugeItem = await distributor.gauges(0);
@@ -400,8 +400,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 50_400 blocks
-        await mine(50_400);
+        // wait a week - 100_800 blocks
+        await mine(100_800);
 
         // finalize voting on distribution
 
@@ -588,8 +588,8 @@ describe('ZunDistributor tests', () => {
         for (let i = 1; i < 130; i++) {
             // max 29 years - 754
             // console.log(i, distrAmount);
-            // wait a week - 50_400 blocks
-            await mine(50_400);
+            // wait a week - 100_800 blocks
+            await mine(100_800);
 
             // distribute
             await distributor.distribute();
@@ -600,8 +600,8 @@ describe('ZunDistributor tests', () => {
             expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(gaugeBal);
 
             // check yearDistributionValue
-            if (i % 52 == 0) {
-                yearCount = BigNumber.from(i).div(52);
+            if (i % 26 == 0) {
+                yearCount = BigNumber.from(i).div(26);
                 yearValue = firstYearValue
                     .mul(BigNumber.from(650).pow(yearCount))
                     .div(BigNumber.from(1000).pow(yearCount));
@@ -799,8 +799,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 50_400 blocks
-        await mine(50_400);
+        // wait a week - 100_800 blocks
+        await mine(100_800);
 
         tx = await distributor.castVote(
             [0, 1],
