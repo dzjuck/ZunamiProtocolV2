@@ -1,6 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
 
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
     console.log('Start deploy');
 
@@ -8,16 +7,20 @@ async function main() {
 
     console.log('Admin:', admin.address);
 
-    const zunAddress = '';
-    const apsLPAddress = '';
+    const zunTokenAddress = '0xAc4d9e15910701a10329040bDC71a484C9Ba3860';
 
-    console.log('Deploy Staking Reward Distributor LP:');
+    // Zunami USD APS LP Staking
+
+    const apsZunUSDControllerLP = '0x8cB6a65076fdA549F1B893436ca437Aa8C906894';
+
+    console.log('Deploy Zunami USD APS LP Staking:');
     const StakingRewardDistributorFactory = await ethers.getContractFactory(
         'StakingRewardDistributor'
     );
+
     const stakingRewardDistributor = await upgrades.deployProxy(
         StakingRewardDistributorFactory,
-        [],
+        [apsZunUSDControllerLP, 'Test Zunami USD APS LP Staking', 'tapsZunUSDLP-stk', admin.address],
         {
             kind: 'uups',
         }
@@ -26,13 +29,10 @@ async function main() {
     await stakingRewardDistributor.deployed();
     console.log('Staking Reward Distributor LP:', stakingRewardDistributor.address);
 
-    let tx = await stakingRewardDistributor.addRewardToken(zunAddress);
+    tx = await stakingRewardDistributor.addRewardToken(zunTokenAddress);
     await tx.wait();
-    console.log('Reward token added: ', zunAddress);
+    console.log('Reward token added: ', zunTokenAddress);
 
-    tx = await stakingRewardDistributor.addPool(100, apsLPAddress, ADDRESS_ZERO, false);
-    await tx.wait();
-    console.log('Pool added: ', 100, apsLPAddress, ADDRESS_ZERO, false);
 }
 
 main()

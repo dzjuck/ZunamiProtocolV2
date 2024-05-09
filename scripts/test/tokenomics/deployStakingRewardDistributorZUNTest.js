@@ -1,6 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
 
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 async function main() {
     console.log('Start deploy');
 
@@ -8,41 +7,40 @@ async function main() {
 
     console.log('Admin:', admin.address);
 
-    const zunAddress = '0xAc4d9e15910701a10329040bDC71a484C9Ba3860';
-    const vlZunAddress = '0x036C922e67cE6E06a2F61765533d65162B8775b1';
+    const zunTokenAddress = '0xAc4d9e15910701a10329040bDC71a484C9Ba3860';
 
-    console.log('Deploy Staking Reward Distributor ZUN:');
-    const StakingRewardDistributorFactory = await ethers.getContractFactory(
-        'StakingRewardDistributor'
+    // ZUN Staking Reward Distributor - vlZUN token
+    console.log('Deploy tvlZUN:');
+    const ZUNStakingRewardDistributorFactory = await ethers.getContractFactory(
+        'ZUNStakingRewardDistributor'
     );
-    const stakingRewardDistributor = await upgrades.deployProxy(
-        StakingRewardDistributorFactory,
-        [],
+    const zunStakingRewardDistributor = await upgrades.deployProxy(
+        ZUNStakingRewardDistributorFactory,
+        [zunTokenAddress, 'Test Zunami Voting Token', 'tvlZUN', admin.address],
         {
             kind: 'uups',
         }
     );
 
-    await stakingRewardDistributor.deployed();
-    console.log('Staking Reward Distributor ZUN:', stakingRewardDistributor.address);
+    await zunStakingRewardDistributor.deployed();
+    console.log('ZUN Staking Reward Distributor(vlZUN):', zunStakingRewardDistributor.address);
 
-    await stakingRewardDistributor.setEarlyExitReceiver(admin.address);
+    await zunStakingRewardDistributor.setEarlyExitReceiver(admin.address);
     console.log('Early exit receiver set to: ', admin.address);
 
-    const ZunamiVotingToken = await ethers.getContractFactory('ZunamiVotingToken');
-    const vlZun = await ZunamiVotingToken.attach(vlZunAddress);
-    await vlZun.deployed();
+    const rewards = [
+        zunTokenAddress, // ZUN
+        '0xD533a949740bb3306d119CC777fa900bA034cd52', // CRV
+        '0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B', // CVX
+        '0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F', // SDT
+        '0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0', // FRX
+    ];
 
-    await vlZun.grantRole(await vlZun.ISSUER_ROLE(), stakingRewardDistributor.address);
-    console.log('Issuer role granted to Staking Reward Distributor ZUN');
-
-    let tx = await stakingRewardDistributor.addRewardToken(zunAddress);
-    await tx.wait();
-    console.log('Reward token added: ', zunAddress);
-
-    tx = await stakingRewardDistributor.addPool(100, zunAddress, vlZunAddress, false);
-    await tx.wait();
-    console.log('Pool added: ', 100, zunAddress, vlZunAddress, false);
+    for (let i = 0; i < rewards.length; i++) {
+        const tx = await zunStakingRewardDistributor.addRewardToken(rewards[i]);
+        await tx.wait();
+        console.log('Reward token added to ZUN staking: ', rewards[i]);
+    }
 }
 
 main()

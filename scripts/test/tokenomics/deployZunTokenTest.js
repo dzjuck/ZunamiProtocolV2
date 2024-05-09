@@ -6,11 +6,11 @@ async function main() {
 
     console.log('Admin:', admin.address);
 
-    console.log('Deploy Zun Token:');
+    console.log('Deploy Test Zun Token:');
     const ZunamiToken = await ethers.getContractFactory('ZunamiToken');
     const zunamiToken = await ZunamiToken.deploy(admin.address);
     await zunamiToken.deployed();
-    console.log('Zunami Token (ZUN):', zunamiToken.address);
+    console.log('Test Zunami Token (TZUN):', zunamiToken.address);
 }
 
 main()

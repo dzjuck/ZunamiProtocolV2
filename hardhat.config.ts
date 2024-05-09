@@ -91,6 +91,8 @@ const config: HardhatUserConfig = {
             url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
             chainId: 11155111,
             gas: 'auto',
+            gasMultiplier: 1.2,
+            gasPrice: 30000000000,
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
         },
