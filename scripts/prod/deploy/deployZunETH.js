@@ -34,7 +34,7 @@ async function main() {
 
     const genericOracleAddr = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
 
-    console.log('Deploy TokenConverter:');
+    // console.log('Deploy TokenConverter:');
     const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
     // const tokenConverter = await TokenConverterFactory.deploy();
     // await tokenConverter.deployed();
@@ -43,7 +43,7 @@ async function main() {
     );
     console.log('TokenConverter:', tokenConverter.address);
 
-    console.log('Deploy zunETH omnipool:');
+    // console.log('Deploy zunETH omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunETH');
     // const zunamiPool = await ZunamiPool.deploy();
     // await zunamiPool.deployed();
@@ -67,12 +67,12 @@ async function main() {
     // );
 
     // await createAndInitStrategy(zunamiPool, 'ZunETHVaultStrat', null, null);
-    await createAndInitStrategy(
-        zunamiPool,
-        'stEthEthConvexCurveStrat',
-        genericOracleAddr,
-        tokenConverter
-    );
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'stEthEthConvexCurveStrat',
+    //     genericOracleAddr,
+    //     tokenConverter
+    // );
     await createAndInitStrategy(
         zunamiPool,
         'sfrxETHERC4626Strat',

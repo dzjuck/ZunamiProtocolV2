@@ -217,3 +217,10 @@ Reward token added:  0x6b5204b0be36771253cc38e88012e02b752f0f36
 Deploy Zunami ETH APS LP Staking:
 Staking Reward Distributor LP: 0x9c1de963f7935e362f7b6531bf962c56bf37476e
 Reward token added:  0x6b5204b0be36771253cc38e88012e02b752f0f36
+
+TokenConverter: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+ZunamiPoolZunETH: 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222
+sfrxETHERC4626Strat strategy deployed to: 0x8BBef98615AE53B19b7843aDD009e8BB6F6f1656
+Set price oracle address 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 in sfrxETHERC4626Strat strategy
+Set token converter address 0xf48A59434609b6e934c2cF091848FA2D28b34bfc in sfrxETHERC4626Strat strategy
+Set zunami pool address 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222 in sfrxETHERC4626Strat strategy

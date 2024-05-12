@@ -81,3 +81,4 @@ npx hardhat verify --network mainnet 0xfC1d377b1bDD82731872CB9A7c823961d00F5C10
 // Recapitalization manager
 npx hardhat verify --network mainnet 0xe04ef994745524be4512516d8f7fcde5e89b0e92 0x6b5204b0be36771253cc38e88012e02b752f0f36
 
+npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/eth/sfrxETHERC4626Strat.sol:sfrxETHERC4626Strat 0x8BBef98615AE53B19b7843aDD009e8BB6F6f1656
