@@ -81,4 +81,17 @@ npx hardhat verify --network mainnet 0xfC1d377b1bDD82731872CB9A7c823961d00F5C10
 // Recapitalization manager
 npx hardhat verify --network mainnet 0xe04ef994745524be4512516d8f7fcde5e89b0e92 0x6b5204b0be36771253cc38e88012e02b752f0f36
 
+// zunETH sfrxETHERC4626Strat
 npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/eth/sfrxETHERC4626Strat.sol:sfrxETHERC4626Strat 0x8BBef98615AE53B19b7843aDD009e8BB6F6f1656
+
+// zunETH pxETHwETHStakeDaoCurveNStrat
+npx hardhat verify --network mainnet --contract contracts/strategies/curve/stakeDao/eth/pxETHwETHStakeDaoCurveNStrat.sol:pxETHwETHStakeDaoCurveNStrat 0x72A2394c42521038a91c94f5b4C421fAa45E0719
+
+// Oracle wETHOracle
+npx hardhat verify --network mainnet 0x6fdd429652fe77d8e2d123d1b99178cf27b112dc 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+
+// Oracle pxETHOracle
+npx hardhat verify --network mainnet 0x9ccca620633a5bd6456630e9d606b308d0ca039c 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+
+// Oracle pxETHwETH pool StaticCurveLPOracle
+npx hardhat verify --network mainnet 0xc2fc3f0a8847c9ff83c4cfb6886751d9bf061511

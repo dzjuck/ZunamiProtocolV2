@@ -65,6 +65,7 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     }
 
     function getTokenPrice(address token) internal view override returns (uint256) {
+        if (token == address(Constants.WETH_ADDRESS)) return 1e18;
         return
             (oracle.getUSDPrice(token) * 1e18) /
             oracle.getUSDPrice(Constants.CHAINLINK_FEED_REGISTRY_ETH_ADDRESS);

@@ -73,12 +73,18 @@ async function main() {
     //     genericOracleAddr,
     //     tokenConverter
     // );
-    await createAndInitStrategy(
-        zunamiPool,
-        'sfrxETHERC4626Strat',
-        genericOracleAddr,
-        tokenConverter
-    );
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'sfrxETHERC4626Strat',
+    //     genericOracleAddr,
+    //     tokenConverter
+    // );
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'pxETHwETHStakeDaoCurveNStrat',
+    //     genericOracleAddr,
+    //     tokenConverter
+    // );
 }
 
 main()

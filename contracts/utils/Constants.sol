@@ -92,6 +92,10 @@ library Constants {
     address internal constant SDT_LLAMALEND_CRVUSD_VAULT_ADDRESS =
         0xfa6D40573082D797CB3cC378c0837fB90eB043e5;
 
+    address internal constant SDT_PXETH_WETH_VAULT_ADDRESS = 0x062AdE4F4583fF6b21f6f2c2Ed04eD7037E8B282;
+    address internal constant CRV_PXETH_WETH_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;
+    address internal constant CRV_PXETH_WETH_LP_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;
+
     // Will be added after deployment of zunUSD v2 pool and curve pool for zunUSD
     address internal constant CRV_zunUSD_crvFRAX_ADDRESS = address(0);
     address internal constant CRV_zunUSD_crvFRAX_LP_ADDRESS = address(0);

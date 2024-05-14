@@ -117,6 +117,8 @@ abstract contract ZunamiStratBase is IStrategy, ZunamiPoolAccessControl {
         uint256[POOL_ASSETS] memory amounts
     ) internal view virtual returns (uint256 value) {
         for (uint256 i = 0; i < POOL_ASSETS; ++i) {
+            address token = address(tokens[i]);
+            if (token == address(0)) break;
             value +=
                 (getTokenPrice(address(tokens[i])) * amounts[i] * tokenDecimalsMultipliers[i]) /
                 PRICE_DENOMINATOR;

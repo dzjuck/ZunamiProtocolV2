@@ -19,7 +19,7 @@ import { setupTokenConverterETHs } from '../utils/SetupTokenConverter';
 const ETH_stETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 
 describe('ZunETH flow tests', () => {
-    const strategyNames = ['ZunETHVaultStrat', 'stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat'];
+    const strategyNames = ['ZunETHVaultStrat', 'pxETHwETHStakeDaoCurveNStrat', 'stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -31,6 +31,31 @@ describe('ZunETH flow tests', () => {
 
         const { curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle } =
             await createAndInitConicOracles([ETH_stETH_pool_addr]);
+
+        const wETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
+        const WETHOracleFactory = await ethers.getContractFactory('WETHOracle');
+        const wETHOracle = await WETHOracleFactory.deploy(genericOracle.address);
+
+        await genericOracle.setCustomOracle(wETH, wETHOracle.address);
+
+        const pxETH = '0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6';
+
+        const PxETHOracleFactory = await ethers.getContractFactory('PxETHOracle');
+        const pxETHOracle = await PxETHOracleFactory.deploy(genericOracle.address);
+
+        await genericOracle.setCustomOracle(pxETH, pxETHOracle.address);
+
+        const pxETH_wETH_pool_addr = '0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D';
+        const StaticCurveLPOracleFactory = await ethers.getContractFactory('StaticCurveLPOracle');
+        const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+          genericOracle.address,
+          [wETH, pxETH],
+          [18, 18],
+          pxETH_wETH_pool_addr
+        );
+        await staticCurveLPOracle.deployed();
+
+        await genericOracle.setCustomOracle(pxETH_wETH_pool_addr, staticCurveLPOracle.address);
 
         const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunETH();
 
