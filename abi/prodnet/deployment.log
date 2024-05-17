@@ -239,3 +239,7 @@ pxETHOracle deployed to: 0x9ccca620633a5bd6456630e9d606b308d0ca039c
 pxETH oracle set:  0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6 0x9ccca620633a5bd6456630e9d606b308d0ca039c
 pxETHwETH pool StaticCurveLPOracle deployed to: 0xc2fc3f0a8847c9ff83c4cfb6886751d9bf061511
 pxETHwETH pool static oracle set:  0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D 0xc2fc3f0a8847c9ff83c4cfb6886751d9bf061511
+
+TokenConverter deployed to: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+Starting setup token converter crvUSD to zunETH
+Token сonverter configured for crvUSD to zunETH

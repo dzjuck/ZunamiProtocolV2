@@ -725,6 +725,45 @@ describe('Token Converter', () => {
 
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
+
+        it('should swap crvUSD to zunETH', async () => {
+          const tokenInAddr = addresses.stablecoins.crvUSD;
+          const tokenOutAddr = addresses.crypto.zunETH;
+          const impersonate = '0xDDE9aE3266277609E21ECDAE9A0fba85a62bd92c';
+          const amount = tokenify('100');
+          const minAmountOut = tokenify('0.03');
+
+          await tokenConverter.setRoute(
+            tokenInAddr,
+            tokenOutAddr,
+            [
+              '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E',
+              '0x954313005c56b555bdc41b84d6c63b69049d7847',
+              '0x5e8422345238f34275888049021821e8e08caa1f',
+              '0x3a65cbaebbfecbea5d0cb523ab56fdbda7ff9aaa',
+              '0xc2e660c62f72c2ad35ace6db78a616215e2f2222',
+            ],
+            [
+              [0, 1, 1, 3, 3],
+              [1, 0, 1, 1, 2],
+            ]
+          );
+
+          const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+          const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+
+
+          await sendTokens(impersonate, alice.address, tokenIn.address, amount, admin);
+
+          const balanceBefore = await tokenOut.balanceOf(alice.address);
+          await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+          await tokenConverter
+            .connect(alice)
+            .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+          expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
     });
 
     describe('CRV', () => {
@@ -1039,49 +1078,4 @@ describe('Token Converter', () => {
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
     });
-
-    // describe('token', () => {
-    //     it('should swap token to token', async () => {
-    //         const tokenInAddr = addresses.;
-    //         const tokenOutAddr = addresses.;
-    //         const impersonate = '0xF977814e90dA44bFA03b6295A0616a897441aceC';
-    //         const amount = tokenify('100');
-    //         const minAmountOut = tokenify('99');
-
-    //         await tokenConverter.setRoute(
-    //             tokenInAddr,
-    //             tokenOutAddr,
-    //             [
-    //                 '0xd533a949740bb3306d119cc777fa900ba034cd52',
-    //                 '0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14',
-    //                 '0xf939e0a03fb07f59a73314e73794be0e57ac1b4e',
-    //                 '0x8c24b3213fd851db80245fccc42c40b94ac9a745',
-    //                 '0x8c0d76c9b18779665475f3e212d9ca1ed6a1a0e6',
-    //                 '0x0000000000000000000000000000000000000000',
-    //                 '0x0000000000000000000000000000000000000000',
-    //                 '0x0000000000000000000000000000000000000000',
-    //                 '0x0000000000000000000000000000000000000000',
-    //                 '0x0000000000000000000000000000000000000000',
-    //                 '0x0000000000000000000000000000000000000000',
-    //             ],
-    //             [
-    //                 [2, 0, 1, 3, 3],
-    //                 [0, 1, 1, 1, 2],
-    //                 [0, 0, 0, 0, 0],
-    //                 [0, 0, 0, 0, 0],
-    //                 [0, 0, 0, 0, 0],
-    //             ]
-    //         );
-
-    //         const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
-    //         const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
-    //         await sendTokens(impersonate, alice.address, tokenIn.address, amount, admin);
-
-    //         const balanceBefore = await tokenOut.balanceOf(alice.address);
-    //         await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
-    //         await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
-
-    //         expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
-    //     });
-    // });
 });

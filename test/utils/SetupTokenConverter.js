@@ -380,8 +380,30 @@ async function setupTokenConverterRewards(tokenConverter) {
     await tokenConverter.setRoutes(tokenIns, tokenOuts, routes, swapParams);
 }
 
+async function setupTokenConverterCrvUsdToZunEth(tokenConverter) {
+    const tokenInAddr = addresses.stablecoins.crvUSD;
+    const tokenOutAddr = addresses.crypto.zunETH;
+
+    await tokenConverter.setRoute(
+        tokenInAddr,
+        tokenOutAddr,
+        [
+            '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E',
+            '0x954313005c56b555bdc41b84d6c63b69049d7847',
+            '0x5e8422345238f34275888049021821e8e08caa1f',
+            '0x3a65cbaebbfecbea5d0cb523ab56fdbda7ff9aaa',
+            '0xc2e660c62f72c2ad35ace6db78a616215e2f2222',
+        ],
+        [
+            [0, 1, 1, 3, 3],
+            [1, 0, 1, 1, 2],
+        ]
+    );
+}
+
 module.exports = {
     setupTokenConverterETHs,
     setupTokenConverterStables,
     setupTokenConverterRewards,
+    setupTokenConverterCrvUsdToZunEth,
 };

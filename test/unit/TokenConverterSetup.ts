@@ -9,6 +9,7 @@ import {
     setupTokenConverterStables,
     setupTokenConverterETHs,
     setupTokenConverterRewards,
+    setupTokenConverterCrvUsdToZunEth,
 } from '../utils/SetupTokenConverter.js';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -63,6 +64,7 @@ describe('Token Converter', () => {
         await setupTokenConverterStables(tokenConverter);
         await setupTokenConverterETHs(tokenConverter);
         await setupTokenConverterRewards(tokenConverter);
+        await setupTokenConverterCrvUsdToZunEth(tokenConverter);
     });
 
     describe('USDT', () => {
@@ -384,6 +386,27 @@ describe('Token Converter', () => {
                 .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
 
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+        });
+
+        it('should swap crvUSD to zunETH', async () => {
+          const tokenInAddr = addresses.stablecoins.crvUSD;
+          const tokenOutAddr = addresses.crypto.zunETH;
+          const impersonate = '0xDDE9aE3266277609E21ECDAE9A0fba85a62bd92c';
+          const amount = tokenify('100');
+          const minAmountOut = tokenify('0.03');
+
+          const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+          const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+
+          await sendTokens(impersonate, alice.address, tokenIn.address, amount, admin);
+
+          const balanceBefore = await tokenOut.balanceOf(alice.address);
+          await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+          await tokenConverter
+            .connect(alice)
+            .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+          expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
     });
 

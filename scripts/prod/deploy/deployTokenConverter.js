@@ -3,6 +3,7 @@ const {
     setupTokenConverterStables,
     setupTokenConverterETHs,
     setupTokenConverterRewards,
+    setupTokenConverterCrvUsdToZunEth,
 } = require('../../../test/utils/SetupTokenConverter.js');
 
 async function main() {
@@ -22,10 +23,14 @@ async function main() {
     // console.log('Starting setup token converter for eths');
     // await setupTokenConverterETHs(tokenConverter);
     // console.log('Token сonverter configured for eths');
-
-    console.log('Starting setup token converter for rewards');
-    await setupTokenConverterRewards(tokenConverter);
-    console.log('Token сonverter configured for rewards');
+    //
+    // console.log('Starting setup token converter for rewards');
+    // await setupTokenConverterRewards(tokenConverter);
+    // console.log('Token сonverter configured for rewards');
+    //
+    console.log('Starting setup token converter crvUSD to zunETH');
+    await setupTokenConverterCrvUsdToZunEth(tokenConverter);
+    console.log('Token сonverter configured for crvUSD to zunETH');
 }
 
 main()
