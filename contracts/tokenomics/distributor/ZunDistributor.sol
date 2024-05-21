@@ -19,13 +19,13 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
             'Ballot(bytes32 gaugeIdsHash,bytes32 amountsHash,address voter,uint256 nonce,uint256 deadline)'
         );
 
-    uint256 public constant VOTING_PERIOD = (14 * 24 * 60 * 60) / 12; // 2 week in blocks
     uint256 public constant ANNUAL_DECREASE_PERCENT = 35; // 35%
     uint256 public constant FIRST_YEAR_DISTRIBUTION_VALUE = 11_200_000 * 1e18; // in tokens
     uint256 public constant DENOMINATOR = 100;
     uint256 public constant BLOCKS_IN_YEAR = (364 * 24 * 60 * 60) / 12;
 
-    uint256 public immutable START_BLOCK;
+    uint256 public immutable START_BLOCK; // block number
+    uint256 public immutable VOTING_PERIOD; // in blocks
 
     struct Gauge {
         address addr;
@@ -76,6 +76,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         address _voteToken,
         address _owner,
         uint256 _startBlock,
+        uint256 _votingPeriod,
         address[] memory _gaugeAddrs,
         uint256[] memory _gaugeVotes
     ) Ownable(_owner) EIP712('ZunamiDistributor', '1') {
@@ -92,6 +93,12 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
             _startBlock = block.number;
         }
         START_BLOCK = _startBlock;
+
+        if (_votingPeriod == 0) {
+            _votingPeriod = (14 * 24 * 60 * 60) / 12; // 2 week in blocks
+        }
+        VOTING_PERIOD = _votingPeriod;
+
         lastDistributionBlock = _startBlock;
         lastFinalizeBlock = _startBlock;
 
@@ -302,7 +309,8 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         for (uint256 i; i < gaugesLength_; ++i) {
             totalVotes += gauges[i].currentVotes;
         }
-        if (totalVotes >= votingThreshold && totalVotes > 0) {
+        bool isQuorumReached = totalVotes > 0 && totalVotes >= votingThreshold;
+        if (isQuorumReached) {
             for (uint256 i; i < gaugesLength_; ++i) {
                 Gauge storage gauge = gauges[i];
                 gauge.finalizedVotes = gauge.currentVotes;
@@ -316,7 +324,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         }
 
         lastFinalizeBlock = block.number;
-        emit VotingFinalized(totalVotes >= votingThreshold);
+        emit VotingFinalized(isQuorumReached);
     }
 
     function _isPeriodPassed(uint256 lastBlock) internal view returns (bool) {

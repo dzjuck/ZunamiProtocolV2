@@ -93,6 +93,7 @@ describe('ZunDistributor tests', () => {
             vlZUN.address,
             dao.address,
             0,
+            (14 * 24 * 60 * 60) / 12,
             [approveGauge.address, transferGauge.address, stakingRewardDistributorGauge.address],
             [parseUnits('1000', 'ether'), parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
         )) as ZunDistributor;
@@ -755,6 +756,7 @@ describe('ZunDistributor tests', () => {
             vlZUN.address,
             dao.address,
             blockInFuture,
+            (14 * 24 * 60 * 60) / 12,
             [approveGauge.address, transferGauge.address],
             [parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
         )) as ZunDistributor;

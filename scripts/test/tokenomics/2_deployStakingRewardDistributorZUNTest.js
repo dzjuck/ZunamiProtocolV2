@@ -7,7 +7,7 @@ async function main() {
 
     console.log('Admin:', admin.address);
 
-    const zunTokenAddress = '0xAc4d9e15910701a10329040bDC71a484C9Ba3860';
+    const zunTokenAddress = '0xbf3127C1554C02f4e60031E29f890a1A700564f6';
 
     // ZUN Staking Reward Distributor - vlZUN token
     console.log('Deploy tvlZUN:');
