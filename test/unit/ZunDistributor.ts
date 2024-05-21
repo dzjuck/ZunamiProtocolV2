@@ -93,7 +93,7 @@ describe('ZunDistributor tests', () => {
             vlZUN.address,
             dao.address,
             0,
-            (14 * 24 * 60 * 60) / 12,
+            (7 * 24 * 60 * 60) / 12,
             [approveGauge.address, transferGauge.address, stakingRewardDistributorGauge.address],
             [parseUnits('1000', 'ether'), parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
         )) as ZunDistributor;
@@ -181,15 +181,15 @@ describe('ZunDistributor tests', () => {
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('287179487179487179487179', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
         expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('287179487179487179487179', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('71794871794871794871794', 'wei')
         );
     });
 
@@ -238,15 +238,15 @@ describe('ZunDistributor tests', () => {
         expect(gaugeItem.finalizedVotes).to.eq(parseUnits('1000', 'ether'));
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('71794871794871794871794', 'wei')
         );
         expect(await ZUN.balanceOf(transferGauge.address)).to.eq(0);
         expect(await ZUN.balanceOf(approveGaugeRec.address)).to.eq(0);
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('71794871794871794871794', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('71794871794871794871794', 'wei')
         );
     });
 
@@ -313,13 +313,13 @@ describe('ZunDistributor tests', () => {
         await distributor.distribute();
 
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(
-            parseUnits('287179487179487179487179', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.allowance(approveGauge.address, approveGaugeRec.address)).to.eq(
-            parseUnits('287179487179487179487179', 'wei')
+            parseUnits('143589743589743589743589', 'wei')
         );
         expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(
-            parseUnits('143589743589743589743589', 'wei')
+            parseUnits('71794871794871794871794', 'wei')
         );
 
         await expect(distributor.distribute()).to.be.revertedWithCustomError(
@@ -756,7 +756,7 @@ describe('ZunDistributor tests', () => {
             vlZUN.address,
             dao.address,
             blockInFuture,
-            (14 * 24 * 60 * 60) / 12,
+            (7 * 24 * 60 * 60) / 12,
             [approveGauge.address, transferGauge.address],
             [parseUnits('1000', 'ether'), parseUnits('1000', 'ether')]
         )) as ZunDistributor;
