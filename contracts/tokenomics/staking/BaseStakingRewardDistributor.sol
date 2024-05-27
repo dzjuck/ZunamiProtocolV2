@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
@@ -34,10 +35,14 @@ abstract contract BaseStakingRewardDistributor is
 
     uint256 public constant DISTRIBUTION_DENOMINATOR = 1e18;
 
+    uint256 public constant WEEK = 604800;
+
     struct RewardTokenInfo {
         IERC20 token;
-        uint256 balance;
         uint256 distribution;
+        uint256 lastUpdate;
+        uint256 periodFinish;
+        uint256 rate;
     }
 
     IERC20 public token; // Address of token contract.
@@ -108,7 +113,13 @@ abstract contract BaseStakingRewardDistributor is
         if (isRewardTokenAdded(address(_token))) revert TokenAlreadyAdded();
 
         uint256 tid = rewardTokenInfo.length;
-        rewardTokenInfo.push(RewardTokenInfo({ token: _token, balance: 0, distribution: 0 }));
+        rewardTokenInfo.push(RewardTokenInfo({
+            token: _token,
+            distribution: 0,
+            lastUpdate: 0,
+            periodFinish: 0,
+            rate: 0
+        }));
         rewardTokenTidByAddress[address(_token)] = tid;
 
         emit RewardTokenAdded(address(_token), tid);
@@ -152,12 +163,6 @@ abstract contract BaseStakingRewardDistributor is
         return distributions;
     }
 
-    function _reduceByStakedAmount(
-        uint256 _tokenBalance
-    ) internal view virtual returns (uint256 reducedTokenBalance) {
-        reducedTokenBalance = _tokenBalance - totalAmount;
-    }
-
     function _checkpointReward(
         uint256 _tid,
         address _user,
@@ -184,7 +189,6 @@ abstract contract BaseStakingRewardDistributor is
                     _receiver,
                     totalClaimable
                 );
-                rewardTokenInfo[_tid].balance -= transferred;
                 // update amount claimed
                 claimedRewards[_tid][_user] += transferred;
                 if (claimableRewards[_tid][_user] != 0 || totalClaimable > transferred) {
@@ -203,17 +207,14 @@ abstract contract BaseStakingRewardDistributor is
         address token_ = address(rewardInfo.token);
         uint256 dI = 0;
         uint256 totalSupply_ = totalSupply();
-        if (totalSupply_ != 0) {
-            uint256 tokenBalance = IERC20(token_).balanceOf(address(this));
-            if (token_ == address(token)) {
-                tokenBalance = _reduceByStakedAmount(tokenBalance);
-            }
-            if (tokenBalance > rewardInfo.balance) {
-                dI =
-                    (DISTRIBUTION_DENOMINATOR * (tokenBalance - rewardInfo.balance)) /
-                    totalSupply_;
-            }
-            rewardInfo.balance = tokenBalance;
+
+        distribution = rewardInfo.distribution;
+        uint256 lastUpdate = Math.min(block.timestamp, rewardInfo.periodFinish);
+        uint256 duration = lastUpdate - rewardInfo.lastUpdate;
+
+        if (totalSupply_ != 0 && duration != 0) {
+            rewardInfo.lastUpdate = lastUpdate;
+            dI = duration * rewardInfo.rate * DISTRIBUTION_DENOMINATOR / totalSupply_;
         }
 
         distribution = rewardInfo.distribution + dI;
@@ -230,8 +231,25 @@ abstract contract BaseStakingRewardDistributor is
         if (_token == address(0)) revert ZeroAddress();
         if (!isRewardTokenAdded(_token)) revert AbsentRewardToken();
         uint256 tid = rewardTokenTidByAddress[_token];
+        RewardTokenInfo storage rewardInfo = rewardTokenInfo[tid];
 
-        rewardTokenInfo[tid].token.safeTransferFrom(msg.sender, address(this), _amount);
+        uint256 amountReceived = rewardInfo.token.balanceOf(address(this));
+        rewardInfo.token.safeTransferFrom(msg.sender, address(this), _amount);
+        amountReceived = rewardInfo.token.balanceOf(address(this)) - amountReceived;
+        if (amountReceived < WEEK) revert WrongAmount();
+
+        uint256 periodFinish = rewardInfo.periodFinish;
+        if (block.timestamp >= periodFinish) {
+            rewardInfo.rate = amountReceived / WEEK;
+        } else {
+            uint256 remaining = periodFinish - block.timestamp;
+            uint256 leftover = remaining * rewardInfo.rate;
+            rewardInfo.rate = (amountReceived + leftover) / WEEK;
+        }
+
+        rewardInfo.lastUpdate = block.timestamp;
+        rewardInfo.periodFinish = block.timestamp + WEEK;
+
         _updateDistribution(tid);
     }
 
@@ -239,6 +257,11 @@ abstract contract BaseStakingRewardDistributor is
     function claim(address _receiver) external nonReentrant {
         uint256[] memory distributions = _updateDistributions();
         _checkpointRewards(msg.sender, distributions, true, _receiver);
+    }
+
+    function updateUserCheckpoint() external nonReentrant {
+        uint256[] memory distributions = _updateDistributions();
+        _checkpointRewards(msg.sender, distributions, false, address(0));
     }
 
     // Safe rewardToken transfer function.
@@ -270,12 +293,25 @@ abstract contract BaseStakingRewardDistributor is
         return false;
     }
 
-    function getPendingReward(uint256 _tid, address _user) external view returns (uint256) {
+    function getActualRewardDistribution(uint256 _tid) public view returns (uint256 distribution) {
+        RewardTokenInfo memory rewardInfo = rewardTokenInfo[_tid];
+        distribution  = rewardInfo.distribution;
+        uint256 totalSupply = totalSupply();
+
+        if (totalSupply != 0) {
+            uint256 lastUpdate  = Math.min(block.timestamp, rewardInfo.periodFinish);
+            uint256 duration = lastUpdate - rewardInfo.lastUpdate;
+            distribution += (duration * rewardInfo.rate * DISTRIBUTION_DENOMINATOR) / totalSupply;
+        }
+    }
+
+    function getPendingReward(uint256 _tid, address _user) public view returns (uint256) {
+        uint256 distribution  = getActualRewardDistribution(_tid);
         uint256 newClaimable = 0;
-        if (userRewardDistribution[_user][_tid] < rewardTokenInfo[_tid].distribution) {
+        if (userRewardDistribution[_user][_tid] < distribution) {
             newClaimable =
                 (balanceOf(_user) *
-                    (rewardTokenInfo[_tid].distribution - userRewardDistribution[_user][_tid])) /
+                    (distribution - userRewardDistribution[_user][_tid])) /
                 DISTRIBUTION_DENOMINATOR;
         }
 

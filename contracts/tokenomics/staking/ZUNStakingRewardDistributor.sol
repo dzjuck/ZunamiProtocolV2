@@ -79,14 +79,9 @@ contract ZUNStakingRewardDistributor is
         return ((totalAmount - recapitalizedAmount) * RATIO_DENOMINATOR) / totalAmount;
     }
 
-    function lastUserLockIndex(address _user) public view returns (uint256) {
-        return userLocks[_user].length - 1;
-    }
-
-    function _reduceByStakedAmount(
-        uint256 _tokenBalance
-    ) internal view override returns (uint256 reducedTokenBalance) {
-        reducedTokenBalance = _tokenBalance + recapitalizedAmount - totalAmount;
+    // Returns the number of locks for a user.
+    function userLockCount(address _user) public view returns (uint256) {
+        return userLocks[_user].length;
     }
 
     function withdrawToken(uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
