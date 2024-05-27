@@ -59,7 +59,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         if (zunToken_ == address(0)) revert ZeroAddress();
         zunToken = IERC20(zunToken_);
 
-        setAccumulationPeriod((14 * 24 * 60 * 60) / 12); // 2 week in blocks
+        setAccumulationPeriod((7 * 24 * 60 * 60) / 12); // 1 week in blocks
     }
 
     function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
