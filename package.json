@@ -12,7 +12,7 @@
     "test:coverage": "hardhat coverage  --testfiles 'test/*.ts'",
     "test:verbose": "hardhat test --verbose test/*.ts",
     "deploy:zunUSD:mainnet": "hardhat run --network mainnet scripts/prod/deploy/deployZunUSD.js",
-    "deploy:zunUSD:testnet": "hardhat run --network sepolia scripts/test/deployZunUSDTest.js"
+    "deploy:zunUSD:testnet": "hardhat run --network sepolia scripts/test/protocol/deployZunUSDTest.js"
   },
   "repository": {
     "type": "git",
@@ -34,6 +34,7 @@
     "@openzeppelin/contracts": "5.0.0",
     "@openzeppelin/contracts-upgradeable": "5.0.0",
     "@openzeppelin/hardhat-upgrades": "^1.28.0",
+    "@tenderly/hardhat-tenderly": "^2.2.2",
     "@types/chai": "^4.2.0",
     "@types/mocha": ">=9.1.0",
     "@types/node": ">=12.0.0",

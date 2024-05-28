@@ -25,7 +25,7 @@ async function main() {
     const ZUN = await ethers.getContractAt('ERC20Token', zunAddr);
     console.log('ZUN address:', zunAddr);
 
-    const vlZunAddr = '0xEfE42F8814Ec988FCd98ec86e737655cE415978A';
+    const vlZunAddr = '0x79B20aE54D75065D48BB6Ef558e7B3d75AFb3F93';
     const vlZUN = await ethers.getContractAt('ZUNStakingRewardDistributor', vlZunAddr);
     console.log('vlZUN address:', vlZunAddr);
 

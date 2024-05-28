@@ -3,7 +3,6 @@ async function main() {
     console.log('Start deploy');
 
     const [admin] = await ethers.getSigners();
-
     console.log('Admin:', admin.address);
 
     console.log('Deploy Test Zun Token:');

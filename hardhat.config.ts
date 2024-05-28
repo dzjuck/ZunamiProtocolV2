@@ -15,7 +15,15 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY;
 export const PROVIDER_URL = process.env.PROVIDER_URL;
 export const FORK_BLOCK_NUMBER = 19855000;
 
+import * as tdly from "@tenderly/hardhat-tenderly";
+tdly.setup({automaticVerifications: false});
+
 const config: HardhatUserConfig = {
+    tenderly: {
+      username: `${process.env.TENDERLY_USERNAME}`,
+      project: "jrf",
+      privateVerification: true,
+    },
     defaultNetwork: 'hardhat',
     gasReporter: {
         currency: 'USD',
@@ -92,7 +100,7 @@ const config: HardhatUserConfig = {
             chainId: 11155111,
             gas: 'auto',
             gasMultiplier: 1.2,
-            gasPrice: 120000000000,
+            gasPrice: 85000000000,
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
         },
@@ -101,6 +109,12 @@ const config: HardhatUserConfig = {
             gas: 12400000,
             gasPrice: 48105966118,
             timeout: 1000000,
+        },
+        devnet: {
+          url: `${process.env.TENDERLY_RPC_URL}`,
+          network_id: `${process.env.TENDERLY_NETWORK_ID}`,
+          accounts: [`${PRIVATE_KEY}`],
+          loggingEnabled: true,
         },
     },
     solidity: {
