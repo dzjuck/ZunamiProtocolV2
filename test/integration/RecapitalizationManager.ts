@@ -38,6 +38,13 @@ const DAI_SPONSOR = '0x837c20D568Dfcd35E74E5CC0B8030f9Cebe10A28';
 const parseDAI = (token: number) => BigNumber.from(token).mul(BigNumber.from(10).pow(18));
 const parseZUN = (token: number) => BigNumber.from(token).mul(BigNumber.from(10).pow(18));
 
+const BLOCK_SECONDS = 1;
+const BLOCKS_IN_1_HOURS = 60 * 60 / BLOCK_SECONDS;
+const BLOCKS_IN_1_DAYS = BLOCKS_IN_1_HOURS * 24;
+const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
+
+const WEEK = 604800;
+
 describe('Recapitalization Manager', async () => {
     async function deployFixture() {
         // set block number of the fork
@@ -162,7 +169,7 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address
             );
             expect(await recapitalizationManager.accumulationPeriod()).to.equal(
-                (14 * 24 * 60 * 60) / 12
+                (7 * 24 * 60 * 60) / 12
             );
             expect(
                 await recapitalizationManager.hasRole(
@@ -196,25 +203,25 @@ describe('Recapitalization Manager', async () => {
                 addresses.crypto.crv,
                 CRV_SPONSOR,
                 recapitalizationManager.address,
-                parseEther('10')
+                parseEther('111')
             );
             await provideLiquidity(
                 addresses.crypto.cvx,
                 CVX_SPONSOR,
                 recapitalizationManager.address,
-                parseEther('10')
+                parseEther('22')
             );
             await provideLiquidity(
                 addresses.crypto.fxs,
                 FXS_SPONSOR,
                 recapitalizationManager.address,
-                parseEther('10')
+                parseEther('3333')
             );
             await provideLiquidity(
                 addresses.crypto.sdt,
                 SDT_SPONSOR,
                 recapitalizationManager.address,
-                parseEther('10')
+                parseEther('6')
             );
 
             await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
@@ -229,6 +236,21 @@ describe('Recapitalization Manager', async () => {
                 .connect(otherAccount)
                 .deposit(parseZUN(1000), otherAccount.address);
 
+            await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
+
+            await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
+              0
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(1)).rate).to.be.eq(
+              0
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(2)).rate).to.be.eq(
+              0
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(3)).rate).to.be.eq(
+              0
+            );
+
             // when
             const tx = await recapitalizationManager.distributeRewards();
 
@@ -236,26 +258,31 @@ describe('Recapitalization Manager', async () => {
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
-            await expect(tx)
-                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(1, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(2, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(3, anyUint);
+
+            await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
+              parseEther('111').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(1)).rate).to.be.eq(
+              parseEther('22').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(2)).rate).to.be.eq(
+              parseEther('3333').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(3)).rate).to.be.eq(
+              parseEther('6').div(WEEK)
+            );
+
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(
-                parseEther('10')
+                parseEther('111')
             );
             expect(await CVX.balanceOf(stakingRewardDistributor.address)).is.equal(
-                parseEther('10')
+                parseEther('22')
             );
             expect(await FXS.balanceOf(stakingRewardDistributor.address)).is.equal(
-                parseEther('10')
+                parseEther('3333')
             );
             expect(await SDT.balanceOf(stakingRewardDistributor.address)).is.equal(
-                parseEther('10')
+                parseEther('6')
             );
         });
         it('Should distribute rewards from recapitalization manager except of unknown reward', async () => {
@@ -321,15 +348,20 @@ describe('Recapitalization Manager', async () => {
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
-            await expect(tx)
-                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(1, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(2, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(3, anyUint);
+
+            await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
+              parseEther('10').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(1)).rate).to.be.eq(
+              parseEther('10').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(2)).rate).to.be.eq(
+              parseEther('10').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(3)).rate).to.be.eq(
+              parseEther('10').div(WEEK)
+            );
+
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(
                 parseEther('10')
             );
@@ -409,7 +441,7 @@ describe('Recapitalization Manager', async () => {
                 .connect(otherAccount)
                 .deposit(parseZUN(1000), otherAccount.address);
 
-            await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
+            await mine(BLOCKS_IN_1_WEEKS);
             await recapitalizationManager.distributeRewards();
 
             // prepare for second distribution
@@ -438,7 +470,7 @@ describe('Recapitalization Manager', async () => {
                 parseEther('1')
             );
 
-            await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
+            await mine(BLOCKS_IN_1_WEEKS);
 
             // when
             const tx = await recapitalizationManager.distributeRewards();
@@ -447,15 +479,20 @@ describe('Recapitalization Manager', async () => {
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
-            await expect(tx)
-                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(0, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(1, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(2, anyUint)
-                .emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(3, anyUint);
+
+            await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
+              parseEther('1').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(1)).rate).to.be.eq(
+              parseEther('1').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(2)).rate).to.be.eq(
+              parseEther('1').div(WEEK)
+            );
+            await expect((await stakingRewardDistributor.rewardTokenInfo(3)).rate).to.be.eq(
+              parseEther('1').div(WEEK)
+            );
+
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(
                 parseEther('11')
             );
@@ -1109,6 +1146,7 @@ describe('Recapitalization Manager', async () => {
             // should be spent during reward distribution
             expect(await stakingRewardDistributor.recapitalizedAmount()).to.equal(parseZUN(36));
         });
+
         it('Should send remaining ZUN during reward distribution after restoring staked zun by rewards', async () => {
             // given
             const {
@@ -1213,9 +1251,11 @@ describe('Recapitalization Manager', async () => {
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
                 .withArgs(tx.blockNumber);
-            await expect(tx)
-                .to.emit(stakingRewardDistributor, 'DistributionUpdated')
-                .withArgs(4, anyUint);
+
+            await expect((await stakingRewardDistributor.rewardTokenInfo(4)).rate).to.be.eq(
+              parseZUN(400).sub(parseZUN(40)).div(WEEK)
+            );
+
             await expect(tx).to.changeTokenBalances(
                 ZUN,
                 [recapitalizationManager.address, stakingRewardDistributor.address],

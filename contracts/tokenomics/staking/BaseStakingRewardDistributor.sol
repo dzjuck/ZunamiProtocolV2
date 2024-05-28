@@ -233,6 +233,8 @@ abstract contract BaseStakingRewardDistributor is
         uint256 tid = rewardTokenTidByAddress[_token];
         RewardTokenInfo storage rewardInfo = rewardTokenInfo[tid];
 
+        _updateDistribution(tid);
+
         uint256 amountReceived = rewardInfo.token.balanceOf(address(this));
         rewardInfo.token.safeTransferFrom(msg.sender, address(this), _amount);
         amountReceived = rewardInfo.token.balanceOf(address(this)) - amountReceived;
@@ -249,8 +251,6 @@ abstract contract BaseStakingRewardDistributor is
 
         rewardInfo.lastUpdate = block.timestamp;
         rewardInfo.periodFinish = block.timestamp + WEEK;
-
-        _updateDistribution(tid);
     }
 
     // claim rewards

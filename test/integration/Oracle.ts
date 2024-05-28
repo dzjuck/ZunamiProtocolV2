@@ -15,7 +15,7 @@ const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 const stETH_ETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 const stETH_addr = '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84';
 
-describe('Conic Oracle', async () => {
+describe('Oracle', async () => {
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.

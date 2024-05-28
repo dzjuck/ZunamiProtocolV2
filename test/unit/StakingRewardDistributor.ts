@@ -11,7 +11,9 @@ const ethUnits = (amount: number | string) => parseUnits(amount.toString(), 'eth
 
 const toBn = (value: number | string) => ethers.BigNumber.from(value);
 
-const BLOCKS_IN_1_DAYS = (24 * 60 * 60) / 12;
+const BLOCK_SECONDS = 1;
+const BLOCKS_IN_1_HOURS = 60 * 60 / BLOCK_SECONDS;
+const BLOCKS_IN_1_DAYS = BLOCKS_IN_1_HOURS * 24;
 const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
 const BLOCKS_IN_2_WEEKS = BLOCKS_IN_1_WEEKS * 2;
 const BLOCKS_IN_3_WEEKS = BLOCKS_IN_1_WEEKS * 3;
@@ -63,11 +65,23 @@ describe('StakingRewardDistributor tests', () => {
 
         const stakingRewardDistributor = instance as StakingRewardDistributor;
 
+        // add reward tokens and pool
+        const tid1 = 0;
+        await stakingRewardDistributor.addRewardToken(REWARD.address);
+        const tid2 = 1;
+        await stakingRewardDistributor.addRewardToken(REWARD2.address);
+
+        // check rewards info
+        const rewardTokenInfoBefore = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        expect(rewardTokenInfoBefore.distribution).to.be.eq(0);
+
         return {
             stakingRewardDistributor,
             POOLTOKEN,
             REWARD,
+            tid1,
             REWARD2,
+            tid2,
             admin,
             users: [user1, user2, user3],
             earlyExitReceiver,
@@ -88,12 +102,6 @@ describe('StakingRewardDistributor tests', () => {
         expect(await POOLTOKEN.balanceOf(users[1].address)).to.eq(ethUnits('0'));
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('0'));
         expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(ethUnits('0'));
-
-        // add reward tokens and pool
-        const tid1 = 0;
-        await stakingRewardDistributor.addRewardToken(REWARD.address);
-        const tid2 = 1;
-        await stakingRewardDistributor.addRewardToken(REWARD2.address);
 
         // add DISTRIBUTOR_ROLE to admin
         await stakingRewardDistributor.grantRole(
@@ -116,28 +124,20 @@ describe('StakingRewardDistributor tests', () => {
             await stakingRewardDistributor.connect(users[1]).deposit(amount2, users[1].address);
             expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(amount2);
         }
-
-        // check rewards info
-        const rewardTokenInfoBefore = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        expect(rewardTokenInfoBefore.distribution).to.be.eq(0);
-
-        return {
-            tid1,
-            tid2,
-        };
     }
 
     it('add and deposit to pool for rewards', async () => {
         const fixture = await loadFixture(deployFixture);
 
+        const { stakingRewardDistributor, POOLTOKEN, REWARD, users, tid1, tid2 } = fixture;
+
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
         );
-        const { stakingRewardDistributor, POOLTOKEN, REWARD, users } = fixture;
 
         // first distribution of REWARD
         const firstDistributionAmount1 = ethUnits('1000000');
@@ -146,12 +146,15 @@ describe('StakingRewardDistributor tests', () => {
 
         await mine(BLOCKS_IN_1_DAYS);
 
-        const rewardTokenInfo1 = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        const accruedRewards1 = rewardTokenInfo1.distribution.mul(depositAmount1);
+        await stakingRewardDistributor.connect(users[0]).updateUserCheckpoint();
+        await stakingRewardDistributor.connect(users[1]).updateUserCheckpoint();
+
+        const actualRewardDistribution = await stakingRewardDistributor.getActualRewardDistribution(tid1);
+        const accruedRewards1 = actualRewardDistribution.mul(depositAmount1);
         expect(await stakingRewardDistributor.getPendingReward(tid1, users[0].address)).to.eq(
             accruedRewards1
         );
-        const accruedRewards2 = rewardTokenInfo1.distribution.mul(depositAmount2);
+        const accruedRewards2 = actualRewardDistribution.mul(depositAmount2);
         expect(await stakingRewardDistributor.getPendingReward(tid1, users[1].address)).to.eq(
             accruedRewards2
         );
@@ -174,23 +177,31 @@ describe('StakingRewardDistributor tests', () => {
 
         await mine(BLOCKS_IN_1_DAYS);
 
+        await stakingRewardDistributor.connect(users[0]).updateUserCheckpoint();
+        await stakingRewardDistributor.connect(users[1]).updateUserCheckpoint();
+
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.be.eq(
             ethUnits(depositAmount1 * 2)
         );
-        expect(await stakingRewardDistributor.getPendingReward(tid1, users[0].address)).to.be.eq(
-            accruedRewards1
+
+        const actualRewardDistribution2 = await stakingRewardDistributor.getActualRewardDistribution(tid1);
+        const distributionDiff = actualRewardDistribution2.sub(actualRewardDistribution);
+        expect(await stakingRewardDistributor.getPendingReward(tid1, users[0].address)).to.closeTo(
+          accruedRewards1.add( distributionDiff.mul(depositAmount2) ), ethUnits(2)
         );
-        expect(await stakingRewardDistributor.getPendingReward(tid1, users[1].address)).to.be.eq(
-            accruedRewards2
+
+        expect(await stakingRewardDistributor.getPendingReward(tid1, users[1].address)).to.closeTo(
+            accruedRewards2.add( distributionDiff.mul(depositAmount2)), ethUnits(2)
         );
     });
 
     it('reward tokens distribution', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD } = fixture;
 
         // distribution
@@ -198,19 +209,19 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD.approve(stakingRewardDistributor.address, ethUnits(distributionAmount));
         await stakingRewardDistributor.distribute(REWARD.address, ethUnits(distributionAmount));
 
-        // check rewards info
-        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        await mine(BLOCKS_IN_1_WEEKS);
 
         const distribution = ethUnits(distributionAmount / (depositAmount1 + depositAmount2));
-        expect(rewardTokenInfo.distribution).to.be.eq(distribution);
+        expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.closeTo(distribution, 100);
     });
 
     it('second distribution at the same block as first', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD } = fixture;
 
         await ethers.provider.send('evm_setAutomine', [false]);
@@ -226,17 +237,19 @@ describe('StakingRewardDistributor tests', () => {
         await mine();
         await ethers.provider.send('evm_setAutomine', [true]);
 
-        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
+        await mine(BLOCKS_IN_1_WEEKS + BLOCKS_IN_1_HOURS);
+
         const distribution = ethUnits((distributionAmount * 2) / (depositAmount1 + depositAmount2));
-        expect(rewardTokenInfo.distribution).to.be.eq(distribution);
+        expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.closeTo(distribution, 200);
     });
 
-    it('second distribution after 1 week', async () => {
+    it('second distribution after a half of a week', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD } = fixture;
 
         // first distribution
@@ -244,27 +257,60 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD.approve(stakingRewardDistributor.address, firstDistributionAmount);
         await stakingRewardDistributor.distribute(REWARD.address, firstDistributionAmount);
 
-        await mine(BLOCKS_IN_1_WEEKS);
+        await mine(BLOCKS_IN_1_WEEKS - BLOCKS_IN_1_WEEKS/2);
 
         // second distribution after a week
         const secondDistributionAmount = ethUnits('30000000');
         await REWARD.approve(stakingRewardDistributor.address, secondDistributionAmount);
         await stakingRewardDistributor.distribute(REWARD.address, secondDistributionAmount);
 
+        await mine(BLOCKS_IN_1_WEEKS + BLOCKS_IN_1_HOURS);
+
         // check rewards info
         const distribution = firstDistributionAmount
             .add(secondDistributionAmount)
             .div(depositAmount1 + depositAmount2);
-        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        expect(rewardTokenInfo.distribution).to.be.eq(distribution);
+        expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.closeTo(distribution, ethUnits(1));
     });
 
-    it('second distribution after 2 weeks - edge case', async () => {
+    it('second distribution after 1 week', async () => {
+      const fixture = await loadFixture(deployFixture);
+      const { tid1 } = fixture;
+
+      const depositAmount1 = 1000;
+      const depositAmount2 = 3000;
+      await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+      const { stakingRewardDistributor, REWARD } = fixture;
+
+      // first distribution
+      const firstDistributionAmount = ethUnits('10000000');
+      await REWARD.approve(stakingRewardDistributor.address, firstDistributionAmount);
+      await stakingRewardDistributor.distribute(REWARD.address, firstDistributionAmount);
+
+      await mine(BLOCKS_IN_1_WEEKS);
+
+      // second distribution after a week
+      const secondDistributionAmount = ethUnits('30000000');
+      await REWARD.approve(stakingRewardDistributor.address, secondDistributionAmount);
+      await stakingRewardDistributor.distribute(REWARD.address, secondDistributionAmount);
+
+      await mine(BLOCKS_IN_1_WEEKS);
+
+      // check rewards info
+      const distribution = firstDistributionAmount
+        .add(secondDistributionAmount)
+        .div(depositAmount1 + depositAmount2);
+
+      expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.closeTo(distribution, ethUnits(1));
+    });
+
+    it('second distribution after 2 weeks', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD } = fixture;
 
         // first distribution
@@ -279,20 +325,22 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD.approve(stakingRewardDistributor.address, secondDistributionAmount);
         await stakingRewardDistributor.distribute(REWARD.address, secondDistributionAmount);
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         // check rewards info
         const distribution = firstDistributionAmount
             .add(secondDistributionAmount)
             .div(depositAmount1 + depositAmount2);
-        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        expect(rewardTokenInfo.distribution).to.be.eq(distribution);
+        expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.be.closeTo(distribution, ethUnits(1));
     });
 
     it('second distribution after 3 weeks', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD } = fixture;
 
         // first distribution
@@ -307,20 +355,22 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD.approve(stakingRewardDistributor.address, secondDistributionAmount);
         await stakingRewardDistributor.distribute(REWARD.address, secondDistributionAmount);
 
+        await mine(BLOCKS_IN_3_WEEKS);
+
         // check rewards info
         const distribution = firstDistributionAmount
             .add(secondDistributionAmount)
             .div(depositAmount1 + depositAmount2);
-        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        expect(rewardTokenInfo.distribution).to.be.eq(distribution);
+        expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.closeTo(distribution, ethUnits(1));
     });
 
     it('second distribution after 3 weeks for two rewards', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1, tid2 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
@@ -352,28 +402,29 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD2.approve(stakingRewardDistributor.address, secondDistributionAmount2);
         await stakingRewardDistributor.distribute(REWARD2.address, secondDistributionAmount2);
 
+        await mine(BLOCKS_IN_3_WEEKS);
+
         // check rewards info of REWARD
 
         let distribution = firstDistributionAmount1
             .add(secondDistributionAmount1)
             .div(depositAmount1 + depositAmount2);
-        const rewardTokenInfo1 = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        expect(rewardTokenInfo1.distribution).to.be.eq(distribution);
+        expect((await stakingRewardDistributor.getActualRewardDistribution(tid1))).to.be.closeTo(distribution, ethUnits(1));
 
         // check rewards info of REWARD2
         distribution = firstDistributionAmount2
             .add(secondDistributionAmount2)
             .div(depositAmount1 + depositAmount2);
-        const rewardTokenInfo2 = await stakingRewardDistributor.rewardTokenInfo(tid2);
-        expect(rewardTokenInfo2.distribution).to.be.eq(distribution);
+        expect((await stakingRewardDistributor.getActualRewardDistribution(tid2))).to.closeTo(distribution, ethUnits(1));
     });
 
     it('claim 1 day after distribution for one reward token', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD, users } = fixture;
 
         // distribution
@@ -389,17 +440,18 @@ describe('StakingRewardDistributor tests', () => {
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
 
         // check balances after claim
-        const rewardTokenInfo1 = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        const accruedRewards = rewardTokenInfo1.distribution.mul(depositAmount1);
+        const accruedRewards = (await stakingRewardDistributor.getActualRewardDistribution(tid1))
+          .mul(depositAmount1);
         expect(await REWARD.balanceOf(users[0].address)).to.eq(accruedRewards);
     });
 
     it('claim 1 day after distribution for one reward token for another receiver', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD, users } = fixture;
 
         // distribution
@@ -417,17 +469,18 @@ describe('StakingRewardDistributor tests', () => {
         await stakingRewardDistributor.connect(users[0]).claim(zeroAddress);
 
         // check balances after claim
-        const rewardTokenInfo1 = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        const accruedRewards = rewardTokenInfo1.distribution.mul(depositAmount1);
+        const accruedRewards = (await stakingRewardDistributor.getActualRewardDistribution(tid1))
+          .mul(depositAmount1);
         expect(await REWARD.balanceOf(users[1].address)).to.eq(accruedRewards);
     });
 
     it('get pending rewards 2 weeks after distribution for one reward token', async () => {
         const fixture = await loadFixture(deployFixture);
+        const { tid1 } = fixture;
 
         const depositAmount1 = 1000;
         const depositAmount2 = 3000;
-        const { tid1 } = await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
+        await depositByTwoUsersState(depositAmount1, depositAmount2, fixture);
         const { stakingRewardDistributor, REWARD, users } = fixture;
 
         // distribution
@@ -439,9 +492,8 @@ describe('StakingRewardDistributor tests', () => {
         const total = await stakingRewardDistributor.getPendingReward(tid1, users[0].address);
 
         const distribution = distributionAmount.div(depositAmount1 + depositAmount2);
-        const rewardTokenInfo = await stakingRewardDistributor.rewardTokenInfo(tid1);
-        expect(rewardTokenInfo.distribution).to.be.eq(distribution);
-        expect(total).to.be.eq(distribution.mul(depositAmount1));
+        expect(await stakingRewardDistributor.getActualRewardDistribution(tid1)).to.be.closeTo(distribution, ethUnits(1));
+        expect(total).to.be.closeTo(distribution.mul(depositAmount1), ethUnits(1));
     });
 
     it('withdraw token immediately after deposit', async () => {
@@ -488,7 +540,7 @@ describe('StakingRewardDistributor tests', () => {
 
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
@@ -557,7 +609,7 @@ describe('StakingRewardDistributor tests', () => {
 
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
@@ -600,8 +652,8 @@ describe('StakingRewardDistributor tests', () => {
             ethUnits(depositAmount1 * 2 + depositAmount2)
         );
 
-        // wait 1 week - 50_400 blocks
-        await mine(50_400);
+        // wait 1 week
+        await mine(BLOCKS_IN_1_WEEKS);
 
         await POOLTOKEN.transfer(users[1].address, ethUnits(depositAmount2));
         await POOLTOKEN.connect(users[1]).approve(
@@ -615,8 +667,8 @@ describe('StakingRewardDistributor tests', () => {
             ethUnits(depositAmount2 * 2)
         );
 
-        // wait 1 week - 50_400 blocks
-        await mine(50_400);
+        // wait 1 week
+        await mine(BLOCKS_IN_1_WEEKS);
 
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
@@ -625,10 +677,10 @@ describe('StakingRewardDistributor tests', () => {
             ethUnits(depositAmount1 * 2 + depositAmount2 * 2)
         );
 
-        expect(await REWARD.balanceOf(users[0].address)).to.eq(distributionAmount.div(2));
-        expect(await REWARD.balanceOf(users[1].address)).to.eq(distributionAmount.div(2));
-        expect(await REWARD2.balanceOf(users[0].address)).to.eq(distributionAmount2.div(2));
-        expect(await REWARD2.balanceOf(users[1].address)).to.eq(distributionAmount2.div(2));
+        expect(await REWARD.balanceOf(users[0].address)).to.closeTo(distributionAmount.div(2), ethUnits(1));
+        expect(await REWARD.balanceOf(users[1].address)).to.closeTo(distributionAmount.div(2), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[0].address)).to.closeTo(distributionAmount2.div(2), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[1].address)).to.closeTo(distributionAmount2.div(2), ethUnits(1));
 
         await stakingRewardDistributor
             .connect(users[0])
@@ -642,21 +694,23 @@ describe('StakingRewardDistributor tests', () => {
         );
         expect(await POOLTOKEN.balanceOf(users[0].address)).to.eq(ethUnits(depositAmount1));
 
-        await mine(50_400);
+        await mine(BLOCKS_IN_1_WEEKS);
 
         expect(await POOLTOKEN.balanceOf(stakingRewardDistributor.address)).to.eq(
             ethUnits(depositAmount1 + depositAmount2 * 2)
         );
 
-        expect(await REWARD.balanceOf(users[0].address)).to.eq(distributionAmount.div(2));
-        expect(await REWARD.balanceOf(users[1].address)).to.eq(distributionAmount.div(2));
-        expect(await REWARD2.balanceOf(users[0].address)).to.eq(distributionAmount2.div(2));
-        expect(await REWARD2.balanceOf(users[1].address)).to.eq(distributionAmount2.div(2));
+        expect(await REWARD.balanceOf(users[0].address)).to.closeTo(distributionAmount.div(2), ethUnits(1));
+        expect(await REWARD.balanceOf(users[1].address)).to.closeTo(distributionAmount.div(2), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[0].address)).to.closeTo(distributionAmount2.div(2), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[1].address)).to.closeTo(distributionAmount2.div(2), ethUnits(1));
         await REWARD.approve(stakingRewardDistributor.address, distributionAmount);
         await stakingRewardDistributor.distribute(REWARD.address, distributionAmount);
 
         await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2);
         await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2);
+
+        await mine(BLOCKS_IN_1_WEEKS / 2);
 
         const rewardBalanceBefore1 = await REWARD.balanceOf(users[0].address);
         const rewardBalanceBefore2 = await REWARD.balanceOf(users[1].address);
@@ -671,13 +725,13 @@ describe('StakingRewardDistributor tests', () => {
         const rewardBalanceAfter3 = await REWARD2.balanceOf(users[0].address);
         const rewardBalanceAfter4 = await REWARD2.balanceOf(users[1].address);
 
-        expect(rewardBalanceAfter1.sub(rewardBalanceBefore1)).to.be.eq(distributionAmount.div(5));
-        expect(rewardBalanceAfter2.sub(rewardBalanceBefore2)).to.be.eq(
-            distributionAmount.div(5).mul(4)
+        expect(rewardBalanceAfter1.sub(rewardBalanceBefore1)).to.closeTo(distributionAmount.div(5).div(2), ethUnits(10));
+        expect(rewardBalanceAfter2.sub(rewardBalanceBefore2)).to.closeTo(
+            distributionAmount.div(5).mul(4).div(2), ethUnits(55)
         );
-        expect(rewardBalanceAfter3.sub(rewardBalanceBefore3)).to.be.eq(distributionAmount2.div(5));
-        expect(rewardBalanceAfter4.sub(rewardBalanceBefore4)).to.be.eq(
-            distributionAmount2.div(5).mul(4)
+        expect(rewardBalanceAfter3.sub(rewardBalanceBefore3)).to.closeTo(distributionAmount2.div(5).div(2), ethUnits(1));
+        expect(rewardBalanceAfter4.sub(rewardBalanceBefore4)).to.closeTo(
+            distributionAmount2.div(5).mul(4).div(2), ethUnits(1)
         );
     });
 
@@ -702,14 +756,16 @@ describe('StakingRewardDistributor tests', () => {
         const balanceAfter = await POOLTOKEN.balanceOf(stakingRewardDistributor.address);
         expect(balanceAfter.sub(balanceBefore)).to.eq(ethUnits(distributionAmount));
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await POOLTOKEN.balanceOf(users[0].address)).to.be.eq(
-            ethUnits(distributionAmount).div(4)
+        expect(await POOLTOKEN.balanceOf(users[0].address)).to.closeTo(
+            ethUnits(distributionAmount).div(4), ethUnits(1)
         );
-        expect(await POOLTOKEN.balanceOf(users[1].address)).to.be.eq(
-            ethUnits(distributionAmount).div(4).mul(3)
+        expect(await POOLTOKEN.balanceOf(users[1].address)).to.closeTo(
+            ethUnits(distributionAmount).div(4).mul(3), ethUnits(1)
         );
     });
 
@@ -761,36 +817,34 @@ describe('StakingRewardDistributor tests', () => {
             users: [alice, bob],
         } = await loadFixture(deployFixture);
 
-        await addRewardToken(stakingRewardDistributor, REWARD.address);
         const depositAmount = ethUnits(100);
         await POOLTOKEN.transfer(alice.address, depositAmount);
         await depositToPool(stakingRewardDistributor, POOLTOKEN, alice, depositAmount);
 
-        await mine(BLOCKS_IN_2_WEEKS);
+        await mine(BLOCKS_IN_1_WEEKS);
 
         const distributionAmount = ethUnits(1000);
         await distributeRewardTokens(stakingRewardDistributor, REWARD, distributionAmount, admin);
+        await mine(BLOCKS_IN_1_WEEKS);
         await stakingRewardDistributor.connect(alice).claim(alice.address);
 
         await POOLTOKEN.transfer(bob.address, depositAmount);
         await depositToPool(stakingRewardDistributor, POOLTOKEN, bob, depositAmount);
 
         await distributeRewardTokens(stakingRewardDistributor, REWARD, distributionAmount, admin);
-
+        await mine(BLOCKS_IN_1_WEEKS);
         await stakingRewardDistributor.connect(bob).claim(bob.address);
-        const bobBalanceFirstClaim = await REWARD.balanceOf(bob.address);
 
         await mine(BLOCKS_IN_2_WEEKS);
         await stakingRewardDistributor.connect(bob).claim(bob.address);
         const bobBalanceSecondClaim = await REWARD.balanceOf(bob.address);
-        const aliceBalanceFirstClaim = await REWARD.balanceOf(alice.address);
 
         await stakingRewardDistributor.connect(alice).claim(alice.address);
         const aliceBalanceSecondClaim = await REWARD.balanceOf(alice.address);
 
-        expect(aliceBalanceSecondClaim.sub(bobBalanceSecondClaim)).to.be.eq(distributionAmount);
-        expect(aliceBalanceSecondClaim).to.be.eq(distributionAmount.add(distributionAmount.div(2)));
-        expect(bobBalanceSecondClaim).to.be.eq(distributionAmount.div(2));
+        expect(aliceBalanceSecondClaim.sub(bobBalanceSecondClaim)).to.closeTo(distributionAmount, ethUnits(1));
+        expect(aliceBalanceSecondClaim).to.closeTo(distributionAmount.add(distributionAmount.div(2)), ethUnits(1));
+        expect(bobBalanceSecondClaim).to.closeTo(distributionAmount.div(2), ethUnits(1));
     });
 
     it('User rewards should not be zeroed on transfer 0 amount of VL token', async function () {
@@ -807,7 +861,6 @@ describe('StakingRewardDistributor tests', () => {
         await POOLTOKEN.connect(bob).approve(stakingRewardDistributor.address, depositAmount);
         await stakingRewardDistributor.connect(bob).deposit(depositAmount, bob.address);
         const distributeAmount = ethUnits(100);
-        await stakingRewardDistributor.addRewardToken(REWARD.address);
         const distributorRole = await stakingRewardDistributor.DISTRIBUTOR_ROLE();
         await stakingRewardDistributor.grantRole(distributorRole, admin.address);
         await REWARD.approve(stakingRewardDistributor.address, distributeAmount);
@@ -821,7 +874,7 @@ describe('StakingRewardDistributor tests', () => {
         );
 
         await stakingRewardDistributor.connect(bob).claim(bob.address);
-        expect(await REWARD.balanceOf(bob.address)).to.eq(ethUnits(100));
+        expect(await REWARD.balanceOf(bob.address)).to.closeTo(ethUnits(100), ethUnits(1));
     });
 
     it("shoudn't deposit zero amount", async function () {
@@ -928,10 +981,9 @@ describe('StakingRewardDistributor tests', () => {
         ).to.be.revertedWithCustomError(stakingRewardDistributor, 'ZeroAddress');
     });
 
-    it("shoudn't add reward token if zero address", async function () {
+    it("shoudn't add reward token if it was added before", async function () {
         const { stakingRewardDistributor, REWARD } = await loadFixture(deployFixture);
 
-        await stakingRewardDistributor.addRewardToken(REWARD.address);
         await expect(
             stakingRewardDistributor.addRewardToken(REWARD.address)
         ).to.be.revertedWithCustomError(stakingRewardDistributor, 'TokenAlreadyAdded');
@@ -958,7 +1010,7 @@ describe('StakingRewardDistributor tests', () => {
         const fixture = await loadFixture(deployFixture);
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
@@ -981,7 +1033,7 @@ describe('StakingRewardDistributor tests', () => {
         const fixture = await loadFixture(deployFixture);
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
@@ -1004,7 +1056,7 @@ describe('StakingRewardDistributor tests', () => {
         const fixture = await loadFixture(deployFixture);
         const depositAmount1 = 1000;
         const depositAmount2 = 2000;
-        const { tid1, tid2 } = await depositByTwoUsersState(
+        await depositByTwoUsersState(
             depositAmount1,
             depositAmount2,
             fixture
@@ -1061,8 +1113,8 @@ describe('StakingRewardDistributor tests', () => {
         const fixture = await loadFixture(deployFixture);
 
         const depositAmount1 = 1000;
-        const { tid1, tid2 } = await depositByTwoUsersState(depositAmount1, 0, fixture);
-        const { stakingRewardDistributor, POOLTOKEN, REWARD, REWARD2, users, earlyExitReceiver } =
+        await depositByTwoUsersState(depositAmount1, 0, fixture);
+        const { stakingRewardDistributor, REWARD, REWARD2, users, earlyExitReceiver } =
             fixture;
 
         const distributionAmount = ethUnits('3000000');
@@ -1073,6 +1125,8 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2.div(3));
         await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2.div(3));
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor
             .connect(users[0])
             .transfer(users[1].address, ethUnits(depositAmount1));
@@ -1082,13 +1136,15 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2.div(3));
         await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2.div(3));
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await REWARD.balanceOf(users[0].address)).to.be.eq(distributionAmount.div(3));
-        expect(await REWARD.balanceOf(users[1].address)).to.be.eq(distributionAmount.div(3));
-        expect(await REWARD2.balanceOf(users[0].address)).to.be.eq(distributionAmount2.div(3));
-        expect(await REWARD2.balanceOf(users[1].address)).to.be.eq(distributionAmount2.div(3));
+        expect(await REWARD.balanceOf(users[0].address)).to.be.closeTo(distributionAmount.div(3), ethUnits(1));
+        expect(await REWARD.balanceOf(users[1].address)).to.be.closeTo(distributionAmount.div(3), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[0].address)).to.be.closeTo(distributionAmount2.div(3), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[1].address)).to.be.closeTo(distributionAmount2.div(3), ethUnits(1));
 
         await stakingRewardDistributor
             .connect(users[1])
@@ -1099,12 +1155,14 @@ describe('StakingRewardDistributor tests', () => {
         await REWARD2.approve(stakingRewardDistributor.address, distributionAmount2.div(3));
         await stakingRewardDistributor.distribute(REWARD2.address, distributionAmount2.div(3));
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await REWARD.balanceOf(users[0].address)).to.be.eq(distributionAmount.div(2));
-        expect(await REWARD.balanceOf(users[1].address)).to.be.eq(distributionAmount.div(2));
-        expect(await REWARD2.balanceOf(users[0].address)).to.be.eq(distributionAmount2.div(2));
-        expect(await REWARD2.balanceOf(users[1].address)).to.be.eq(distributionAmount2.div(2));
+        expect(await REWARD.balanceOf(users[0].address)).to.be.closeTo(distributionAmount.div(2), ethUnits(1));
+        expect(await REWARD.balanceOf(users[1].address)).to.be.closeTo(distributionAmount.div(2), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[0].address)).to.be.closeTo(distributionAmount2.div(2), ethUnits(1));
+        expect(await REWARD2.balanceOf(users[1].address)).to.be.closeTo(distributionAmount2.div(2), ethUnits(1));
     });
 });

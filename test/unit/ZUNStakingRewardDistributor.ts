@@ -15,8 +15,12 @@ import { getSignTypedData } from '../utils/signature';
 
 const ethUnits = (amount: number | string) => parseUnits(amount.toString(), 'ether');
 
-const BLOCKS_IN_1_DAYS = (24 * 60 * 60) / 12;
-const BLOCKS_IN_4_MONTHS = BLOCKS_IN_1_DAYS * 30 * 4;
+const BLOCK_SECONDS = 1;
+const BLOCKS_IN_1_HOURS = 60 * 60 / BLOCK_SECONDS;
+const BLOCKS_IN_1_DAYS = BLOCKS_IN_1_HOURS * 24;
+const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
+const BLOCKS_IN_4_MONTHS = (4 * 30 * 24 * 60 * 60) / 12;
+
 const zeroAddress = ethers.constants.AddressZero;
 
 const toBn = (value: number | string) => ethers.BigNumber.from(value);
@@ -56,40 +60,6 @@ describe('ZUNStakingRewardDistributor tests', () => {
             ZUN,
             REWARD,
             REWARD2,
-            admin,
-            users: [user1, user2, user3],
-            earlyExitReceiver,
-        };
-    }
-
-    async function deployVotesFixture() {
-        // Contracts are deployed using the first signer/account by default
-        const [admin, user1, user2, user3, earlyExitReceiver] = await ethers.getSigners();
-
-        // deploy test ERC20 token
-        const ZunTokenFactory = await ethers.getContractFactory('ZunamiToken');
-        const ZUN = (await ZunTokenFactory.deploy(admin.address)) as ZunamiToken;
-
-        // deploy distributor contract
-        const ZunStakingRewardDistributorVotesFactory = await ethers.getContractFactory(
-            'ZUNStakingRewardDistributorVotes'
-        );
-
-        const instance = await upgrades.deployProxy(
-            ZunStakingRewardDistributorVotesFactory,
-            [ZUN.address, 'Zunami Voting Token', 'vlZUN', admin.address],
-            {
-                kind: 'uups',
-            }
-        );
-        await instance.deployed();
-
-        const zunStakingRewardDistributorVotes = instance as ZUNStakingRewardDistributorVotes;
-
-        await zunStakingRewardDistributorVotes.setEarlyExitReceiver(earlyExitReceiver.address);
-
-        return {
-            token: zunStakingRewardDistributorVotes,
             admin,
             users: [user1, user2, user3],
             earlyExitReceiver,
@@ -173,10 +143,10 @@ describe('ZUNStakingRewardDistributor tests', () => {
         await ZUN.transfer(users[1].address, ethUnits('2000'));
         await ZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('1000'));
         await ZUN.connect(users[1]).approve(stakingRewardDistributor.address, ethUnits('2000'));
-        const tx1 = await stakingRewardDistributor
+        let tx1 = await stakingRewardDistributor
             .connect(users[0])
             .deposit(ethUnits('1000'), users[0].address);
-        const tx2 = await stakingRewardDistributor
+        let tx2 = await stakingRewardDistributor
             .connect(users[1])
             .deposit(ethUnits('2000'), users[1].address);
 
@@ -201,6 +171,40 @@ describe('ZUNStakingRewardDistributor tests', () => {
             tx2.blockNumber! + BLOCKS_IN_4_MONTHS
         );
         expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('3000'));
+
+        // Second deposit without any distribution
+        await ZUN.transfer(users[0].address, ethUnits('1000'));
+        await ZUN.transfer(users[1].address, ethUnits('2000'));
+        await ZUN.connect(users[0]).approve(stakingRewardDistributor.address, ethUnits('1000'));
+        await ZUN.connect(users[1]).approve(stakingRewardDistributor.address, ethUnits('2000'));
+        tx1 = await stakingRewardDistributor
+          .connect(users[0])
+          .deposit(ethUnits('1000'), users[0].address);
+        tx2 = await stakingRewardDistributor
+          .connect(users[1])
+          .deposit(ethUnits('2000'), users[1].address);
+
+        await expect(tx1)
+          .to.emit(stakingRewardDistributor, 'Deposited')
+          .withArgs(users[0].address, 1, ethUnits('1000'), tx1.blockNumber! + BLOCKS_IN_4_MONTHS);
+        await expect(tx2)
+          .to.emit(stakingRewardDistributor, 'Deposited')
+          .withArgs(users[1].address, 1, ethUnits('2000'), tx2.blockNumber! + BLOCKS_IN_4_MONTHS);
+        expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('2000'));
+        expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(ethUnits('4000'));
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 1)).amount).to.eq(
+          ethUnits('1000')
+        );
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 1)).untilBlock).to.eq(
+          tx1.blockNumber! + BLOCKS_IN_4_MONTHS
+        );
+        expect((await stakingRewardDistributor.userLocks(users[1].address, 1)).amount).to.eq(
+          ethUnits('2000')
+        );
+        expect((await stakingRewardDistributor.userLocks(users[1].address, 1)).untilBlock).to.eq(
+          tx2.blockNumber! + BLOCKS_IN_4_MONTHS
+        );
+        expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('6000'));
     });
 
     it('should deposit with permit', async () => {
@@ -1066,12 +1070,14 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const balanceAfter = await ZUN.balanceOf(stakingRewardDistributor.address);
         expect(balanceAfter.sub(balanceBefore)).to.eq(ethUnits(distributionAmount));
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await ZUN.balanceOf(users[0].address)).to.be.eq(ethUnits(distributionAmount).div(4));
-        expect(await ZUN.balanceOf(users[1].address)).to.be.eq(
-            ethUnits(distributionAmount).div(4).mul(3)
+        expect(await ZUN.balanceOf(users[0].address)).to.closeTo(ethUnits(distributionAmount).div(4), ethUnits(1));
+        expect(await ZUN.balanceOf(users[1].address)).to.closeTo(
+            ethUnits(distributionAmount).div(4).mul(3), ethUnits(1)
         );
     });
 
@@ -1112,6 +1118,8 @@ describe('ZUNStakingRewardDistributor tests', () => {
             ethUnits(distributionAmount)
         );
 
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor.withdrawEmergency(REWARD.address);
         await REWARD.transfer(stakingRewardDistributor.address, ethUnits(distributionAmount).sub(1));
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
@@ -1127,17 +1135,21 @@ describe('ZUNStakingRewardDistributor tests', () => {
 
         await REWARD.approve(stakingRewardDistributor.address, ethUnits(distributionAmount));
         await stakingRewardDistributor.distribute(REWARD.address, ethUnits(distributionAmount));
+
+        await mine(BLOCKS_IN_1_WEEKS);
+
         await stakingRewardDistributor.connect(users[0]).claim(users[0].address);
         await stakingRewardDistributor.connect(users[1]).claim(users[1].address);
 
-        expect(await REWARD.balanceOf(users[0].address)).to.be.gte(
-            ethUnits(distributionAmount).div(4).mul(2)
+        expect(await REWARD.balanceOf(users[0].address)).to.closeTo(
+            ethUnits(distributionAmount).div(4).mul(2), ethUnits(1)
         );
-        expect(await REWARD.balanceOf(users[1].address)).to.be.gte(
-            ethUnits(distributionAmount - 1)
+        expect(await REWARD.balanceOf(users[1].address)).to.closeTo(
+            ethUnits(distributionAmount)
                 .div(4)
                 .mul(3)
-                .mul(2)
+                .mul(2),
+            ethUnits(1)
         );
     });
 
