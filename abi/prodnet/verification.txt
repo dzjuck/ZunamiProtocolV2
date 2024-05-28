@@ -95,3 +95,6 @@ npx hardhat verify --network mainnet 0x9ccca620633a5bd6456630e9d606b308d0ca039c 
 
 // Oracle pxETHwETH pool StaticCurveLPOracle
 npx hardhat verify --network mainnet 0xc2fc3f0a8847c9ff83c4cfb6886751d9bf061511
+
+
+npx hardhat verify --network mainnet --constructor-args ./abi/ZunVestingDistributor_ambasadors_arguments.js 0x7ba745D6ee5c19d4284ee6dF5cE3c3Ccf147C283

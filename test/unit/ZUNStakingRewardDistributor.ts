@@ -21,7 +21,7 @@ const BLOCKS_IN_1_DAYS = BLOCKS_IN_1_HOURS * 24;
 const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
 const BLOCKS_IN_4_MONTHS = (4 * 30 * 24 * 60 * 60) / 12;
 
-const zeroAddress = ethers.constants.AddressZero;
+const zeroAddress = '0x0000000000000000000000000000000000000000';
 
 const toBn = (value: number | string) => ethers.BigNumber.from(value);
 

@@ -18,7 +18,7 @@ const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
 const BLOCKS_IN_2_WEEKS = BLOCKS_IN_1_WEEKS * 2;
 const BLOCKS_IN_3_WEEKS = BLOCKS_IN_1_WEEKS * 3;
 
-const zeroAddress = ethers.constants.AddressZero;
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 
 describe('StakingRewardDistributor tests', () => {
     async function deployFixture() {

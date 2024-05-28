@@ -21,5 +21,6 @@ bun.lockb
 gas_report
 typechain-types
 
-contracts_rnd
+scripts/prod/deploy/vesting/private/
+
 
