@@ -95,7 +95,7 @@ contract ZunDistributor is Ownable2Step, Pausable, EIP712, Nonces, ReentrancyGua
         START_BLOCK = _startBlock;
 
         if (_votingPeriod == 0) {
-            _votingPeriod = (7 * 24 * 60 * 60) / 12; // 2 week in blocks
+            _votingPeriod = (7 * 24 * 60 * 60) / 12; // 1 week in blocks
         }
         VOTING_PERIOD = _votingPeriod;
 

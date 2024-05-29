@@ -12,15 +12,30 @@ import { stEthEthConvexCurveStrat } from '../../strategies/curve/convex/eth/stEt
 contract RecapitalizationManager is AccessControl, RewardTokenManager {
     using SafeERC20 for IERC20;
 
+    error WrongRewardDistributionTimestamp(uint256 rewardDistributionTimestamp, uint256 nowTimestamp);
+    error WrongTid(uint256 tid);
+    error ZeroAddress();
+    error ZeroParam();
+
+    bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN_ROLE');
+
+    IERC20 public immutable zunToken;
+
+    uint256 public rewardDistributionTimestamp;
+    IZUNStakingRewardDistributor public stakingRewardDistributor;
+    uint256 public accumulationPeriod;
+
+    event SetRewardDistributor(address rewardDistributorAddr);
+    event SetAccumulationPeriod(uint256 accumulationPeriod);
     event RecapitalizedPoolByRewards(
         address rewardManager,
         address pool,
         uint256 sid,
         uint256 tid,
-        uint256 rewardDistributionBlock,
+        uint256 rewardDistributionTimestamp,
         uint256[] rewardAmounts
     );
-    event DistributedRewards(uint256 rewardDistributionBlock);
+    event DistributedRewards(uint256 rewardDistributionTimestamp);
     event RecapitalizedPoolByStackedZun(
         uint256 zunAmount,
         address rewardManager,
@@ -31,35 +46,19 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     event RestoredStakedZunByRewards(
         uint256 zunReturnTokenAmount,
         address rewardManager,
-        uint256 rewardDistributionBlock
+        uint256 rewardDistributionTimestamp
     );
     event WithdrawnEmergency(address token, uint256 amount);
-
-    error WrongRewardDistributionBlock(uint256 rewardDistributionBlock, uint256 nowBlock);
-    error WrongTid(uint256 tid);
-    error ZeroAddress();
-    error ZeroParam();
-
-    bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN_ROLE');
-
-    IERC20 public immutable zunToken;
-
-    uint256 public rewardDistributionBlock;
-    IZUNStakingRewardDistributor public stakingRewardDistributor;
-    uint256 public accumulationPeriod;
-
-    event SetRewardDistributor(address rewardDistributorAddr);
-    event SetAccumulationPeriod(uint256 accumulationPeriod);
 
     constructor(address zunToken_) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(EMERGENCY_ADMIN_ROLE, msg.sender);
-        rewardDistributionBlock = block.number;
+        rewardDistributionTimestamp = block.timestamp;
 
         if (zunToken_ == address(0)) revert ZeroAddress();
         zunToken = IERC20(zunToken_);
 
-        setAccumulationPeriod((7 * 24 * 60 * 60) / 12); // 1 week in blocks
+        setAccumulationPeriod(7 * 24 * 60 * 60); // 1 week in seconds
     }
 
     function setRewardTokens(IERC20[] memory rewardTokens_) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -85,10 +84,10 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     }
 
     function distributeRewards() external {
-        if (block.number < rewardDistributionBlock + accumulationPeriod)
-            revert WrongRewardDistributionBlock(rewardDistributionBlock, block.number);
+        if (block.timestamp < rewardDistributionTimestamp + accumulationPeriod)
+            revert WrongRewardDistributionTimestamp(rewardDistributionTimestamp, block.timestamp);
 
-        rewardDistributionBlock = block.number;
+        rewardDistributionTimestamp = block.timestamp;
 
         uint256 transferAmount;
         IERC20 token_;
@@ -103,7 +102,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
             }
         }
 
-        emit DistributedRewards(rewardDistributionBlock);
+        emit DistributedRewards(rewardDistributionTimestamp);
     }
 
     function recapitalizePoolByRewards(
@@ -120,14 +119,14 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
 
         _depositToken(pool, sid, tid, depositedToken);
 
-        rewardDistributionBlock = block.number;
+        rewardDistributionTimestamp = block.timestamp;
 
         emit RecapitalizedPoolByRewards(
             address(rewardManager),
             address(pool),
             sid,
             tid,
-            rewardDistributionBlock,
+            rewardDistributionTimestamp,
             rewardAmounts
         );
     }
@@ -169,12 +168,12 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
         zunToken.safeIncreaseAllowance(address(stakingRewardDistributor), zunTokenReturnAmount);
         stakingRewardDistributor.returnToken(zunTokenReturnAmount);
 
-        rewardDistributionBlock = block.number;
+        rewardDistributionTimestamp = block.timestamp;
 
         emit RestoredStakedZunByRewards(
             zunTokenReturnAmount,
             address(rewardManager),
-            rewardDistributionBlock
+            rewardDistributionTimestamp
         );
     }
 

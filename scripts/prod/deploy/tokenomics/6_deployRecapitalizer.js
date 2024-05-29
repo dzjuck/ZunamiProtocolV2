@@ -7,10 +7,10 @@ async function main() {
 
     console.log('Admin:', admin.address);
 
-    const zunAddr = '0xbf3127C1554C02f4e60031E29f890a1A700564f6';
+    const zunAddr = '0x6b5204b0be36771253cc38e88012e02b752f0f36';
     console.log('ZUN address:', zunAddr);
 
-    const vlZunAddr = '0x79B20aE54D75065D48BB6Ef558e7B3d75AFb3F93';
+    const vlZunAddr = '';
     const StakingRewardDistributor = await ethers.getContractFactory('ZUNStakingRewardDistributor');
     const stakingRewardDistributor = await StakingRewardDistributor.attach(vlZunAddr);
     console.log('ZUNStakingRewardDistributor:', stakingRewardDistributor.address);
@@ -28,7 +28,6 @@ async function main() {
         addresses.crypto.cvx,
         addresses.crypto.fxs,
         addresses.crypto.sdt,
-        zunAddr,
     ];
     await recapitalizationManager.setRewardTokens(rewards);
     await recapitalizationManager.setRewardDistributor(stakingRewardDistributor.address);

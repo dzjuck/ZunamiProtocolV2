@@ -10,6 +10,7 @@ const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 import { IPool, IZUNStakingRewardDistributor, IRewardManager, IERC20 } from '../../typechain-types';
 import { mine } from '@nomicfoundation/hardhat-network-helpers';
+import {ContractTransaction} from "ethers";
 
 chai.should(); // if you like should syntax
 chai.use(smock.matchers);
@@ -29,6 +30,10 @@ async function stubToken(decimals: number, admin: SignerWithAddress) {
     const token = await StubToken.deploy(decimals);
     await token.deployed();
     return token;
+}
+
+async function getTimestampFor(blockNumber: number) {
+  return (await ethers.provider.getBlock(blockNumber)).timestamp;
 }
 
 describe('RecapitalizationManager', () => {
@@ -58,7 +63,7 @@ describe('RecapitalizationManager', () => {
             'IZUNStakingRewardDistributor'
         )) as FakeContract<IZUNStakingRewardDistributor>;
 
-        const currentBlock = (await ethers.provider.getBlockNumber()) + 1;
+        const currentTimestamp = (await getTimestampFor(await ethers.provider.getBlockNumber())) + 1;
         const RecapitalizationManager = await ethers.getContractFactory(
             'RecapitalizationManager',
             admin
@@ -67,8 +72,8 @@ describe('RecapitalizationManager', () => {
         await recapitalizationManager.deployed();
         expect(recapitalizationManager.address).to.properAddress;
 
-        await expect(await recapitalizationManager.rewardDistributionBlock()).to.be.equal(
-            currentBlock
+        await expect(await recapitalizationManager.rewardDistributionTimestamp()).to.be.equal(
+            currentTimestamp
         );
 
         await expect(recapitalizationManager.setRewardTokens([])).to.be.revertedWithCustomError(
@@ -94,7 +99,7 @@ describe('RecapitalizationManager', () => {
         await expect(await recapitalizationManager.stakingRewardDistributor()).to.be.equal(
             ADDRESS_ZERO
         );
-        const accumulationPeriod = (7 * 24 * 60 * 60) / 12;
+        const accumulationPeriod = 7 * 24 * 60 * 60;
         await expect(await recapitalizationManager.accumulationPeriod()).to.be.equal(
             accumulationPeriod.toString()
         );
@@ -125,10 +130,10 @@ describe('RecapitalizationManager', () => {
 
     it('should be set accumulation period', async () => {
         await expect(await recapitalizationManager.accumulationPeriod()).to.be.equal(
-            (7 * 24 * 60 * 60) / 12
+            7 * 24 * 60 * 60
         );
 
-        const newAccumulationPeriod = ((7 * 24 * 60 * 60) / 12) * 2;
+        const newAccumulationPeriod = (7 * 24 * 60 * 60) * 2;
 
         await expect(
             recapitalizationManager.connect(bob).setAccumulationPeriod(newAccumulationPeriod)
@@ -151,7 +156,7 @@ describe('RecapitalizationManager', () => {
     it('should distribute rewards', async () => {
         await expect(
             recapitalizationManager.connect(bob).distributeRewards()
-        ).to.be.revertedWithCustomError(recapitalizationManager, `WrongRewardDistributionBlock`);
+        ).to.be.revertedWithCustomError(recapitalizationManager, `WrongRewardDistributionTimestamp`);
 
         await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
 

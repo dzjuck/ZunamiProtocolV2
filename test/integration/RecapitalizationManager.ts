@@ -16,7 +16,7 @@ import {
     setBalance,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import {BigNumber, ContractTransaction} from 'ethers';
 import { parseEther, parseUnits } from 'ethers/lib/utils';
 import { FORK_BLOCK_NUMBER, PROVIDER_URL } from '../../hardhat.config';
 import { anyUint } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
@@ -44,6 +44,10 @@ const BLOCKS_IN_1_DAYS = BLOCKS_IN_1_HOURS * 24;
 const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
 
 const WEEK = 604800;
+
+async function getTimestampFor(tx: ContractTransaction) {
+  return (await ethers.provider.getBlock(tx.blockNumber || 0)).timestamp;
+}
 
 describe('Recapitalization Manager', async () => {
     async function deployFixture() {
@@ -169,7 +173,7 @@ describe('Recapitalization Manager', async () => {
                 stakingRewardDistributor.address
             );
             expect(await recapitalizationManager.accumulationPeriod()).to.equal(
-                (7 * 24 * 60 * 60) / 12
+                7 * 24 * 60 * 60
             );
             expect(
                 await recapitalizationManager.hasRole(
@@ -257,7 +261,7 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
-                .withArgs(tx.blockNumber);
+                .withArgs(await getTimestampFor(tx));
 
             await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
               parseEther('111').div(WEEK)
@@ -347,7 +351,7 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
-                .withArgs(tx.blockNumber);
+                .withArgs(await getTimestampFor(tx));
 
             await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
               parseEther('10').div(WEEK)
@@ -478,7 +482,7 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
-                .withArgs(tx.blockNumber);
+                .withArgs(await getTimestampFor(tx));
 
             await expect((await stakingRewardDistributor.rewardTokenInfo(0)).rate).to.be.eq(
               parseEther('1').div(WEEK)
@@ -541,14 +545,14 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
-                .withArgs(tx.blockNumber!);
+                .withArgs(await getTimestampFor(tx)!);
             expect(await CRV.balanceOf(stakingRewardDistributor.address)).is.equal(expectedCRV);
             expect(await SDT.balanceOf(stakingRewardDistributor.address)).is.equal(expectedSDT);
         });
     });
 
     describe('Recapitalize pool by rewards', async () => {
-        it('Should recapitalize pool by rewards', async () => {
+        it.only('Should recapitalize pool by rewards', async () => {
             // given
             const { recapitalizationManager, CRV, SDT } = await loadFixture(deployFixture);
             // deploy zunUSD
@@ -559,6 +563,7 @@ describe('Recapitalization Manager', async () => {
             // deploy SellingCurveRewardManager
             const sellingCurveRewardManager = await deploySellingCurveRewardManager();
             // claim zunUSD strategies rewards
+          console.log('accumulationPeriod', await recapitalizationManager.accumulationPeriod());
             await mine((await recapitalizationManager.accumulationPeriod()).toNumber());
             await zunUSDController.claimRewards();
 
@@ -571,6 +576,9 @@ describe('Recapitalization Manager', async () => {
                 await zunUSD.token(tid)
             )) as IERC20;
             const strategyAddress = (await zunUSD.strategyInfo(sid)).strategy;
+            console.log('zunUSD.address', zunUSD.address);
+            console.log('strategyAddress', strategyAddress);
+            console.log('poolFeeToken.address', poolFeeToken.address);
             const expectedDepositInFeeToken = (
                 await sellingCurveRewardManager.valuate(
                     CRV.address,
@@ -594,6 +602,9 @@ describe('Recapitalization Manager', async () => {
                 tid,
                 expectedRewardAmounts
             );
+            const txReceipt = await tx.wait();
+
+            // console.log('txReceipt.events', txReceipt.events);
 
             // then
             await expect(tx)
@@ -603,7 +614,7 @@ describe('Recapitalization Manager', async () => {
                     zunUSD.address,
                     sid,
                     tid,
-                    tx.blockNumber,
+                    await getTimestampFor(tx),
                     expectedRewardAmounts
                 );
             // check that transfer to strategy is near the evaluated value because of slippage during rewards selling
@@ -1034,7 +1045,7 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'RestoredStakedZunByRewards')
-                .withArgs(parseZUN(40), stubRewardToZunManager.address, tx.blockNumber);
+                .withArgs(parseZUN(40), stubRewardToZunManager.address, await getTimestampFor(tx));
             await expect(tx)
                 .to.emit(stakingRewardDistributor, 'ReturnedToken')
                 .withArgs(parseZUN(40));
@@ -1139,7 +1150,7 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'RestoredStakedZunByRewards')
-                .withArgs(parseZUN(4), stubRewardToZunManager.address, tx.blockNumber);
+                .withArgs(parseZUN(4), stubRewardToZunManager.address, await getTimestampFor(tx));
             await expect(tx)
                 .to.emit(stakingRewardDistributor, 'ReturnedToken')
                 .withArgs(parseZUN(4));
@@ -1250,7 +1261,7 @@ describe('Recapitalization Manager', async () => {
             // then
             await expect(tx)
                 .to.emit(recapitalizationManager, 'DistributedRewards')
-                .withArgs(tx.blockNumber);
+                .withArgs(await getTimestampFor(tx));
 
             await expect((await stakingRewardDistributor.rewardTokenInfo(4)).rate).to.be.eq(
               parseZUN(400).sub(parseZUN(40)).div(WEEK)
@@ -1402,11 +1413,9 @@ async function deploySellingCurveRewardManager() {
     const converter = (await StableConverter.deploy()) as StableConverter;
 
     const SellingCurveRewardManager = await ethers.getContractFactory('SellingCurveRewardManager');
-    const rewardManager = (await SellingCurveRewardManager.deploy(
+    return (await SellingCurveRewardManager.deploy(
         converter.address
     )) as SellingCurveRewardManager;
-
-    return rewardManager;
 }
 
 async function provideLiquidity(

@@ -27,11 +27,11 @@ contract ZUNStakingRewardDistributor is
 
     uint256 public constant RATIO_DENOMINATOR = 1e18;
 
-    uint32 public constant BLOCKS_IN_4_MONTHS = (4 * 30 * 24 * 60 * 60) / 12;
+    uint32 public constant SECS_IN_4_MONTHS = 4 * 30 * 24 * 60 * 60;
 
     struct LockInfo {
         uint128 amount;
-        uint128 untilBlock;
+        uint128 untilTimestamp;
     }
 
     function initialize(
@@ -50,7 +50,7 @@ contract ZUNStakingRewardDistributor is
 
     address public earlyExitReceiver;
 
-    event Deposited(address indexed user, uint256 lockIndex, uint256 amount, uint256 untilBlock);
+    event Deposited(address indexed user, uint256 lockIndex, uint256 amount, uint256 untilTimestamp);
     event Withdrawn(
         address indexed user,
         uint256 lockIndex,
@@ -146,10 +146,10 @@ contract ZUNStakingRewardDistributor is
 
         _mint(_receiver, _amount);
 
-        uint128 untilBlock = uint128(block.number + BLOCKS_IN_4_MONTHS);
+        uint128 untilTimestamp = uint128(block.timestamp + SECS_IN_4_MONTHS);
         uint256 lockIndex = userLocks[_receiver].length;
-        userLocks[_receiver].push(LockInfo(uint128(_amount), untilBlock));
-        emit Deposited(_receiver, lockIndex, _amount, untilBlock);
+        userLocks[_receiver].push(LockInfo(uint128(_amount), untilTimestamp));
+        emit Deposited(_receiver, lockIndex, _amount, untilTimestamp);
     }
 
     // Withdraw tokens from rewardToken staking.
@@ -162,8 +162,8 @@ contract ZUNStakingRewardDistributor is
         if (locks.length <= _lockIndex) revert LockDoesNotExist();
 
         LockInfo storage lock = locks[_lockIndex];
-        uint256 untilBlock = lock.untilBlock;
-        if (untilBlock == 0) revert Unlocked();
+        uint256 untilTimestamp = lock.untilTimestamp;
+        if (untilTimestamp == 0) revert Unlocked();
         uint256 amount = lock.amount;
 
         uint256[] memory distributions = _updateDistributions();
@@ -183,11 +183,11 @@ contract ZUNStakingRewardDistributor is
             }
         }
 
-        // Set untilBlock to 0 to mark the lock as withdrawn.
-        lock.untilBlock = 0;
+        // Set untilTimestamp to 0 to mark the lock as withdrawn.
+        lock.untilTimestamp = 0;
 
         uint256 transferredAmount = amountReduced;
-        if (block.number < untilBlock) {
+        if (block.timestamp < untilTimestamp) {
             transferredAmount =
                 (amountReduced * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
                 PERCENT_DENOMINATOR;

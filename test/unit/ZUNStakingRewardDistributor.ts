@@ -9,21 +9,25 @@ import {
     ZUNStakingRewardDistributor,
     ZUNStakingRewardDistributorVotes,
 } from '../../typechain-types';
-import { BigNumber, BigNumberish } from 'ethers';
+import {BigNumber, BigNumberish, ContractTransaction} from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getSignTypedData } from '../utils/signature';
 
 const ethUnits = (amount: number | string) => parseUnits(amount.toString(), 'ether');
 
 const BLOCK_SECONDS = 1;
-const BLOCKS_IN_1_HOURS = 60 * 60 / BLOCK_SECONDS;
+const BLOCKS_IN_1_HOURS = (60 * 60) / BLOCK_SECONDS;
 const BLOCKS_IN_1_DAYS = BLOCKS_IN_1_HOURS * 24;
 const BLOCKS_IN_1_WEEKS = BLOCKS_IN_1_DAYS * 7;
-const BLOCKS_IN_4_MONTHS = (4 * 30 * 24 * 60 * 60) / 12;
+const BLOCKS_IN_4_MONTHS = 4 * 30 * 24 * 60 * 60;
 
 const zeroAddress = '0x0000000000000000000000000000000000000000';
 
 const toBn = (value: number | string) => ethers.BigNumber.from(value);
+
+async function getTimestampFor(tx: ContractTransaction) {
+  return (await ethers.provider.getBlock(tx.blockNumber || 0)).timestamp;
+}
 
 describe('ZUNStakingRewardDistributor tests', () => {
     async function deployFixture() {
@@ -152,23 +156,23 @@ describe('ZUNStakingRewardDistributor tests', () => {
 
         await expect(tx1)
             .to.emit(stakingRewardDistributor, 'Deposited')
-            .withArgs(users[0].address, 0, ethUnits('1000'), tx1.blockNumber! + BLOCKS_IN_4_MONTHS);
+            .withArgs(users[0].address, 0, ethUnits('1000'), (await getTimestampFor(tx1))! + BLOCKS_IN_4_MONTHS);
         await expect(tx2)
             .to.emit(stakingRewardDistributor, 'Deposited')
-            .withArgs(users[1].address, 0, ethUnits('2000'), tx2.blockNumber! + BLOCKS_IN_4_MONTHS);
+            .withArgs(users[1].address, 0, ethUnits('2000'), (await getTimestampFor(tx2))! + BLOCKS_IN_4_MONTHS);
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
         expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(ethUnits('2000'));
         expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).amount).to.eq(
             ethUnits('1000')
         );
-        expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock).to.eq(
-            tx1.blockNumber! + BLOCKS_IN_4_MONTHS
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp).to.eq(
+            (await getTimestampFor(tx1))! + BLOCKS_IN_4_MONTHS
         );
         expect((await stakingRewardDistributor.userLocks(users[1].address, 0)).amount).to.eq(
             ethUnits('2000')
         );
-        expect((await stakingRewardDistributor.userLocks(users[1].address, 0)).untilBlock).to.eq(
-            tx2.blockNumber! + BLOCKS_IN_4_MONTHS
+        expect((await stakingRewardDistributor.userLocks(users[1].address, 0)).untilTimestamp).to.eq(
+            (await getTimestampFor(tx2))! + BLOCKS_IN_4_MONTHS
         );
         expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('3000'));
 
@@ -186,23 +190,23 @@ describe('ZUNStakingRewardDistributor tests', () => {
 
         await expect(tx1)
           .to.emit(stakingRewardDistributor, 'Deposited')
-          .withArgs(users[0].address, 1, ethUnits('1000'), tx1.blockNumber! + BLOCKS_IN_4_MONTHS);
+          .withArgs(users[0].address, 1, ethUnits('1000'), (await getTimestampFor(tx1))! + BLOCKS_IN_4_MONTHS);
         await expect(tx2)
           .to.emit(stakingRewardDistributor, 'Deposited')
-          .withArgs(users[1].address, 1, ethUnits('2000'), tx2.blockNumber! + BLOCKS_IN_4_MONTHS);
+          .withArgs(users[1].address, 1, ethUnits('2000'), (await getTimestampFor(tx2))! + BLOCKS_IN_4_MONTHS);
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('2000'));
         expect(await stakingRewardDistributor.balanceOf(users[1].address)).to.eq(ethUnits('4000'));
         expect((await stakingRewardDistributor.userLocks(users[0].address, 1)).amount).to.eq(
           ethUnits('1000')
         );
-        expect((await stakingRewardDistributor.userLocks(users[0].address, 1)).untilBlock).to.eq(
-          tx1.blockNumber! + BLOCKS_IN_4_MONTHS
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 1)).untilTimestamp).to.eq(
+          (await getTimestampFor(tx1))! + BLOCKS_IN_4_MONTHS
         );
         expect((await stakingRewardDistributor.userLocks(users[1].address, 1)).amount).to.eq(
           ethUnits('2000')
         );
-        expect((await stakingRewardDistributor.userLocks(users[1].address, 1)).untilBlock).to.eq(
-          tx2.blockNumber! + BLOCKS_IN_4_MONTHS
+        expect((await stakingRewardDistributor.userLocks(users[1].address, 1)).untilTimestamp).to.eq(
+          (await getTimestampFor(tx2))! + BLOCKS_IN_4_MONTHS
         );
         expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('6000'));
     });
@@ -227,13 +231,13 @@ describe('ZUNStakingRewardDistributor tests', () => {
         // then
         await expect(tx1)
             .to.emit(stakingRewardDistributor, 'Deposited')
-            .withArgs(users[0].address, 0, ethUnits('1000'), tx1.blockNumber! + BLOCKS_IN_4_MONTHS);
+            .withArgs(users[0].address, 0, ethUnits('1000'), (await getTimestampFor(tx1))! + BLOCKS_IN_4_MONTHS);
         expect(await stakingRewardDistributor.balanceOf(users[0].address)).to.eq(ethUnits('1000'));
         expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).amount).to.eq(
             ethUnits('1000')
         );
-        expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock).to.eq(
-            tx1.blockNumber! + BLOCKS_IN_4_MONTHS
+        expect((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp).to.eq(
+            (await getTimestampFor(tx1))! + BLOCKS_IN_4_MONTHS
         );
         expect(await stakingRewardDistributor.totalAmount()).to.eq(ethUnits('1000'));
     });
@@ -293,7 +297,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         // check lock info
         const lockInfo = await stakingRewardDistributor.userLocks(users[0].address, 0);
         expect(lockInfo.amount).to.eq(ethUnits(depositAmount1));
-        expect(lockInfo.untilBlock).to.eq(0);
+        expect(lockInfo.untilTimestamp).to.eq(0);
     });
 
     it('withdraw after lock period', async () => {
@@ -316,7 +320,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
         // mine blocks to unlock the withdraw without early exit fee
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp);
 
         const withdrawAmount = ethUnits(depositAmount1);
         const tx = await stakingRewardDistributor
@@ -340,7 +344,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         // check lock info
         const lockInfo = await stakingRewardDistributor.userLocks(users[0].address, 0);
         expect(lockInfo.amount).to.eq(ethUnits(depositAmount1));
-        expect(lockInfo.untilBlock).to.eq(0);
+        expect(lockInfo.untilTimestamp).to.eq(0);
     });
 
     it('withdraw after lock period with claim', async () => {
@@ -377,7 +381,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
         // mine blocks to unlock the withdraw without early exit fee
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp);
 
         const withdrawAmount = ethUnits(depositAmount1);
         const expectedReward = await stakingRewardDistributor.getPendingReward(
@@ -406,7 +410,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         // check lock info
         const lockInfo = await stakingRewardDistributor.userLocks(users[0].address, 0);
         expect(lockInfo.amount).to.eq(ethUnits(depositAmount1));
-        expect(lockInfo.untilBlock).to.eq(0);
+        expect(lockInfo.untilTimestamp).to.eq(0);
         // check rewards
         expect(await REWARD.balanceOf(users[0].address)).to.eq(expectedReward);
     });
@@ -429,7 +433,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const { stakingRewardDistributor, ZUN, users, earlyExitReceiver } = fixture;
 
         // mine blocks to unlock the withdraw without early exit fee and withdraw
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp);
         await stakingRewardDistributor.connect(users[0]).withdraw(0, false, users[0].address);
 
         // try to withdraw again
@@ -503,7 +507,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         expect(await stakingRewardDistributor.getRecapitalizationRatio()).to.eq(expectedRatio);
 
         // withdraw tokens by all users after lock period (without early exit fee) and check that tokenRatio is not changed
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[2].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[2].address, 0)).untilTimestamp);
 
         const withdrawAmount1 = ethUnits(depositAmount1);
         const amountReduced1 = withdrawAmount1.mul(expectedRatio).div(ethUnits(1));
@@ -649,7 +653,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
         // mine blocks to unlock the withdraw without early exit fee
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp);
 
         const withdrawAmount = ethUnits(depositAmount1);
         const tx = await stakingRewardDistributor
@@ -673,7 +677,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         // check lock info
         const lockInfo = await stakingRewardDistributor.userLocks(users[0].address, 0);
         expect(lockInfo.amount).to.eq(ethUnits(depositAmount1));
-        expect(lockInfo.untilBlock).to.eq(0);
+        expect(lockInfo.untilTimestamp).to.eq(0);
     });
 
     it('deposit and withdraw when ZUN added as reward token after lock period with claim', async () => {
@@ -727,7 +731,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         const totalAmountsBefore = await stakingRewardDistributor.totalAmount();
 
         // mine blocks to unlock the withdraw without early exit fee
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[0].address, 0)).untilTimestamp);
 
         const withdrawAmount = ethUnits(depositAmount1);
         const expectedReward = await stakingRewardDistributor.getPendingReward(
@@ -761,7 +765,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         // check lock info
         const lockInfo = await stakingRewardDistributor.userLocks(users[0].address, 0);
         expect(lockInfo.amount).to.eq(ethUnits(depositAmount1));
-        expect(lockInfo.untilBlock).to.eq(0);
+        expect(lockInfo.untilTimestamp).to.eq(0);
     });
 
     it('check rounding when user deposit and withdraw reduced amount when recapitalizedAmount > 0', async () => {
@@ -789,7 +793,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         );
 
         // withdraw tokens by all users after lock period (without early exit fee) and check that tokenRatio is not changed
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[1].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[1].address, 0)).untilTimestamp);
 
         const withdrawAmount1 = ethUnits(depositAmount1);
         const amountReduced1 = withdrawAmount1.mul(expectedRecapitalizationRatio).div(ethUnits(1));
@@ -859,7 +863,7 @@ describe('ZUNStakingRewardDistributor tests', () => {
         expect(await stakingRewardDistributor.getRecapitalizationRatio()).to.eq(ethUnits(1));
 
         // withdraw tokens by all users after lock period (without early exit fee)
-        await mineUpTo((await stakingRewardDistributor.userLocks(users[2].address, 0)).untilBlock);
+        await mineUpTo((await stakingRewardDistributor.userLocks(users[2].address, 0)).untilTimestamp);
 
         const withdrawAmount1 = ethUnits(depositAmount1);
         const tx1 = await stakingRewardDistributor

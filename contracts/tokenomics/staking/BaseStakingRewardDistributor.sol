@@ -70,6 +70,7 @@ abstract contract BaseStakingRewardDistributor is
     event RewardTokenAdded(address indexed token, uint256 indexed tid);
     event RewardsReceiverSet(address indexed claimant, address indexed receiver);
     event Claimed(address indexed user, uint256 indexed tid, uint256 amount);
+    event RewardTokenStreamed(address indexed token, uint256 indexed tid, uint256 amount);
     event DistributionUpdated(uint256 indexed tid, uint256 distribution);
     event UserDistributionUpdated(uint256 indexed tid, address indexed user, uint256 distribution);
 
@@ -251,6 +252,8 @@ abstract contract BaseStakingRewardDistributor is
 
         rewardInfo.lastUpdate = block.timestamp;
         rewardInfo.periodFinish = block.timestamp + WEEK;
+
+        emit RewardTokenStreamed(_token, tid, _amount);
     }
 
     // claim rewards
