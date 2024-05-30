@@ -23,7 +23,7 @@ async function main() {
     );
 
     await zunStakingRewardDistributor.deployed();
-    console.log('ZUN Staking Reward Distributor(tvlZUN):', zunStakingRewardDistributor.address);
+    console.log('ZUN Staking Reward Distributor(vlZUN):', zunStakingRewardDistributor.address);
 
     await zunStakingRewardDistributor.setEarlyExitReceiver(admin.address);
     console.log('Early exit receiver set to: ', admin.address);

@@ -1,0 +1,399 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x45af4F12B46682B3958B297bAcebde2cE2E795c3",
+      "txHash": "0xbdb27b1cf662fb89c4dfd5b7f3e702fd91b744fcdd2368ec5b3d15489a032cc7",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "9f127d6666ac3220c0facf631d04e4ac5541bbb0d1fa6bf6677b62a3502670f6": {
+      "address": "0xcE3a40F3B0F6539aD1BB669Eb80beaf54c28E842",
+      "txHash": "0xa56205669fd1d7a0f1ba10cc7a3f1dbff63b12bdbb2e670099a737d74fd0701d",
+      "layout": {
+        "solcVersion": "0.8.23",
+        "storage": [
+          {
+            "label": "token",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IERC20)4350",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:48"
+          },
+          {
+            "label": "rewardTokenInfo",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_struct(RewardTokenInfo)15447_storage)dyn_storage",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:51"
+          },
+          {
+            "label": "rewardTokenTidByAddress",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:52"
+          },
+          {
+            "label": "claimableRewards",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:56"
+          },
+          {
+            "label": "claimedRewards",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:60"
+          },
+          {
+            "label": "rewardsReceiver",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:63"
+          },
+          {
+            "label": "userRewardDistribution",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:66"
+          },
+          {
+            "label": "totalAmount",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint256",
+            "contract": "BaseStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:68"
+          },
+          {
+            "label": "userLocks",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_array(t_struct(LockInfo)17554_storage)dyn_storage)",
+            "contract": "ZUNStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/ZUNStakingRewardDistributor.sol:47"
+          },
+          {
+            "label": "recapitalizedAmount",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "ZUNStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/ZUNStakingRewardDistributor.sol:49"
+          },
+          {
+            "label": "earlyExitReceiver",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_address",
+            "contract": "ZUNStakingRewardDistributor",
+            "src": "contracts/tokenomics/staking/ZUNStakingRewardDistributor.sol:51"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(LockInfo)17554_storage)dyn_storage": {
+            "label": "struct ZUNStakingRewardDistributor.LockInfo[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(RewardTokenInfo)15447_storage)dyn_storage": {
+            "label": "struct BaseStakingRewardDistributor.RewardTokenInfo[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)4350": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_struct(LockInfo)17554_storage)dyn_storage)": {
+            "label": "mapping(address => struct ZUNStakingRewardDistributor.LockInfo[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(uint256 => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(LockInfo)17554_storage": {
+            "label": "struct ZUNStakingRewardDistributor.LockInfo",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint128",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "untilTimestamp",
+                "type": "t_uint128",
+                "offset": 16,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RewardTokenInfo)15447_storage": {
+            "label": "struct BaseStakingRewardDistributor.RewardTokenInfo",
+            "members": [
+              {
+                "label": "token",
+                "type": "t_contract(IERC20)4350",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "distribution",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "lastUpdate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "periodFinish",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "rate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)25_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)25_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_struct(Trace208)10055_storage)": {
+            "label": "mapping(address => struct Checkpoints.Trace208)"
+          },
+          "t_struct(Trace208)10055_storage": {
+            "label": "struct Checkpoints.Trace208",
+            "members": [
+              {
+                "label": "_checkpoints",
+                "type": "t_array(t_struct(Checkpoint208)10060_storage)dyn_storage"
+              }
+            ]
+          },
+          "t_array(t_struct(Checkpoint208)10060_storage)dyn_storage": {
+            "label": "struct Checkpoints.Checkpoint208[]"
+          },
+          "t_struct(Checkpoint208)10060_storage": {
+            "label": "struct Checkpoints.Checkpoint208",
+            "members": [
+              {
+                "label": "_key",
+                "type": "t_uint48"
+              },
+              {
+                "label": "_value",
+                "type": "t_uint208"
+              }
+            ]
+          },
+          "t_uint48": {
+            "label": "uint48"
+          },
+          "t_uint208": {
+            "label": "uint208"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Votes": [
+            {
+              "contract": "VotesUpgradeable",
+              "label": "_delegatee",
+              "type": "t_mapping(t_address,t_address)",
+              "src": "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol:41"
+            },
+            {
+              "contract": "VotesUpgradeable",
+              "label": "_delegateCheckpoints",
+              "type": "t_mapping(t_address,t_struct(Trace208)10055_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol:43"
+            },
+            {
+              "contract": "VotesUpgradeable",
+              "label": "_totalCheckpoints",
+              "type": "t_struct(Trace208)10055_storage",
+              "src": "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol:45"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Nonces": [
+            {
+              "contract": "NoncesUpgradeable",
+              "label": "_nonces",
+              "type": "t_mapping(t_address,t_uint256)",
+              "src": "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol:17"
+            }
+          ],
+          "erc7201:openzeppelin.storage.EIP712": [
+            {
+              "contract": "EIP712Upgradeable",
+              "label": "_hashedName",
+              "type": "t_bytes32",
+              "src": "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol:39"
+            },
+            {
+              "contract": "EIP712Upgradeable",
+              "label": "_hashedVersion",
+              "type": "t_bytes32",
+              "src": "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol:41"
+            },
+            {
+              "contract": "EIP712Upgradeable",
+              "label": "_name",
+              "type": "t_string_storage",
+              "src": "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol:43"
+            },
+            {
+              "contract": "EIP712Upgradeable",
+              "label": "_version",
+              "type": "t_string_storage",
+              "src": "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol:44"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ERC20": [
+            {
+              "contract": "ERC20Upgradeable",
+              "label": "_balances",
+              "type": "t_mapping(t_address,t_uint256)",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:38"
+            },
+            {
+              "contract": "ERC20Upgradeable",
+              "label": "_allowances",
+              "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:40"
+            },
+            {
+              "contract": "ERC20Upgradeable",
+              "label": "_totalSupply",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:42"
+            },
+            {
+              "contract": "ERC20Upgradeable",
+              "label": "_name",
+              "type": "t_string_storage",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:44"
+            },
+            {
+              "contract": "ERC20Upgradeable",
+              "label": "_symbol",
+              "type": "t_string_storage",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:45"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -223,3 +223,14 @@ Zunami Token (ZUN): 0x6b5204b0be36771253cc38e88012e02b752f0f36
 
 Zunami Multisig: 0xb056B9A45f09b006eC7a69770A65339586231a34
 Zunami Multisig ZUN balance: 100000000.0
+
+
+Admin: 0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
+Deploy vlZUN:
+ZUN Staking Reward Distributor(vlZUN): 0x45af4F12B46682B3958B297bAcebde2cE2E795c3
+Early exit receiver set to:  0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
+Reward token added to ZUN staking:  0x6b5204b0be36771253cc38e88012e02b752f0f36
+Reward token added to ZUN staking:  0xD533a949740bb3306d119CC777fa900bA034cd52
+Reward token added to ZUN staking:  0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B
+Reward token added to ZUN staking:  0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F
+Reward token added to ZUN staking:  0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0
