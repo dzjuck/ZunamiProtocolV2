@@ -11,7 +11,7 @@ async function main() {
 
     // Zunami USD APS LP Staking
 
-    const apsZunUSDControllerLP = '';
+    const apsZunUSDControllerLP = '0xd9F559280c9d308549e84946C0d668a817fcCFB5';
 
     console.log('Deploy Zunami USD APS LP Staking:');
     const StakingRewardDistributorFactory = await ethers.getContractFactory(
@@ -20,19 +20,19 @@ async function main() {
 
     const stakingRewardDistributor = await upgrades.deployProxy(
         StakingRewardDistributorFactory,
-        [apsZunUSDControllerLP, 'Zunami USD APS LP Staking', 'stkApsZunUSDLP', admin.address],
+        [apsZunUSDControllerLP, 'Zunami USD APS LP Staking', 'stApsZunUSDLP', admin.address],
         {
             kind: 'uups',
         }
     );
 
     await stakingRewardDistributor.deployed();
+    // const stakingRewardDistributor = StakingRewardDistributorFactory.attach('0x280D48e85F712e067A16D6b25e7fFe261c0810Bd');
     console.log('Staking Reward Distributor LP:', stakingRewardDistributor.address);
 
-    tx = await stakingRewardDistributor.addRewardToken(zunTokenAddress);
+    const tx = await stakingRewardDistributor.addRewardToken(zunTokenAddress);
     await tx.wait();
     console.log('Reward token added: ', zunTokenAddress);
-
 }
 
 main()

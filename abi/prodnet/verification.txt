@@ -99,5 +99,20 @@ npx hardhat verify --network mainnet 0xc2fc3f0a8847c9ff83c4cfb6886751d9bf061511
 
 npx hardhat verify --network mainnet --constructor-args ./abi/ZunVestingDistributor_ambassadors_arguments.js 0x7ba745D6ee5c19d4284ee6dF5cE3c3Ccf147C283
 
-// vlZUN
+// vlZUN implementation
 npx hardhat verify --network mainnet 0x45af4F12B46682B3958B297bAcebde2cE2E795c3
+
+// StakingRewardDistributor implementation
+npx hardhat verify --network mainnet 0x98140f01c51981596C0E8dE2E69F15BE1719F52D
+
+// StakingRewardDistributorGauge
+npx hardhat verify --network mainnet 0x4A9077F2815fC5DB6AE00221A65360c5e6097122 0x6b5204b0be36771253cc38e88012e02b752f0f36 0x45af4F12B46682B3958B297bAcebde2cE2E795c3
+npx hardhat verify --network mainnet 0x593e59A7D8ce65bFA64Ff5Ee3d8eB155180c31BF 0x6b5204b0be36771253cc38e88012e02b752f0f36 0x280D48e85F712e067A16D6b25e7fFe261c0810Bd
+npx hardhat verify --network mainnet 0xa5F3f35fcFC31742838Bad8e781F1cEc9fB9B821 0x6b5204b0be36771253cc38e88012e02b752f0f36 0x61b31cF4039D39F2F2909B8cb82cdb8eB5927Cd8
+
+// CurveGaugeGauge
+npx hardhat verify --network mainnet с 0x6b5204b0be36771253cc38e88012e02b752f0f36 0xdA22f2De17547E3A5CADcC960EB4e9cfDC52e10A
+
+// ZunDistributor
+npx hardhat verify --network mainnet --constructor-args ./abi/ZunDistributor_arguments.js 0xEEA950a509d822CF65edcEED53d161fBaa967B3a
+
