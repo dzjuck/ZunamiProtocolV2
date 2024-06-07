@@ -95,6 +95,33 @@ const config: HardhatUserConfig = {
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
         },
+        base: {
+          url: `${process.env.BASE_RPC_URL}`,
+          chainId: 8453,
+          gas: 'auto',
+          gasMultiplier: 1.2,
+          gasPrice: 10000000000,
+          accounts: [`${PRIVATE_KEY}`],
+          loggingEnabled: true,
+        },
+        arbitrum: {
+          url: `https://arbitrum-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+          chainId: 42161,
+          gas: 'auto',
+          gasMultiplier: 1.2,
+          gasPrice: 11000000,
+          accounts: [`${PRIVATE_KEY}`],
+          loggingEnabled: true,
+        },
+        optimism: {
+          url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+          chainId: 10,
+          gas: 'auto',
+          gasMultiplier: 1.2,
+          gasPrice: 10000000000,
+          accounts: [`${PRIVATE_KEY}`],
+          loggingEnabled: true,
+        },
         sepolia: {
             url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
             chainId: 11155111,
@@ -133,7 +160,22 @@ const config: HardhatUserConfig = {
         timeout: 500000,
     },
     etherscan: {
-        apiKey: `${process.env.ETHERSCAN_API_KEY}`,
+        apiKey: {
+            mainnet: `${process.env.ETHERSCAN_API_KEY}`,
+            optimisticEthereum: `${process.env.OPTIMISTIC_API_KEY}`,
+            arbitrumOne: `${process.env.ARBISCAN_API_KEY}`,
+            base: `${process.env.BASESCAN_API_KEY}`,
+        },
+        customChains: [
+          {
+            network: "base",
+            chainId: 8453,
+            urls: {
+              apiURL: "https://api.basescan.org/api",
+              browserURL: "https://basescan.org/"
+            }
+          }
+        ]
     },
 };
 
