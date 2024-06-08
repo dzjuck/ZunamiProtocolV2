@@ -1,8 +1,8 @@
 import { ethers, network } from 'hardhat';
 import {
-    impersonateAccount,
-    loadFixture,
-    setBalance,
+  impersonateAccount,
+  loadFixture, reset,
+  setBalance, time,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumber, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
@@ -27,7 +27,8 @@ import {
 
 import * as addresses from '../address.json';
 import { deployRewardManager } from '../utils/DeployRewardManager';
-import {getMinAmountZunUSD} from "../utils/GetMinAmountZunUSD";
+
+import {FORK_BLOCK_NUMBER, PROVIDER_URL} from "../../hardhat.config";
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
@@ -108,11 +109,14 @@ async function setCustomOracle(
 describe('ZunETH flow APS tests', () => {
     const strategyApsNames = [
         'ZunETHApsVaultStrat',
+        'ZunEthFrxEthApsStakingConvexCurveStrat',
         'ZunEthFrxEthApsConvexCurveStrat',
         'ZunEthFrxEthApsStakeDaoCurveStrat',
     ];
 
     async function deployFixture() {
+        await reset(PROVIDER_URL, 20047000);
+
         // Contracts are deployed using the first signer/account by default
         const [admin, alice, bob, feeCollector] = await ethers.getSigners();
 
@@ -240,6 +244,11 @@ describe('ZunETH flow APS tests', () => {
         };
     }
 
+    // Reset the network to the initial state
+    after(async function () {
+      await reset(PROVIDER_URL, FORK_BLOCK_NUMBER);
+    });
+
     it('should deposit, withdraw and compound all rewards in all strategies', async () => {
         const {
             admin,
@@ -361,6 +370,8 @@ describe('ZunETH flow APS tests', () => {
         );
         expect(sharesAmount).to.gt(0);
 
+        await time.increase(604800);
+
         const withdrawAmount = ethers.utils.parseUnits('99', 'ether').sub(MINIMUM_LIQUIDITY);
         for (let i = 0; i < strategiesAps.length; i++) {
             let assetsBefore = BigNumber.from(await zunamiPool.balanceOf(admin.getAddress()));
@@ -423,27 +434,40 @@ describe('ZunETH flow APS tests', () => {
                 .deposit([zStableBalance, 0, 0, 0, 0], admin.getAddress())
         ).to.emit(zunamiPoolAps, 'Deposited');
 
+        await time.increase(604800);
+
         await expect(strategy.connect(alice).inflate(100, 100)).to.be.revertedWithCustomError(
             strategy,
             `AccessControlUnauthorizedAccount`
         );
+
+        await time.increase(604800);
+
         await expect(strategy.connect(alice).deflate(100, 100)).to.be.revertedWithCustomError(
             strategy,
             `AccessControlUnauthorizedAccount`
         );
+
+        await time.increase(604800);
 
         let holdingsBefore = await zunamiPoolAps.totalHoldings();
         await strategy.connect(admin).inflate(parseUnits('0.33333', 'ether'), 0);
         let holdingsAfterInflation = await zunamiPoolAps.totalHoldings();
         expect(holdingsAfterInflation).to.lt(holdingsBefore);
 
+        await time.increase(604800);
+
         await strategy.connect(admin).deflate(parseUnits('0.6666666', 'ether'), 0);
         expect(await zunamiPoolAps.totalHoldings()).to.gt(holdingsAfterInflation);
+
+        await time.increase(604800);
 
         holdingsBefore = await zunamiPoolAps.totalHoldings();
         await strategy.connect(admin).inflate(parseUnits('1', 'ether'), 0);
         holdingsAfterInflation = await zunamiPoolAps.totalHoldings();
         expect(holdingsAfterInflation).to.lt(holdingsBefore);
+
+        await time.increase(604800);
 
         await strategy.connect(admin).deflate(parseUnits('1', 'ether'), 0);
         expect(await zunamiPoolAps.totalHoldings()).to.gt(holdingsAfterInflation);

@@ -3,11 +3,14 @@ pragma solidity ^0.8.23;
 
 import '../../../../../utils/Constants.sol';
 import '../../../../../interfaces/IController.sol';
-import '../EmergencyAdminConvexCurveNStratBase.sol';
+import '../../../../../interfaces/ITokenConverter.sol';
+import '../EmergencyAdminStakingConvexCurveNStratBase.sol';
 import '../../../../../interfaces/ICurvePool2.sol';
 import '../../../../../interfaces/ITokenConverter.sol';
 
-contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
+import 'hardhat/console.sol';
+
+contract FrxEthApsStakingConvexCurveStratBase is EmergencyAdminStakingConvexCurveNStratBase {
     using SafeERC20 for IERC20;
 
     error InsufficientAmount();
@@ -35,18 +38,16 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
         address _poolAddr,
         address _poolLpAddr,
         address _cvxBooster,
-        address _cvxRewardsAddr,
         uint256 _cvxPID,
         address _zunamiControllerAddr,
         address _zunamiStableAddr
     )
-        EmergencyAdminConvexCurveNStratBase(
+        EmergencyAdminStakingConvexCurveNStratBase(
             _tokens,
             _tokenDecimalsMultipliers,
             _poolAddr,
             _poolLpAddr,
             _cvxBooster,
-            _cvxRewardsAddr,
             _cvxPID
         )
     {
@@ -55,6 +56,10 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
 
         if (_zunamiStableAddr == address(0)) revert ZeroAddress();
         zunamiStable = IERC20(_zunamiStableAddr);
+    }
+
+    function setLockingIntervalSec(uint256 _lockingIntervalSec) external onlyRole(EMERGENCY_ADMIN_ROLE) {
+        _setLockingIntervalSec(_lockingIntervalSec);
     }
 
     function setTokenConverter(address converterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -99,7 +104,13 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     function _inflate(uint256 ratioOfCrvLps, uint256 minInflatedAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
         depositedLiquidity -= removingCrvLps;
-        cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
+
+        releaseLiquidity();
+
+        if (ratioOfCrvLps != RATIO_MULTIPLIER) {
+            // stake back other liquidity
+            depositBooster(poolToken.balanceOf(address(this)) - removingCrvLps);
+        }
 
         uint256 frxEthAmount = pool.remove_liquidity_one_coin(
             removingCrvLps,
@@ -129,7 +140,13 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     function _deflate(uint256 ratioOfCrvLps, uint256 minDeflateAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
         depositedLiquidity -= removingCrvLps;
-        cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
+
+        releaseLiquidity();
+
+        if (ratioOfCrvLps != RATIO_MULTIPLIER) {
+            // stake back other liquidity
+            depositBooster(poolToken.balanceOf(address(this)) - removingCrvLps);
+        }
 
         uint256 tokenAmount = pool.remove_liquidity_one_coin(
             removingCrvLps,
@@ -141,6 +158,7 @@ contract FrxEthApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
         zunamiController.withdraw(tokenAmount, [uint256(0), 0, 0, 0, 0], address(this));
 
         uint256 wEthBalance = wEth.balanceOf(address(this));
+
         if (wEthBalance > 0) {
             wEth.safeTransfer(address(converter), wEthBalance);
             converter.handle(

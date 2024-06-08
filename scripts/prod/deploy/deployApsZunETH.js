@@ -16,7 +16,7 @@ async function createAndInitStrategy(zunamiPool, stratName, oracleAddress, token
         result = await strategy.setTokenConverter(tokenConverterAddress);
         await result.wait();
         console.log(
-            `Set stable converter address ${tokenConverterAddress} in ${stratName} strategy`
+            `Set token converter address ${tokenConverterAddress} in ${stratName} strategy`
         );
     }
 
@@ -59,9 +59,17 @@ async function main() {
 
     const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
     const tokenConverterAddress = '0xf48A59434609b6e934c2cF091848FA2D28b34bfc';
+
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'ZunEthFrxEthApsStakeDaoCurveStrat',
+    //     genericOracleAddress,
+    //     tokenConverterAddress
+    // );
+
     await createAndInitStrategy(
         zunamiPool,
-        'ZunEthFrxEthApsStakeDaoCurveStrat',
+        'ZunEthFrxEthApsStakingConvexCurveStrat',
         genericOracleAddress,
         tokenConverterAddress
     );

@@ -111,8 +111,11 @@ npx hardhat verify --network mainnet 0x593e59A7D8ce65bFA64Ff5Ee3d8eB155180c31BF 
 npx hardhat verify --network mainnet 0xa5F3f35fcFC31742838Bad8e781F1cEc9fB9B821 0x6b5204b0be36771253cc38e88012e02b752f0f36 0x61b31cF4039D39F2F2909B8cb82cdb8eB5927Cd8
 
 // CurveGaugeGauge
-npx hardhat verify --network mainnet с 0x6b5204b0be36771253cc38e88012e02b752f0f36 0xdA22f2De17547E3A5CADcC960EB4e9cfDC52e10A
+npx hardhat verify --network mainnet 0xD7c689822cE9C99798C43426c9Fe53A2d8892fA3 0x6b5204b0be36771253cc38e88012e02b752f0f36 0xdA22f2De17547E3A5CADcC960EB4e9cfDC52e10A
 
 // ZunDistributor
 npx hardhat verify --network mainnet --constructor-args ./abi/ZunDistributor_arguments.js 0xEEA950a509d822CF65edcEED53d161fBaa967B3a
 
+
+// zunETH APS sid 2
+npx hardhat verify --network mainnet --contract contracts/strategies/curve/convex/aps/stakingFrxETH/ZunEthFrxEthApsStakingConvexCurveStrat.sol:ZunEthFrxEthApsStakingConvexCurveStrat 0xE527082401705c5b395E3e7a91B0be6e78357159

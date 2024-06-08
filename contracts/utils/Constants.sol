@@ -56,6 +56,7 @@ library Constants {
     address internal constant CRV_CRVUSD_USDC_ADDRESS = 0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E;
 
     address internal constant CRV_BOOSTER_ADDRESS = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
+    address internal constant CRV_STAKING_BOOSTER_ADDRESS = 0xD8Bd5Cdd145ed2197CB16ddB172DF954e3F28659;
 
     address internal constant CRV_ETH_stETH_ADDRESS = 0x21E27a5E5513D6e65C4f830167390997aA84843a;
     address internal constant CRV_ETH_stETH_LP_ADDRESS = 0x21E27a5E5513D6e65C4f830167390997aA84843a;
@@ -85,6 +86,9 @@ library Constants {
     address internal constant CVX_zunETH_frxETH_REWARDS_ADDRESS =
         0x756d67A10974Fa0e0cE63F82AF4E7ef0d46d452D;
     uint256 internal constant CVX_zunETH_frxETH_PID = 330;
+
+    uint256 internal constant CVX_STAKING_zunETH_frxETH_PID = 75;
+
 
     address internal constant SDT_zunETH_frxETH_VAULT_ADDRESS =
         0xAaE1Ae12d4C8b811DDa1188b01be23b4ab7C62D2;

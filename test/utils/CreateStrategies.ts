@@ -53,7 +53,8 @@ export async function createStrategies(
             (tokenConverter && strategyName.includes('stEthEthConvexCurveStrat')) ||
             (tokenConverter && strategyName.includes('ZunEthFrxEthApsConvexCurveStrat')) ||
             (tokenConverter && strategyName.includes('pxETHwETHStakeDaoCurveNStrat')) ||
-            (tokenConverter && strategyName.includes('ZunEthFrxEthApsStakeDaoCurveStrat'))
+            (tokenConverter && strategyName.includes('ZunEthFrxEthApsStakeDaoCurveStrat')) ||
+            (tokenConverter && strategyName.includes('ZunEthFrxEthApsStakingConvexCurveStrat'))
         ) {
             await strategy.setTokenConverter(tokenConverter.address);
         }
