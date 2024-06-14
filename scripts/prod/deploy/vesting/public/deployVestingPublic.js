@@ -18,12 +18,15 @@ async function main() {
     const ambassadorsCsvPath = './scripts/prod/deploy/vesting/public/ambassadors.csv';
     const compensationFirstCsvPath = './scripts/prod/deploy/vesting/public/compensation_first.csv';
     const compensationSecondCsvPath = './scripts/prod/deploy/vesting/public/compensation_second.csv';
+    const compensationSecondZethCsvPath = './scripts/prod/deploy/vesting/public/compensation_second_zeth.csv';
 
-    await deployVesting(ambassadorsCsvPath, admin, startTimestamp, durationSecondsUnlocked, zunTokenAddress);
-
-    await deployVesting(compensationFirstCsvPath, admin, startTimestamp, durationSecondsUnlocked, zunTokenAddress);
-
-    await deployVesting(compensationSecondCsvPath, admin, startTimestamp, durationSecondsYear, zunTokenAddress);
+    // await deployVesting(ambassadorsCsvPath, admin, startTimestamp, durationSecondsUnlocked, zunTokenAddress);
+    //
+    // await deployVesting(compensationFirstCsvPath, admin, startTimestamp, durationSecondsUnlocked, zunTokenAddress);
+    //
+    // await deployVesting(compensationSecondCsvPath, admin, startTimestamp, durationSecondsYear, zunTokenAddress);
+    //
+    // await deployVesting(compensationSecondZethCsvPath, admin, startTimestamp, durationSecondsYear, zunTokenAddress);
 }
 
 main()
