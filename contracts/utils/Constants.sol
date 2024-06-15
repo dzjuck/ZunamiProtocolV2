@@ -74,10 +74,16 @@ library Constants {
 
     address internal constant CRV_USDT_crvUSD_ADDRESS = 0x390f3595bCa2Df7d23783dFd126427CCeb997BF4;
 
-    address internal constant LLAMALEND_CRVUSD_ADDRESS = 0xCeA18a8752bb7e7817F9AE7565328FE415C0f2cA;
-    address internal constant CVX_LLAMALEND_CRVUSD_REWARDS_ADDRESS =
+    address internal constant LLAMALEND_CRV_ADDRESS = 0xCeA18a8752bb7e7817F9AE7565328FE415C0f2cA;
+    address internal constant SDT_LLAMALEND_CRV_VAULT_ADDRESS =
+        0xfa6D40573082D797CB3cC378c0837fB90eB043e5;
+    address internal constant CVX_LLAMALEND_CRV_REWARDS_ADDRESS =
         0x4bf2d8484474170bff8a8c34475be3d87dFF28cA;
-    uint256 internal constant CVX_LLAMALEND_CRVUSD_PID = 325;
+    uint256 internal constant CVX_LLAMALEND_CRV_PID = 325;
+
+    address internal constant LLAMALEND_WETH_ADDRESS = 0x5AE28c9197a4a6570216fC7e53E7e0221D7A0FEF;
+    address internal constant SDT_LLAMALEND_WETH_CRVUSD_VAULT_ADDRESS =
+        0xADde9073d897743E7004115Fa2452cC959FBF28a;
 
     address internal constant CRV_zunETH_frxETH_ADDRESS =
         0x3A65cbaebBFecbeA5D0CB523ab56fDbda7fF9aAA;
@@ -92,9 +98,6 @@ library Constants {
 
     address internal constant SDT_zunETH_frxETH_VAULT_ADDRESS =
         0xAaE1Ae12d4C8b811DDa1188b01be23b4ab7C62D2;
-
-    address internal constant SDT_LLAMALEND_CRVUSD_VAULT_ADDRESS =
-        0xfa6D40573082D797CB3cC378c0837fB90eB043e5;
 
     address internal constant SDT_PXETH_WETH_VAULT_ADDRESS = 0x062AdE4F4583fF6b21f6f2c2Ed04eD7037E8B282;
     address internal constant CRV_PXETH_WETH_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;

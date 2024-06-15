@@ -8,8 +8,6 @@ import '../EmergencyAdminStakingConvexCurveNStratBase.sol';
 import '../../../../../interfaces/ICurvePool2.sol';
 import '../../../../../interfaces/ITokenConverter.sol';
 
-import 'hardhat/console.sol';
-
 contract FrxEthApsStakingConvexCurveStratBase is EmergencyAdminStakingConvexCurveNStratBase {
     using SafeERC20 for IERC20;
 

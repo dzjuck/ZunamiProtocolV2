@@ -21,8 +21,9 @@ const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
 describe('ZunUSD flow tests', () => {
     const strategyNames = [
-        'LlamalendCrvUsdConvexERC4626Strat',
-        'LlamalendCrvUsdStakeDaoERC4626Strat',
+        'LlamalendWethStakeDaoERC4626Strat',
+        'LlamalendCrvStakeDaoERC4626Strat',
+        // 'LlamalendCrvConvexERC4626Strat',
         'UsdtCrvUsdStakeDaoCurve',
         'UsdcCrvUsdStakeDaoCurve',
         'ZunUSDVaultStrat',

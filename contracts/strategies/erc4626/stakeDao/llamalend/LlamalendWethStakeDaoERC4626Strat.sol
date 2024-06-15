@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import '../../../../utils/Constants.sol';
 import './CrvUsdStakeDaoERC4626StratBase.sol';
 
-contract LlamalendCrvUsdStakeDaoERC4626Strat is CrvUsdStakeDaoERC4626StratBase {
+contract LlamalendWethStakeDaoERC4626Strat is CrvUsdStakeDaoERC4626StratBase {
     constructor()
         CrvUsdStakeDaoERC4626StratBase(
             [
@@ -15,9 +15,9 @@ contract LlamalendCrvUsdStakeDaoERC4626Strat is CrvUsdStakeDaoERC4626StratBase {
                 IERC20(address(0))
             ],
             [uint256(1), 1e12, 1e12, 0, 0],
-            Constants.LLAMALEND_CRVUSD_ADDRESS,
+            Constants.LLAMALEND_WETH_ADDRESS,
             Constants.CRVUSD_ADDRESS,
-            Constants.SDT_LLAMALEND_CRVUSD_VAULT_ADDRESS
+            Constants.SDT_LLAMALEND_WETH_CRVUSD_VAULT_ADDRESS
         )
     {}
 }

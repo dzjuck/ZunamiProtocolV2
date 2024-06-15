@@ -4,8 +4,6 @@ pragma solidity ^0.8.23;
 import '@openzeppelin/contracts/access/Ownable2Step.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import 'hardhat/console.sol';
-
 contract ZunVestingDistributor is Ownable2Step {
     using SafeERC20 for IERC20;
 

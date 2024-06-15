@@ -91,19 +91,26 @@ async function main() {
     //     stableConverter
     // );
 
-    // console.log('Attach TokenConverter:');
-    // const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    // const tokenConverter = await TokenConverterFactory.attach(
-    //     '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
-    // );
-    // console.log('TokenConverter:', tokenConverter.address);
+    console.log('Attach TokenConverter:');
+    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    const tokenConverter = await TokenConverterFactory.attach(
+        '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
+    );
+    console.log('TokenConverter:', tokenConverter.address);
 
     // await createAndInitStrategy(
     //     zunamiPool,
-    //     'LlamalendCrvUsdStakeDaoERC4626Strat',
+    //     'LlamalendCrvStakeDaoERC4626Strat',
     //     genericOracleAddr,
     //     tokenConverter
     // );
+
+    await createAndInitStrategy(
+        zunamiPool,
+        'LlamalendWethStakeDaoERC4626Strat',
+        genericOracleAddr,
+        tokenConverter
+    );
 }
 
 main()

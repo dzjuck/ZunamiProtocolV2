@@ -47,8 +47,9 @@ export async function createStrategies(
         }
 
         if (
-            (tokenConverter && strategyName.includes('LlamalendCrvUsdStakeDaoERC4626Strat')) ||
-            (tokenConverter && strategyName.includes('LlamalendCrvUsdConvexERC4626Strat')) ||
+            (tokenConverter && strategyName.includes('LlamalendCrvStakeDaoERC4626Strat')) ||
+            (tokenConverter && strategyName.includes('LlamalendWethStakeDaoERC4626Strat')) ||
+            (tokenConverter && strategyName.includes('LlamalendCrvConvexERC4626Strat')) ||
             (tokenConverter && strategyName.includes('sfrxETHERC4626Strat')) ||
             (tokenConverter && strategyName.includes('stEthEthConvexCurveStrat')) ||
             (tokenConverter && strategyName.includes('ZunEthFrxEthApsConvexCurveStrat')) ||

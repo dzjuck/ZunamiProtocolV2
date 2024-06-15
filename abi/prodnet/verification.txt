@@ -117,5 +117,8 @@ npx hardhat verify --network mainnet 0xD7c689822cE9C99798C43426c9Fe53A2d8892fA3 
 npx hardhat verify --network mainnet --constructor-args ./abi/ZunDistributor_arguments.js 0xEEA950a509d822CF65edcEED53d161fBaa967B3a
 
 
-// zunETH APS sid 2
+// zunETH APS 2
 npx hardhat verify --network mainnet --contract contracts/strategies/curve/convex/aps/stakingFrxETH/ZunEthFrxEthApsStakingConvexCurveStrat.sol:ZunEthFrxEthApsStakingConvexCurveStrat 0xE527082401705c5b395E3e7a91B0be6e78357159
+
+// zunAPS 4 LlamalendWethStakeDaoERC4626Strat
+npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/stakeDao/llamalend/LlamalendWethStakeDaoERC4626Strat.sol:LlamalendWethStakeDaoERC4626Strat 0x5De1BDedcDef3A5D6A833B6385Ef7bD24e6998f1

@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import '../../../../utils/Constants.sol';
 import './CrvUsdConvexERC4626StratBase.sol';
 
-contract LlamalendCrvUsdConvexERC4626Strat is CrvUsdConvexERC4626StratBase {
+contract LlamalendCrvConvexERC4626Strat is CrvUsdConvexERC4626StratBase {
     constructor()
         CrvUsdConvexERC4626StratBase(
             [
@@ -15,11 +15,11 @@ contract LlamalendCrvUsdConvexERC4626Strat is CrvUsdConvexERC4626StratBase {
                 IERC20(address(0))
             ],
             [uint256(1), 1e12, 1e12, 0, 0],
-            Constants.LLAMALEND_CRVUSD_ADDRESS,
+            Constants.LLAMALEND_CRV_ADDRESS,
             Constants.CRVUSD_ADDRESS,
             Constants.CRV_BOOSTER_ADDRESS,
-            Constants.CVX_LLAMALEND_CRVUSD_REWARDS_ADDRESS,
-            Constants.CVX_LLAMALEND_CRVUSD_PID
+            Constants.CVX_LLAMALEND_CRV_REWARDS_ADDRESS,
+            Constants.CVX_LLAMALEND_CRV_PID
         )
     {}
 }
