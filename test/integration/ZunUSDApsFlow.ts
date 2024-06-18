@@ -1,4 +1,4 @@
-import { ethers, network } from 'hardhat';
+import {ethers, network, upgrades} from 'hardhat';
 import {
     impersonateAccount,
     loadFixture,
@@ -17,12 +17,12 @@ import { createStrategies } from '../utils/CreateStrategies';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
 
 import {
-    ZunamiPool,
-    ZunamiPoolCompoundController,
-    ZunamiDepositZap,
-    GenericOracle,
-    IStableConverter,
-    IERC20,
+  ZunamiPool,
+  ZunamiPoolCompoundController,
+  ZunamiDepositZap,
+  GenericOracle,
+  IStableConverter,
+  IERC20, StakingRewardDistributor, ITokenConverter,
 } from '../../typechain-types';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -31,6 +31,7 @@ const CRV_zunUSD_crvUSD_LP_ADDRESS = '0x8C24b3213FD851db80245FCCc42c40B94Ac9a745
 
 import * as addrs from '../address.json';
 import { attachPoolAndControllerZunUSD } from '../utils/AttachPoolAndControllerZunUSD';
+import { setupTokenConverterStables } from '../utils/SetupTokenConverter';
 
 export async function createPoolAndCompoundController(token: string, rewardManager: string) {
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
@@ -472,7 +473,7 @@ describe('ZunUSD flow APS tests', () => {
     it('should deposit to aps using zap', async () => {
         const {
             admin,
-            zunamiPoolController,
+            zunamiPool,
             zunamiPoolAps,
             zunamiPoolControllerAps,
             dai,
@@ -485,11 +486,20 @@ describe('ZunUSD flow APS tests', () => {
         const sid = 0;
         await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
 
+        const curveRouterAddr = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';
+        const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+        const tokenConverter = (await TokenConverterFactory.deploy(
+          curveRouterAddr
+        )) as ITokenConverter;
+
+        await setupTokenConverterStables(tokenConverter);
+
         //deploy zap
-        const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap');
+        const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap2');
         const zunamiDepositZap = (await ZunamiDepositZapFactory.deploy(
-            zunamiPoolController.address,
-            zunamiPoolControllerAps.address
+            zunamiPool.address,
+            zunamiPoolControllerAps.address,
+            tokenConverter.address
         )) as ZunamiDepositZap;
 
         expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);
@@ -511,4 +521,72 @@ describe('ZunUSD flow APS tests', () => {
 
         expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.gt(0);
     });
+
+  it('should deposit to aps using zap 3', async () => {
+    const {
+      admin,
+      zunamiPool,
+      zunamiPoolAps,
+      zunamiPoolControllerAps,
+      dai,
+      usdc,
+      usdt,
+      strategiesAps,
+    } = await loadFixture(deployFixture);
+
+    // Add strategies to omnipool and aps pool
+    const sid = 0;
+    await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
+
+    const curveRouterAddr = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';
+    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    const tokenConverter = (await TokenConverterFactory.deploy(
+      curveRouterAddr
+    )) as ITokenConverter;
+
+    await setupTokenConverterStables(tokenConverter);
+
+    const StakingRewardDistributorFactory = await ethers.getContractFactory(
+      'StakingRewardDistributor'
+    );
+
+    const instance = await upgrades.deployProxy(
+      StakingRewardDistributorFactory,
+      [zunamiPoolControllerAps.address, 'LP', 'LP', admin.address],
+      {
+        kind: 'uups',
+      }
+    );
+    await instance.deployed();
+
+    const stakingRewardDistributor = instance as StakingRewardDistributor;
+
+    //deploy zap
+    const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap3');
+    const zunamiDepositZap = (await ZunamiDepositZapFactory.deploy(
+      zunamiPool.address,
+      zunamiPoolControllerAps.address,
+      stakingRewardDistributor.address,
+      tokenConverter.address
+    )) as ZunamiDepositZap;
+
+    expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);
+
+    const tokenAmount = '10000';
+    await dai
+      .connect(admin)
+      .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'ether'));
+    await usdc
+      .connect(admin)
+      .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'mwei'));
+    await usdt
+      .connect(admin)
+      .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'mwei'));
+
+    await zunamiDepositZap
+      .connect(admin)
+      .deposit(getMinAmountZunUSD(tokenAmount), admin.getAddress());
+
+    expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.closeTo(0, 1);
+  });
 });
