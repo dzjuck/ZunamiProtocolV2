@@ -109,7 +109,7 @@ const config: HardhatUserConfig = {
           chainId: 42161,
           gas: 'auto',
           gasMultiplier: 1.2,
-          gasPrice: 11000000,
+          gasPrice: 160000000,
           accounts: [`${PRIVATE_KEY}`],
           loggingEnabled: true,
         },
