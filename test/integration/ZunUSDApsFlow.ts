@@ -1,8 +1,8 @@
 import {ethers, network, upgrades} from 'hardhat';
 import {
-    impersonateAccount,
-    loadFixture,
-    setBalance,
+  impersonateAccount,
+  loadFixture,
+  setBalance, time,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumber, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
@@ -22,7 +22,7 @@ import {
   ZunamiDepositZap,
   GenericOracle,
   IStableConverter,
-  IERC20, StakingRewardDistributor, ITokenConverter,
+  IERC20, StakingRewardDistributor, ITokenConverter, ZunamiStableZap,
 } from '../../typechain-types';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -32,6 +32,7 @@ const CRV_zunUSD_crvUSD_LP_ADDRESS = '0x8C24b3213FD851db80245FCCc42c40B94Ac9a745
 import * as addrs from '../address.json';
 import { attachPoolAndControllerZunUSD } from '../utils/AttachPoolAndControllerZunUSD';
 import { setupTokenConverterStables } from '../utils/SetupTokenConverter';
+import {getMinAmountZunETH} from "../utils/GetMinAmountZunETH";
 
 export async function createPoolAndCompoundController(token: string, rewardManager: string) {
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
@@ -123,11 +124,11 @@ describe('ZunUSD flow APS tests', () => {
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
-        const [admin, alice, bob, feeCollector] = await ethers.getSigners();
+        const [admin, alice, bob, carol, feeCollector] = await ethers.getSigners();
 
         const { dai, usdt, usdc } = attachTokens(admin);
 
-        await mintStables(admin, usdc);
+        await mintStables(admin, usdc, usdt, dai);
 
         const { stableConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
             'StableConverter',
@@ -244,6 +245,7 @@ describe('ZunUSD flow APS tests', () => {
             admin,
             alice,
             bob,
+            carol,
             feeCollector,
             zunamiPool,
             zunamiPoolController,
@@ -588,5 +590,95 @@ describe('ZunUSD flow APS tests', () => {
       .deposit(getMinAmountZunUSD(tokenAmount), admin.getAddress());
 
     expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.closeTo(0, 1);
+  });
+
+  it('should mint zunUSD using stable zap', async () => {
+    const {
+      admin,
+      carol,
+      zunamiPool,
+      zunamiPoolController,
+      dai,
+      usdc,
+      usdt,
+    } = await loadFixture(deployFixture);
+
+    const dailyMintDuration = 24 * 60 * 60; // 1 day in seconds
+    const dailyMintLimit = ethers.utils.parseUnits('1100000', "ether");
+    const dailyRedeemDuration = 24 * 60 * 60; // 1 day in seconds;
+    const dailyRedeemLimit = ethers.utils.parseUnits('100000', "ether");
+
+    //deploy zap
+    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap');
+    const zunamiStableZap = (await ZunamiStableZapFactory.deploy(
+      zunamiPoolController.address,
+      dailyMintDuration,
+      dailyMintLimit,
+      dailyRedeemDuration,
+      dailyRedeemLimit
+    )) as ZunamiStableZap;
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(0);
+
+    const approveAmount = '10000000';
+    await dai
+      .connect(admin)
+      .approve(zunamiStableZap.address, parseUnits(approveAmount, 'ether'));
+    await usdc
+      .connect(admin)
+      .approve(zunamiStableZap.address, parseUnits(approveAmount, 'mwei'));
+    await usdt
+      .connect(admin)
+      .approve(zunamiStableZap.address, parseUnits(approveAmount, 'mwei'));
+
+    await expect(zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunUSD('400000'), admin.getAddress())
+    ).to.be.revertedWithCustomError(
+      zunamiStableZap,
+      `DailyMintLimitOverflow`
+    );
+
+    await zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunUSD('300000'), admin.getAddress());
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.closeTo(parseUnits("900000", 'ether'), parseUnits("1", 'ether'));
+    expect(await dai.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await usdc.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await usdt.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await dai.balanceOf(carol.getAddress())).to.eq(0);
+    expect(await usdc.balanceOf(carol.getAddress())).to.eq(0);
+    expect(await usdt.balanceOf(carol.getAddress())).to.eq(0);
+
+    await zunamiPool.approve(zunamiStableZap.address, parseUnits("10000000", 'ether'));
+
+    await expect(zunamiStableZap
+      .connect(admin)
+      .redeem(parseUnits("110000", 'ether'),  admin.getAddress(), [0,0,0,0,0])
+    ).to.be.revertedWithCustomError(
+      zunamiStableZap,
+      `DailyRedeemLimitOverflow`
+    );
+
+    await zunamiStableZap
+      .connect(admin)
+      .redeem(parseUnits("90000", 'ether'), carol.getAddress(), [0,0,0,0,0]);
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("810000", 'ether'));
+    expect(await dai.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await usdc.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await usdt.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await dai.balanceOf(carol.getAddress())).to.eq(parseUnits('30000', 'ether'));
+    expect(await usdc.balanceOf(carol.getAddress())).to.eq(parseUnits('30000', 'mwei'));
+    expect(await usdt.balanceOf(carol.getAddress())).to.eq(parseUnits('30000', 'mwei'));
+
+    await time.increase(dailyRedeemDuration);
+
+    await zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunUSD("300000"), admin.getAddress());
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("1710000", 'ether'));
   });
 });

@@ -22,7 +22,7 @@ import {
   ZunamiPoolCompoundController,
   ZunamiDepositZap,
   GenericOracle,
-  ITokenConverter, StakingRewardDistributor,
+  ITokenConverter, StakingRewardDistributor, ZunamiStableZap,
 } from '../../typechain-types';
 
 import * as addresses from '../address.json';
@@ -118,7 +118,7 @@ describe('ZunETH flow APS tests', () => {
         await reset(PROVIDER_URL, 20047000);
 
         // Contracts are deployed using the first signer/account by default
-        const [admin, alice, bob, feeCollector] = await ethers.getSigners();
+        const [admin, alice, bob, carol, feeCollector] = await ethers.getSigners();
 
         const { frxEth, wEth } = attachTokens(admin);
 
@@ -230,6 +230,7 @@ describe('ZunETH flow APS tests', () => {
             admin,
             alice,
             bob,
+            carol,
             feeCollector,
             zunamiPool,
             zunamiPoolController,
@@ -572,4 +573,87 @@ describe('ZunETH flow APS tests', () => {
     expect(await stakingRewardDistributor.balanceOf(admin.getAddress())).to.closeTo(parseUnits("30", 'ether'), parseUnits("0.3", 'ether'));
   });
 
+  it('should mint zunETH using stable zap', async () => {
+    const {
+      admin,
+      carol,
+      zunamiPool,
+      zunamiPoolController,
+      wEth,
+      frxEth,
+    } = await loadFixture(deployFixture);
+
+    const dailyMintDuration = 24 * 60 * 60; // 1 day in seconds
+    const dailyMintLimit = ethers.utils.parseUnits('275', "ether"); // 1100000 / 4000
+    const dailyRedeemDuration = 24 * 60 * 60; // 1 day in seconds;
+    const dailyRedeemLimit = ethers.utils.parseUnits('25', "ether"); // 100000 / 4000
+
+    //deploy zap
+    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap');
+    const zunamiStableZap = (await ZunamiStableZapFactory.deploy(
+      zunamiPoolController.address,
+      dailyMintDuration,
+      dailyMintLimit,
+      dailyRedeemDuration,
+      dailyRedeemLimit
+    )) as ZunamiStableZap;
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(0);
+
+    const approveAmount = '300';
+    await wEth
+      .connect(admin)
+      .approve(zunamiStableZap.address, parseUnits(approveAmount, 'ether'));
+    await frxEth
+      .connect(admin)
+      .approve(zunamiStableZap.address, parseUnits(approveAmount, 'ether'));
+
+    await expect(zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunETH('150'), admin.getAddress())
+    ).to.be.revertedWithCustomError(
+      zunamiStableZap,
+      `DailyMintLimitOverflow`
+    );
+
+    await zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunETH("100"), admin.getAddress());
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("200", 'ether'));
+    expect(await wEth.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await frxEth.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await wEth.balanceOf(carol.getAddress())).to.eq(0);
+    expect(await frxEth.balanceOf(carol.getAddress())).to.eq(0);
+
+    await zunamiPool
+      .connect(admin)
+      .approve(zunamiStableZap.address, parseUnits("50", 'ether'));
+
+    await expect(zunamiStableZap
+      .connect(admin)
+      .redeem(parseUnits("50", 'ether'),  admin.getAddress(), [0,0,0,0,0])
+    ).to.be.revertedWithCustomError(
+      zunamiStableZap,
+      `DailyRedeemLimitOverflow`
+    );
+
+    await zunamiStableZap
+      .connect(admin)
+      .redeem(parseUnits("25", 'ether'),  carol.getAddress(), [0,0,0,0,0])
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("175", 'ether'));
+    expect(await wEth.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await frxEth.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await wEth.balanceOf(carol.getAddress())).to.eq(parseUnits("12.5", 'ether'));
+    expect(await frxEth.balanceOf(carol.getAddress())).to.eq(parseUnits("12.5", 'ether'));
+
+    await time.increase(dailyRedeemDuration);
+
+    await zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunETH("100"), admin.getAddress());
+
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("375", 'ether'));
+  });
 });

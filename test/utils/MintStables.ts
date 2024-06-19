@@ -32,19 +32,19 @@ const curve_3pool_abi = [
     },
 ];
 
-export async function mintStables(admin: SignerWithAddress, usdc) {
+export async function mintStables(admin: SignerWithAddress, usdc, usdt, dai) {
     const curveTricryptoUSDC = new ethers.Contract(
         curve_TricryptoUSDC_addr,
         curve_TricryptoUSDC_abi,
         admin
     );
 
-    const ethAmount = ethers.utils.parseEther('1100');
+    const ethAmount = ethers.utils.parseEther('1500');
     await curveTricryptoUSDC.exchange_underlying(2, 0, ethAmount, 0, { value: ethAmount });
 
     const curve3pool = new ethers.Contract(curve_3pool_addr, curve_3pool_abi, admin);
 
-    const usdcAmount = ethers.utils.parseUnits('500000', 'mwei');
+    const usdcAmount = ethers.utils.parseUnits('1010000', 'mwei');
 
     await usdc.approve(curve3pool.address, usdcAmount);
     await curve3pool.exchange(1, 0, usdcAmount, 0); // usdc -> dai

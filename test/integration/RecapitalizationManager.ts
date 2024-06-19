@@ -552,7 +552,7 @@ describe('Recapitalization Manager', async () => {
     });
 
     describe('Recapitalize pool by rewards', async () => {
-        it.only('Should recapitalize pool by rewards', async () => {
+        it('Should recapitalize pool by rewards', async () => {
             // given
             const { recapitalizationManager, CRV, SDT } = await loadFixture(deployFixture);
             // deploy zunUSD
