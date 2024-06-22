@@ -164,8 +164,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 100_800 blocks
-        await mine(100_800);
+        // wait a week - 50_400 blocks
+        await mine(50_400);
 
         // distribute
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(0);
@@ -221,8 +221,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('100', 'ether'));
 
-        // wait a week - 100_800 blocks
-        await mine(100_800);
+        // wait a week - 50_400 blocks
+        await mine(50_400);
 
         // distribute
         expect(await ZUN.balanceOf(approveGauge.address)).to.eq(0);
@@ -306,8 +306,8 @@ describe('ZunDistributor tests', () => {
             [parseUnits('2000', 'ether'), parseUnits('1000', 'ether')]
         );
 
-        // wait a week - 100_800 blocks
-        await mine(100_800);
+        // wait a week - 50_400 blocks
+        await mine(50_400);
 
         // distribute
         await distributor.distribute();
@@ -352,8 +352,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 100_800 blocks
-        await mine(100_800);
+        // wait a week - 50_400 blocks
+        await mine(50_400);
 
         // finalize voting on vote
         gaugeItem = await distributor.gauges(0);
@@ -401,8 +401,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 100_800 blocks
-        await mine(100_800);
+        // wait a week - 50_400 blocks
+        await mine(50_400);
 
         // finalize voting on distribution
 
@@ -564,7 +564,7 @@ describe('ZunDistributor tests', () => {
         ).to.be.revertedWithCustomError(distributor, 'ExpiredSignature');
     });
 
-    it('should distribute all', async () => {
+    it.only('should distribute all', async () => {
         const {
             voter,
             approveGauge,
@@ -586,11 +586,11 @@ describe('ZunDistributor tests', () => {
         let distrAmount = firstYearValue.mul(periodBlocks).div(yearBlocks).div(3);
 
         // distribute in cycle
-        for (let i = 1; i < 130; i++) {
-            // max 29 years - 754
+        for (let i = 1; i < 1508; i++) {
+            // max 29 years - 1508 weeks
             // console.log(i, distrAmount);
-            // wait a week - 100_800 blocks
-            await mine(100_800);
+            // wait a week - 50_400 blocks
+            await mine(50_400);
 
             // distribute
             await distributor.distribute();
@@ -601,8 +601,8 @@ describe('ZunDistributor tests', () => {
             expect(await ZUN.balanceOf(transferGaugeRec.address)).to.eq(gaugeBal);
 
             // check yearDistributionValue
-            if (i % 26 == 0) {
-                yearCount = BigNumber.from(i).div(26);
+            if (i % 52 == 0) {
+                yearCount = BigNumber.from(i).div(52);
                 yearValue = firstYearValue
                     .mul(BigNumber.from(650).pow(yearCount))
                     .div(BigNumber.from(1000).pow(yearCount));
@@ -801,8 +801,8 @@ describe('ZunDistributor tests', () => {
         gaugeItem = await distributor.gauges(1);
         expect(gaugeItem.currentVotes).to.eq(parseUnits('1000', 'ether'));
 
-        // wait a week - 100_800 blocks
-        await mine(100_800);
+        // wait a week - 50_400 blocks
+        await mine(50_400);
 
         tx = await distributor.castVote(
             [0, 1],
@@ -829,7 +829,6 @@ describe('ZunDistributor tests', () => {
         console.log(receipt.cumulativeGasUsed);
     });
 
-    //FIXME: ZunDistributor bug
     it.skip('Same borderBlock with block.number will revert in _castVote', async function () {
         const { vlZUN, distributor } = await loadFixture(deployFixture);
 

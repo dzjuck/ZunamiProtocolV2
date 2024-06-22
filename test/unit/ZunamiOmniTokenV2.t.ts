@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {ZunamiOmniToken} from "../../typechain-types";
 
-describe('ZunamiOmniToken', () => {
+describe('ZunamiOmniTokenV2', () => {
     let admin: SignerWithAddress;
     let alice: SignerWithAddress;
     let bob: SignerWithAddress;
@@ -15,13 +15,13 @@ describe('ZunamiOmniToken', () => {
     beforeEach(async () => {
         [admin, alice, bob, carrol, mallroy] = await ethers.getSigners();
 
-        const TokenFactory = await ethers.getContractFactory('ZunamiOmniToken', admin);
-        token = (await TokenFactory.deploy()) as ZunamiOmniToken;
+        const TokenFactory = await ethers.getContractFactory('ZunamiOmniTokenV2', admin);
+        token = (await TokenFactory.deploy("Test Token", "TST")) as ZunamiOmniToken;
     });
 
     it('should have correct name and symbol and default admin', async () => {
-        expect(await token.name()).to.be.eq('Zunami Token');
-        expect(await token.symbol()).to.be.eq('ZUN');
+        expect(await token.name()).to.be.eq('Test Token');
+        expect(await token.symbol()).to.be.eq('TST');
         expect(await token.hasRole(await token.DEFAULT_ADMIN_ROLE(), admin.address)).to.be.true;
     });
 
