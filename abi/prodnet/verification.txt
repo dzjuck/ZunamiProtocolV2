@@ -146,3 +146,7 @@ npx hardhat verify --network base --contract contracts/tokenomics/dao/ZunamiOmni
 
 npx hardhat verify --network optimism --contract contracts/tokenomics/dao/ZunamiOmniTokenV2.sol:ZunamiOmniTokenV2 0xdC30b3bdE2734A0Bc55AF01B38943ef04aaCB423 'Zunami Omni USD' 'zunUSD'
 npx hardhat verify --network optimism --contract contracts/tokenomics/dao/ZunamiOmniTokenV2.sol:ZunamiOmniTokenV2 0x2d691C2492e056ADCAE7cA317569af25910fC4cb 'Zunami Omni ETH', 'zunETH'
+
+
+npx hardhat verify --network mainnet 0x0Ce6df2119F649fF6f547bfaF8F4bB7C3B027be1 0x6b5204b0be36771253cc38e88012e02b752f0f36 0x63942E31E98f1833A234077f47880A66136a2D1e 0x44f30d79f62a3d5340030d64806cd73239889f07
+npx hardhat verify --network mainnet 0x65c327bFb1405cD6E33143c6C16ED6AdE3268028 0x6b5204b0be36771253cc38e88012e02b752f0f36 0x2272B9a1ce6503f9428E4179eBcdc2690eF28469 0x9516c367952430371A733E5eBb587E01eE082F99
