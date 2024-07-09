@@ -9,11 +9,15 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { FORK_BLOCK_NUMBER, PROVIDER_URL } from '../../hardhat.config';
 import { parseEther } from 'ethers/lib/utils';
+import { max } from 'hardhat/internal/util/bigint';
+import { bn } from '../unit/ZunamiPool.unit';
+import { BigNumberish } from 'ethers';
 
 const VOTEMARKET_ADDRESS = '0x0000000895cB182E6f983eb4D8b4E0Aa0B31Ae4c';
 const ZUN_ADDRESS = '0x6b5204B0Be36771253Cc38e88012E02B752f0f36';
 const crvUSD_zunUSD_BOUNTY_ID = 236;
 const CURRENT_crvUSD_zunUSD_BOUNTY_MANAGER = '0xF9605D8c4c987d7Cb32D0d11FbCb8EeeB1B22D5d';
+const GENERIC_ORACLE = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
 
 describe('Votemarket Gauge', async () => {
     // We define a fixture to reuse the same setup in every test.
@@ -28,7 +32,8 @@ describe('Votemarket Gauge', async () => {
         const VotemarketGaugeFactory = await ethers.getContractFactory('VotemarketGauge');
         const crvUsdZunUsdVotemarketGauge = (await VotemarketGaugeFactory.deploy(
             ZUN_ADDRESS,
-            crvUSD_zunUSD_BOUNTY_ID
+            crvUSD_zunUSD_BOUNTY_ID,
+            GENERIC_ORACLE
         )) as VotemarketGauge;
 
         return {
@@ -54,6 +59,7 @@ describe('Votemarket Gauge', async () => {
             expect(await crvUsdZunUsdVotemarketGauge.BOUNTY_ID()).to.equal(crvUSD_zunUSD_BOUNTY_ID);
             expect(await crvUsdZunUsdVotemarketGauge.additionalPeriods()).to.equal(1);
             expect(await crvUsdZunUsdVotemarketGauge.TOKEN()).to.equal(ZUN_ADDRESS);
+            expect(await crvUsdZunUsdVotemarketGauge.genericOracle()).to.equal(GENERIC_ORACLE);
         });
     });
 
@@ -86,28 +92,28 @@ describe('Votemarket Gauge', async () => {
         });
     });
 
-    describe('Set max price per vote', async () => {
-        it('Should set max price per vote', async () => {
+    describe('Set generic oracle', async () => {
+        it('Should set generic oracle', async () => {
             // given
-            const { crvUsdZunUsdVotemarketGauge } = await loadFixture(deployFixture);
+            const { crvUsdZunUsdVotemarketGauge, otherAccount } = await loadFixture(deployFixture);
 
             // when
-            const tx = await crvUsdZunUsdVotemarketGauge.setMaxPricePerVote('900000000000000000');
+            const tx = await crvUsdZunUsdVotemarketGauge.setGenericOracle(otherAccount.address);
 
             // then
             await expect(tx)
-                .to.emit(crvUsdZunUsdVotemarketGauge, 'SetMaxPricePerVote')
-                .withArgs('900000000000000000');
-            expect(await crvUsdZunUsdVotemarketGauge.maxPricePerVote()).to.eq('900000000000000000');
+                .to.emit(crvUsdZunUsdVotemarketGauge, 'SetGenericOracle')
+                .withArgs(otherAccount.address);
+            expect(await crvUsdZunUsdVotemarketGauge.genericOracle()).to.eq(otherAccount.address);
         });
-        it('Should revert when set max price per vote by not the owner', async () => {
+        it('Should revert when set additional periods by not the owner', async () => {
             // given
             const { crvUsdZunUsdVotemarketGauge, otherAccount } = await loadFixture(deployFixture);
 
             // when
             const tx = crvUsdZunUsdVotemarketGauge
                 .connect(otherAccount)
-                .setMaxPricePerVote('900000000000000000');
+                .setGenericOracle(otherAccount.address);
 
             // then
             await expect(tx).to.revertedWithCustomError(
@@ -154,8 +160,7 @@ describe('Votemarket Gauge', async () => {
                 crvUsdZunUsdVotemarketGauge.address
             );
 
-            const maxPricePerVote = '9810000000000000000';
-            await crvUsdZunUsdVotemarketGauge.setMaxPricePerVote(maxPricePerVote);
+            const expectedMaxPricePerVote = '8892746029926595';
 
             // when
             const tx = await crvUsdZunUsdVotemarketGauge.distribute(parseEther('4000'));
@@ -163,7 +168,9 @@ describe('Votemarket Gauge', async () => {
             // then
             await expect(tx)
                 .to.emit(crvUsdZunUsdVotemarketGauge, 'VotemarketIncreasedBountyDuration')
-                .withArgs(crvUSD_zunUSD_BOUNTY_ID, 1, parseEther('4000'), maxPricePerVote);
+                .withArgs(crvUSD_zunUSD_BOUNTY_ID, 1, parseEther('4000'), (actual: BigNumberish) =>
+                    expectCloseTo(actual, expectedMaxPricePerVote, '1000000000000')
+                );
             expect(await ZUN.balanceOf(crvUsdZunUsdVotemarketGauge.address)).to.eq(0);
         });
         it('Should distribute and increase bounty twice', async () => {
@@ -192,11 +199,9 @@ describe('Votemarket Gauge', async () => {
                 crvUsdZunUsdVotemarketGauge.address
             );
 
-            await crvUsdZunUsdVotemarketGauge.setMaxPricePerVote('9810000000000000000');
             await crvUsdZunUsdVotemarketGauge.distribute(parseEther('4000'));
 
-            const maxPricePerVote = '9990000000000000000';
-            await crvUsdZunUsdVotemarketGauge.setMaxPricePerVote(maxPricePerVote);
+            const expectedMaxPricePerVote = '8892662386666693';
 
             // when
             const tx = await crvUsdZunUsdVotemarketGauge.distribute(parseEther('1000'));
@@ -204,48 +209,10 @@ describe('Votemarket Gauge', async () => {
             // then
             await expect(tx)
                 .to.emit(crvUsdZunUsdVotemarketGauge, 'VotemarketIncreasedBountyDuration')
-                .withArgs(crvUSD_zunUSD_BOUNTY_ID, 1, parseEther('1000'), maxPricePerVote);
+                .withArgs(crvUSD_zunUSD_BOUNTY_ID, 1, parseEther('1000'), (actual: BigNumberish) =>
+                    expectCloseTo(actual, expectedMaxPricePerVote, '1000000000000')
+                );
             expect(await ZUN.balanceOf(crvUsdZunUsdVotemarketGauge.address)).to.eq(0);
-        });
-        it('Should revert when distribute second time and maxPricePerVote is zero', async () => {
-            // given
-            const { crvUsdZunUsdVotemarketGauge } = await loadFixture(deployFixture);
-            await impersonateAccount(CURRENT_crvUSD_zunUSD_BOUNTY_MANAGER);
-            const impersonatedSigner = await ethers.getSigner(CURRENT_crvUSD_zunUSD_BOUNTY_MANAGER);
-            // set balance to cover any tx costs
-            await setBalance(
-                CURRENT_crvUSD_zunUSD_BOUNTY_MANAGER,
-                ethers.utils.parseEther('2').toHexString()
-            );
-            // provide ZUN to gauge
-            const ZUN = (await ethers.getContractAt('IERC20', ZUN_ADDRESS)) as IERC20;
-            await ZUN.connect(impersonatedSigner).transfer(
-                crvUsdZunUsdVotemarketGauge.address,
-                parseEther('4000')
-            );
-            // update bounty manager
-            const VOTEMARKET = (await ethers.getContractAt(
-                'IVotemarket',
-                VOTEMARKET_ADDRESS
-            )) as IVotemarket;
-            await VOTEMARKET.connect(impersonatedSigner).updateManager(
-                crvUSD_zunUSD_BOUNTY_ID,
-                crvUsdZunUsdVotemarketGauge.address
-            );
-
-            const maxPricePerVote = '9810000000000000000';
-            await crvUsdZunUsdVotemarketGauge.setMaxPricePerVote(maxPricePerVote);
-
-            await crvUsdZunUsdVotemarketGauge.distribute(parseEther('4000'));
-
-            // when
-            const tx = crvUsdZunUsdVotemarketGauge.distribute(parseEther('4000'));
-
-            // then
-            await expect(tx).to.revertedWithCustomError(
-                crvUsdZunUsdVotemarketGauge,
-                'ZeroMaxPricePerVote'
-            );
         });
     });
 
@@ -297,3 +264,11 @@ describe('Votemarket Gauge', async () => {
         });
     });
 });
+
+export function expectCloseTo(
+    amount: BigNumberish,
+    expectedAmount: BigNumberish,
+    deltaAmount: BigNumberish
+) {
+    return expect(amount).closeTo(expectedAmount, deltaAmount);
+}
