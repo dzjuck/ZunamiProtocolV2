@@ -29,6 +29,10 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         vaultAsset = IERC20(vaultAssetAddr);
     }
 
+    function getLiquidityBalance() internal view override returns (uint256) {
+        return super.getLiquidityBalance() - calculateCollectedRewards();
+    }
+
     function getLiquidityTokenPrice() internal view virtual override returns (uint256) {
         return (oracle.getUSDPrice(address(vaultAsset)) * vault.convertToAssets(SHARES)) / SHARES;
     }
@@ -71,14 +75,20 @@ abstract contract ERC4626StratBase is ZunamiStratBase {
         }
     }
 
-    function claimCollectedRewards() internal virtual override {
+    function calculateCollectedRewards() internal view returns (uint256 rewardShares) {
         uint256 redeemableAssets = vault.previewRedeem(depositedLiquidity);
         if (redeemableAssets > depositedAssets) {
-            uint256 withdrawnAssets = redeemableAssets - depositedAssets;
-            uint256 withdrawnShares = vault.convertToShares(withdrawnAssets);
+            uint256 rewardAssets = redeemableAssets - depositedAssets;
+            rewardShares = vault.convertToShares(rewardAssets);
+        }
+    }
+
+    function claimCollectedRewards() internal virtual override {
+        uint256 rewardShares = calculateCollectedRewards();
+        if (rewardShares > 0) {
             uint256[POOL_ASSETS] memory minTokenAmounts;
-            removeLiquidity(withdrawnShares, minTokenAmounts, false);
-            depositedLiquidity -= withdrawnShares;
+            removeLiquidity(rewardShares, minTokenAmounts, false);
+            depositedLiquidity -= rewardShares;
         }
     }
 }

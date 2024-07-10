@@ -97,11 +97,7 @@ contract CrvUsdStakeDaoERC4626StratBase is StakeDaoERC4626StratBase {
             Constants.CRVUSD_ADDRESS,
             Constants.USDT_ADDRESS,
             crvUSDBalance,
-            applySlippageDifferentPrice(
-                crvUSDBalance,
-                Constants.CRVUSD_ADDRESS,
-                Constants.USDT_ADDRESS
-            ) / tokenDecimalsMultipliers[ZUNAMI_USDT_TOKEN_ID]
+            minAmounts[ZUNAMI_USDT_TOKEN_ID]
         );
     }
 }

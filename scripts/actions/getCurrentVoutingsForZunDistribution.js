@@ -16,7 +16,7 @@ async function main() {
     const gauges = [];
     let finalizedVotesTotal = BigNumber.from(0);
     let currentVotesTotal = BigNumber.from(0);
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 9; i++) {
         const gauge = await distributor.gauges(i);
         gauges.push(gauge);
         finalizedVotesTotal = finalizedVotesTotal.add(gauge.finalizedVotes);
@@ -27,6 +27,7 @@ async function main() {
     const divider = 10_000;
     for (let i = 0; i < gauges.length; i++) {
         console.log('Gauge ', i, ' :');
+        console.log(' -- current votes:', gauges[i].currentVotes.toString());
         console.log(' -- previous percent :', Number(gauges[i].finalizedVotes.mul(divider).div(finalizedVotesTotal).toString()) / divider * 100);
         console.log(' -- current percent :', Number(gauges[i].currentVotes.mul(divider).div(currentVotesTotal).toString()) / divider * 100);
     }
