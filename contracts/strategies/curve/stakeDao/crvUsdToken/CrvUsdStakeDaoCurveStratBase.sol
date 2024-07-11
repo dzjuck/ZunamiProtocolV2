@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import '../../../../interfaces/IStableConverter.sol';
+import '../../../../interfaces/ITokenConverter.sol';
 import '../StakeDaoCurveStratBase.sol';
 
 contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
@@ -18,9 +18,9 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     int128 public constant CURVE_POOL_TOKEN_ID_INT = int128(CURVE_POOL_TOKEN_ID);
 
     uint256 public immutable zunamiTokenIndex;
-    IStableConverter public stableConverter;
 
-    event SetStableConverter(address stableConverter);
+    ITokenConverter public converter;
+    event SetTokenConverter(address tokenConverter);
 
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
@@ -41,10 +41,10 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
         zunamiTokenIndex = _zunamiTokenIndex;
     }
 
-    function setStableConverter(address stableConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(stableConverterAddr) == address(0)) revert ZeroAddress();
-        stableConverter = IStableConverter(stableConverterAddr);
-        emit SetStableConverter(stableConverterAddr);
+    function setTokenConverter(address converterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(converterAddr) == address(0)) revert ZeroAddress();
+        converter = ITokenConverter(converterAddr);
+        emit SetTokenConverter(converterAddr);
     }
 
     function convertCurvePoolTokenAmounts(
@@ -72,7 +72,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     ) internal view returns (uint256) {
         if (address(fromStable) == address(toStable)) return 0;
 
-        return stableConverter.valuate(address(fromStable), address(toStable), amount);
+        return converter.valuate(address(fromStable), address(toStable), amount);
     }
 
     function convertAndApproveTokens(
@@ -100,7 +100,7 @@ contract CrvUsdStakeDaoCurveStratBase is StakeDaoCurveStratBase {
     function convertStable(IERC20 fromToken, IERC20 toToken, uint256 fromAmount) internal {
         if (address(fromToken) == address(toToken)) return;
 
-        fromToken.safeTransfer(address(stableConverter), fromAmount);
-        stableConverter.handle(address(fromToken), address(toToken), fromAmount, 0);
+        fromToken.safeTransfer(address(converter), fromAmount);
+        converter.handle(address(fromToken), address(toToken), fromAmount, 0);
     }
 }

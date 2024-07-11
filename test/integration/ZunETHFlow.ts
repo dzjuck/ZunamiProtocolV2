@@ -71,7 +71,6 @@ describe('ZunETH flow tests', () => {
             strategyNames,
             genericOracle,
             zunamiPool,
-            undefined,
             tokenConverter,
             undefined,
             undefined

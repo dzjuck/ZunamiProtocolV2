@@ -64,6 +64,8 @@ library Constants {
         0x6B27D7BC63F1999D14fF9bA900069ee516669ee8;
     uint256 internal constant CVX_ETH_stETH_PID = 177;
 
+    address internal constant SDT_zunUSD_crvUSD_VAULT_ADDRESS = 0x5962E74338FEA24051e039A6106a68082AB58375;
+
     address internal constant CRV_zunUSD_crvUSD_ADDRESS =
         0x8C24b3213FD851db80245FCCc42c40B94Ac9a745;
     address internal constant CRV_zunUSD_crvUSD_LP_ADDRESS =

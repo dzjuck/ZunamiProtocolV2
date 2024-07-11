@@ -1,7 +1,5 @@
 import {
     GenericOracle,
-    INativeConverter,
-    IStableConverter,
     ITokenConverter,
     ZunamiPool,
 } from '../../typechain-types';
@@ -28,8 +26,7 @@ export async function createStrategies(
     strategyNames: string[],
     genericOracle: GenericOracle,
     zunamiPool: ZunamiPool,
-    stableConverter: IStableConverter | undefined,
-    tokenConverter: ITokenConverter | undefined,
+    tokenConverter: ITokenConverter,
     tokens: string[] | undefined,
     tokensDecimals: number[] | undefined
 ) {
@@ -46,26 +43,8 @@ export async function createStrategies(
             await strategy.setPriceOracle(genericOracle.address);
         }
 
-        if (
-            (tokenConverter && strategyName.includes('LlamalendCrvStakeDaoERC4626Strat')) ||
-            (tokenConverter && strategyName.includes('LlamalendWethStakeDaoERC4626Strat')) ||
-            (tokenConverter && strategyName.includes('LlamalendCrvConvexERC4626Strat')) ||
-            (tokenConverter && strategyName.includes('sfrxETHERC4626Strat')) ||
-            (tokenConverter && strategyName.includes('stEthEthConvexCurveStrat')) ||
-            (tokenConverter && strategyName.includes('ZunEthFrxEthApsConvexCurveStrat')) ||
-            (tokenConverter && strategyName.includes('pxETHwETHStakeDaoCurveNStrat')) ||
-            (tokenConverter && strategyName.includes('ZunEthFrxEthApsStakeDaoCurveStrat')) ||
-            (tokenConverter && strategyName.includes('ZunEthFrxEthApsStakingConvexCurveStrat'))
-        ) {
-            await strategy.setTokenConverter(tokenConverter.address);
-        }
-
-        if (
-            (stableConverter && strategyName.includes('ZunUsdCrvUsdApsConvexCurveStrat')) ||
-            (stableConverter && strategyName.includes('UsdtCrvUsdStakeDaoCurve')) ||
-            (stableConverter && strategyName.includes('UsdcCrvUsdStakeDaoCurve'))
-        ) {
-            await strategy.setStableConverter(stableConverter.address);
+        if (!strategyName.includes('VaultStrat')) {
+          await strategy.setTokenConverter(tokenConverter.address);
         }
 
         strategies.push(strategy);

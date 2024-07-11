@@ -4,10 +4,10 @@ pragma solidity ^0.8.23;
 import '../../../../../utils/Constants.sol';
 import '../../../../../interfaces/IController.sol';
 import '../../../../../interfaces/ITokenConverter.sol';
-import '../EmergencyAdminConvexCurveNStratBase.sol';
+import '../EmergencyAdminStakeDaoCurveNStratBase.sol';
 import '../../../../../interfaces/ICurvePool2.sol';
 
-contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
+contract CrvUsdApsStakeDaoCurveStratBase is EmergencyAdminStakeDaoCurveNStratBase {
     using SafeERC20 for IERC20;
 
     uint256 public constant ZUNAMI_ZUNUSD_TOKEN_ID = 0;
@@ -38,22 +38,18 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
+        address _vaultAddr,
         address _poolAddr,
-        address _poolLpAddr,
-        address _cvxBooster,
-        address _cvxRewardsAddr,
-        uint256 _cvxPID,
+        address _poolTokenAddr,
         address _zunamiControllerAddr,
         address _zunamiStableAddr
     )
-        EmergencyAdminConvexCurveNStratBase(
+        EmergencyAdminStakeDaoCurveNStratBase(
             _tokens,
             _tokenDecimalsMultipliers,
+            _vaultAddr,
             _poolAddr,
-            _poolLpAddr,
-            _cvxBooster,
-            _cvxRewardsAddr,
-            _cvxPID
+            _poolTokenAddr
         )
     {
         if (_zunamiControllerAddr == address(0)) revert ZeroAddress();
@@ -98,7 +94,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     function _inflate(uint256 ratioOfCrvLps, uint256 minInflatedAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
         depositedLiquidity -= removingCrvLps;
-        cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
+        vault.withdraw(removingCrvLps);
 
         uint256 crvUsdAmount = pool.remove_liquidity_one_coin(
             removingCrvLps,
@@ -134,7 +130,7 @@ contract CrvUsdApsConvexCurveStratBase is EmergencyAdminConvexCurveNStratBase {
     function _deflate(uint256 ratioOfCrvLps, uint256 minDeflateAmount) internal override {
         uint256 removingCrvLps = getLiquidityAmountByRatio(ratioOfCrvLps);
         depositedLiquidity -= removingCrvLps;
-        cvxRewards.withdrawAndUnwrap(removingCrvLps, false);
+        vault.withdraw(removingCrvLps);
 
         uint256 tokenAmount = pool.remove_liquidity_one_coin(
             removingCrvLps,

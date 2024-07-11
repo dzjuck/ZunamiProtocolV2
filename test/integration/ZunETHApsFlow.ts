@@ -202,7 +202,6 @@ describe('ZunETH flow APS tests', () => {
             strategyApsNames,
             genericOracle,
             zunamiPoolAps,
-            undefined,
             tokenConverter,
             [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
             [1, 0, 0, 0, 0]

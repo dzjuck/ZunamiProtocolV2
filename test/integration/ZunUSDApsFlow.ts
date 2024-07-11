@@ -120,7 +120,7 @@ async function setCustomOracle(
 }
 
 describe('ZunUSD flow APS tests', () => {
-    const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunUsdCrvUsdApsConvexCurveStrat'];
+    const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunUsdCrvUsdApsStakeDaoCurveStrat', 'ZunUsdCrvUsdApsConvexCurveStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -130,10 +130,12 @@ describe('ZunUSD flow APS tests', () => {
 
         await mintStables(admin, usdc, usdt, dai);
 
-        const { stableConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
+        const { tokenConverter, rewardManager } = await createConvertersAndRewardManagerContracts(
             'StableConverter',
             'SellingCurveRewardManager'
         );
+
+        await setupTokenConverterStables(tokenConverter);
 
         const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
         const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
@@ -212,14 +214,10 @@ describe('ZunUSD flow APS tests', () => {
             strategyApsNames,
             genericOracle,
             zunamiPoolAps,
-            stableConverter,
-            undefined,
+            tokenConverter,
             [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
             [1, 0, 0, 0, 0]
         );
-
-        const StableConverterFactory = await ethers.getContractFactory('StableConverter');
-        const stableConverterAps = (await StableConverterFactory.deploy()) as IStableConverter;
 
         const tokenApprovedAmount = '10000';
         for (const user of [admin, alice, bob]) {
@@ -247,14 +245,13 @@ describe('ZunUSD flow APS tests', () => {
             bob,
             carol,
             feeCollector,
+            tokenConverter,
             zunamiPool,
             zunamiPoolController,
-            stableConverter,
             rewardManager,
             zunamiPoolAps,
             zunamiPoolControllerAps,
             strategiesAps,
-            stableConverterAps,
             genericOracle,
             dai,
             usdc,
@@ -270,7 +267,6 @@ describe('ZunUSD flow APS tests', () => {
             zunamiPoolAps,
             zunamiPoolControllerAps,
             strategiesAps,
-            stableConverterAps,
         } = await loadFixture(deployFixture);
 
         await expect(
@@ -333,11 +329,6 @@ describe('ZunUSD flow APS tests', () => {
         );
 
         await zunamiPool.transfer(zunamiPoolControllerAps.address, parseUnits('100', 'ether')); // zunUSD
-
-        await zunamiPool.transfer(
-            stableConverterAps.address,
-            ethers.utils.parseUnits('10000', 'ether').sub(MINIMUM_LIQUIDITY)
-        );
 
         await zunamiPoolControllerAps.autoCompoundAll();
         expect(await zunamiPoolControllerAps.collectedManagementFee()).to.not.eq(0);
@@ -482,19 +473,12 @@ describe('ZunUSD flow APS tests', () => {
             usdc,
             usdt,
             strategiesAps,
+            tokenConverter,
         } = await loadFixture(deployFixture);
 
         // Add strategies to omnipool and aps pool
         const sid = 0;
         await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
-
-        const curveRouterAddr = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';
-        const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-        const tokenConverter = (await TokenConverterFactory.deploy(
-          curveRouterAddr
-        )) as ITokenConverter;
-
-        await setupTokenConverterStables(tokenConverter);
 
         //deploy zap
         const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositZap2');
@@ -527,6 +511,7 @@ describe('ZunUSD flow APS tests', () => {
   it('should deposit to aps using zap 3', async () => {
     const {
       admin,
+      tokenConverter,
       zunamiPool,
       zunamiPoolAps,
       zunamiPoolControllerAps,
@@ -539,14 +524,6 @@ describe('ZunUSD flow APS tests', () => {
     // Add strategies to omnipool and aps pool
     const sid = 0;
     await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
-
-    const curveRouterAddr = '0xF0d4c12A5768D806021F80a262B4d39d26C58b8D';
-    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    const tokenConverter = (await TokenConverterFactory.deploy(
-      curveRouterAddr
-    )) as ITokenConverter;
-
-    await setupTokenConverterStables(tokenConverter);
 
     const StakingRewardDistributorFactory = await ethers.getContractFactory(
       'StakingRewardDistributor'

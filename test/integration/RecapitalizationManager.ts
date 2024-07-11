@@ -1347,7 +1347,7 @@ async function deployZunUSDPoolWithStrategies() {
 
     const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunUSD();
 
-    const { stableConverter, rewardManager, frxEthNativeConverter } =
+    const { frxEthNativeConverter } =
         await createConvertersAndRewardManagerContracts(
             'StableConverter',
             'SellingCurveRewardManager'
@@ -1362,7 +1362,6 @@ async function deployZunUSDPoolWithStrategies() {
         strategyNames,
         genericOracle,
         zunamiPool,
-        stableConverter,
         frxEthNativeConverter,
         undefined,
         undefined

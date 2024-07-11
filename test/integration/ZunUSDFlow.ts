@@ -56,7 +56,6 @@ describe('ZunUSD flow tests', () => {
             strategyNames,
             genericOracle,
             zunamiPool,
-            stableConverter,
             tokenConverter,
             undefined,
             undefined
