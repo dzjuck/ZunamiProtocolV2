@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 
-async function createAndInitStrategy(zunamiPool, stratName, oracleAddress, stableConverterAddress) {
+async function createAndInitStrategy(zunamiPool, stratName, oracleAddress, tokenConverterAddress) {
     const StratFactory = await ethers.getContractFactory(stratName);
     const strategy = await StratFactory.deploy();
     await strategy.deployed();
@@ -12,11 +12,11 @@ async function createAndInitStrategy(zunamiPool, stratName, oracleAddress, stabl
         console.log(`Set price oracle address ${oracleAddress} in ${stratName} strategy`);
     }
 
-    if (!!stableConverterAddress) {
-        result = await strategy.setStableConverter(stableConverterAddress);
+    if (!!tokenConverterAddress) {
+        result = await strategy.setTokenConverter(tokenConverterAddress);
         await result.wait();
         console.log(
-            `Set stable converter address ${stableConverterAddress} in ${stratName} strategy`
+            `Set token converter address ${tokenConverterAddress} in ${stratName} strategy`
         );
     }
 
@@ -56,13 +56,22 @@ async function main() {
     // );
     // await createAndInitStrategy(zunamiPool, 'ZunUSDApsVaultStrat', null, null);
 
+    // const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
+    // const tokenConverterAddress = '0x0236B7A3996d8c3597173aA95fD2a915c7A8A42E';
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'ZunUsdCrvUsdApsConvexCurveStrat',
+    //     genericOracleAddress,
+    //     tokenConverterAddress
+    // );
+
     const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
-    const stableConverterAddress = '0x0236B7A3996d8c3597173aA95fD2a915c7A8A42E';
+    const tokenConverterAddress = '0xf48A59434609b6e934c2cF091848FA2D28b34bfc';
     await createAndInitStrategy(
         zunamiPool,
-        'ZunUsdCrvUsdApsConvexCurveStrat',
+        'ZunUsdCrvUsdApsStakeDaoCurveStrat',
         genericOracleAddress,
-        stableConverterAddress
+        tokenConverterAddress
     );
 }
 
