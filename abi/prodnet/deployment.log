@@ -301,3 +301,14 @@ ZUN address: 0x6b5204B0Be36771253Cc38e88012E02B752f0f36
 VotemarketGauge for crvUSD+zunUSD bountyID:  236  deployed to: 0xD94068Fee545d1A6CE092D8d2eFea3FF0a207326
 VotemarketGauge for crvUSD+zunUSD Arbitrum bountyID:  244  deployed to: 0x8b62043cbFE897204fC48c0C652c207fDCb4Ed30
 VotemarketGauge for zunETH/wETH Arbitrum bountyID:  245  deployed to: 0x5CF40DC559273E4Fe85ded4342e450B69499DC6d
+
+
+ZUN address: 0x6b5204B0Be36771253Cc38e88012E02B752f0f36
+VotemarketGauge for bountyID:  236  deployed to: 0x1c572Bf5306c086b43f6F91F032296A25B49D920
+VotemarketGauge for bountyID:  244  deployed to: 0xd3Ea7CF0a73D709029988Bf2cb65ACC568f79332
+VotemarketGauge for bountyID:  245  deployed to: 0xf8AfC5e9AEdA712A05E32F27513cDAa2F67f457B
+
+ZUN address: 0x6b5204b0be36771253cc38e88012e02b752f0f36
+Receiver address: 0xb056B9A45f09b006eC7a69770A65339586231a34
+TransferGauge for receiver:  0xb056B9A45f09b006eC7a69770A65339586231a34  deployed to: 0x4D9AbDEF5Da8F44d6Cd8f6654786276c092CBB1B
+TransferGauge for receiver:  0xb056B9A45f09b006eC7a69770A65339586231a34  deployed to: 0x124Ab70402Eaf0bA6B18F0b304577c336dcF81df
