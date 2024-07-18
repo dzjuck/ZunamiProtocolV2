@@ -9,6 +9,7 @@ import '../interfaces/ITokenConverter.sol';
 import '../utils/Constants.sol';
 import "../interfaces/IWETH.sol";
 import "../tokenomics/staking/IStaking.sol";
+import '../lib/Oracle/interfaces/IOracle.sol';
 
 contract ZunamiDepositEthZap3 is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -21,7 +22,7 @@ contract ZunamiDepositEthZap3 is ReentrancyGuard {
     uint256 constant ZUNAMI_WETH_TOKEN_ID = 0;
 
     uint256 public constant MIN_AMOUNT_DENOMINATOR = 10000;
-    uint256 public constant MIN_AMOUNT = 9950; // 99.50%
+    uint256 public constant MIN_AMOUNT = 9980; // 99.80%
 
     IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
 
@@ -29,18 +30,21 @@ contract ZunamiDepositEthZap3 is ReentrancyGuard {
     IPoolController public immutable apsController;
     IStaking public immutable staking;
     ITokenConverter public immutable converter;
+    IOracle public immutable oracle;
 
-    constructor(address zunamiPoolAddr, address apsControllerAddr, address stakingAddr, address tokenConverterAddr) {
+    constructor(address zunamiPoolAddr, address apsControllerAddr, address stakingAddr, address tokenConverterAddr, address oracleAddr) {
         if (
             zunamiPoolAddr == address(0) ||
             apsControllerAddr == address(0) ||
             stakingAddr == address(0) ||
-            tokenConverterAddr == address(0)
+            tokenConverterAddr == address(0) ||
+            oracleAddr == address(0)
         ) revert ZeroAddress();
         zunamiPool = IPool(zunamiPoolAddr);
         apsController = IPoolController(apsControllerAddr);
         staking = IStaking(stakingAddr);
         converter = ITokenConverter(tokenConverterAddr);
+        oracle = IOracle(oracleAddr);
     }
 
     function deposit(
@@ -77,7 +81,7 @@ contract ZunamiDepositEthZap3 is ReentrancyGuard {
                     address(token),
                     address(zunamiPool),
                     amount,
-                    (amount * tokenDecimalsMultiplier * MIN_AMOUNT) / MIN_AMOUNT_DENOMINATOR
+                    _calculateSlippage(address(token), tokenDecimalsMultiplier, address(zunamiPool), amount)
                 );
             }
         }
@@ -91,5 +95,11 @@ contract ZunamiDepositEthZap3 is ReentrancyGuard {
         staking.deposit(apsLpBalance, receiver);
 
         return apsLpBalance;
+    }
+
+    function _calculateSlippage(address tokenIn, uint256 tokenInDecimalsMultiplier, address tokenOut, uint256 amountIn) internal view returns (uint256) {
+        uint256 tokenOutAmount = amountIn * tokenInDecimalsMultiplier * oracle.getUSDPrice(tokenIn)
+            / oracle.getUSDPrice(tokenOut); // only 18 decimals (zunUSD and zunETH)
+        return tokenOutAmount * MIN_AMOUNT / MIN_AMOUNT_DENOMINATOR;
     }
 }

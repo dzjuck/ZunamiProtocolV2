@@ -519,6 +519,7 @@ describe('ZunUSD flow APS tests', () => {
       usdc,
       usdt,
       strategiesAps,
+      genericOracle
     } = await loadFixture(deployFixture);
 
     // Add strategies to omnipool and aps pool
@@ -546,7 +547,8 @@ describe('ZunUSD flow APS tests', () => {
       zunamiPool.address,
       zunamiPoolControllerAps.address,
       stakingRewardDistributor.address,
-      tokenConverter.address
+      tokenConverter.address,
+      genericOracle.address
     )) as ZunamiDepositZap;
 
     expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);
