@@ -43,11 +43,18 @@ async function main() {
     //     '0xF859C621D7fF69DF1E283385DBdE04135EEA0276',
     //     ['DEFAULT_ADMIN_ROLE']
     // );
+    //
+    // await grandStrategyRolesTo(
+    //     newAdmin,
+    //     'ZunUsdCrvUsdApsConvexCurveStrat',
+    //     '0x770f991Ca9f3D1Db503024C7144498F4e5DC6CC9',
+    //     ['DEFAULT_ADMIN_ROLE', 'EMERGENCY_ADMIN_ROLE']
+    // );
 
     await grandStrategyRolesTo(
         newAdmin,
-        'ZunUsdCrvUsdApsConvexCurveStrat',
-        '0x770f991Ca9f3D1Db503024C7144498F4e5DC6CC9',
+        'ZunUsdCrvUsdApsStakeDaoCurveStrat',
+        '0x2457C9a3cc6221674c3C91e07A7f193037adDD43',
         ['DEFAULT_ADMIN_ROLE', 'EMERGENCY_ADMIN_ROLE']
     );
 }

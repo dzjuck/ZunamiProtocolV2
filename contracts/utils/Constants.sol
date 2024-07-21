@@ -57,6 +57,7 @@ library Constants {
 
     address internal constant CRV_BOOSTER_ADDRESS = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
     address internal constant CRV_STAKING_BOOSTER_ADDRESS = 0xD8Bd5Cdd145ed2197CB16ddB172DF954e3F28659;
+    address internal constant CRV_FX_BOOSTER_ADDRESS = 0xAffe966B27ba3E4Ebb8A0eC124C7b7019CC762f8;
 
     address internal constant CRV_ETH_stETH_ADDRESS = 0x21E27a5E5513D6e65C4f830167390997aA84843a;
     address internal constant CRV_ETH_stETH_LP_ADDRESS = 0x21E27a5E5513D6e65C4f830167390997aA84843a;
@@ -104,6 +105,11 @@ library Constants {
     address internal constant SDT_PXETH_WETH_VAULT_ADDRESS = 0x062AdE4F4583fF6b21f6f2c2Ed04eD7037E8B282;
     address internal constant CRV_PXETH_WETH_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;
     address internal constant CRV_PXETH_WETH_LP_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;
+
+
+    address internal constant CRV_zunUSD_fxUSD_ADDRESS = 0x13eA95Ce68185e334d3747539845A3b7643a8cab;
+    address internal constant CRV_zunUSD_fxUSD_LP_ADDRESS = 0x13eA95Ce68185e334d3747539845A3b7643a8cab;
+    uint256 internal constant CVX_zunUSD_fxUSD_PID = 31;
 
     // Will be added after deployment of zunUSD v2 pool and curve pool for zunUSD
     address internal constant CRV_zunUSD_crvFRAX_ADDRESS = address(0);

@@ -120,7 +120,7 @@ async function setCustomOracle(
 }
 
 describe('ZunUSD flow APS tests', () => {
-    const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunUsdCrvUsdApsStakeDaoCurveStrat', 'ZunUsdCrvUsdApsConvexCurveStrat'];
+    const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunUsdCrvUsdApsStakeDaoCurveStrat', 'ZunUsdCrvUsdApsConvexCurveStrat', 'ZunUsdFxUsdApsStakingConvexCurveStrat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -206,6 +206,35 @@ describe('ZunUSD flow APS tests', () => {
             CRVZUNUSDPoolAddress,
             staticCurveLPOracle.address
         );
+
+      const fxUSDAddress = '0x085780639CC2cACd35E474e71f4d000e2405d8f6';
+      const FxUsdOracleFactory = await ethers.getContractFactory('FxUsdOracle');
+      const fxUsdOracle = await FxUsdOracleFactory.deploy(genericOracleAddress);
+      await fxUsdOracle.deployed();
+
+      await setCustomOracle(
+        genericOracle,
+        zunamiAdminAddress,
+        fxUSDAddress,
+        fxUsdOracle.address
+      );
+
+      const ZUNUSDFXUSDPoolAddress = '0x13eA95Ce68185e334d3747539845A3b7643a8cab';
+
+      const staticCurveLPOracle2 = await StaticCurveLPOracleFactory.deploy(
+        genericOracleAddress,
+        [zunUSDPoolAddress, fxUSDAddress],
+        [18, 18],
+        ZUNUSDFXUSDPoolAddress
+      );
+      await staticCurveLPOracle.deployed();
+
+      await setCustomOracle(
+        genericOracle,
+        zunamiAdminAddress,
+        ZUNUSDFXUSDPoolAddress,
+        staticCurveLPOracle2.address
+      );
 
         const { zunamiPool: zunamiPoolAps, zunamiPoolController: zunamiPoolControllerAps } =
             await createPoolAndCompoundController(zunamiPool.address, rewardManager.address);

@@ -65,11 +65,20 @@ async function main() {
     //     tokenConverterAddress
     // );
 
+    // const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
+    // const tokenConverterAddress = '0xf48A59434609b6e934c2cF091848FA2D28b34bfc';
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'ZunUsdCrvUsdApsStakeDaoCurveStrat',
+    //     genericOracleAddress,
+    //     tokenConverterAddress
+    // );
+
     const genericOracleAddress = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
     const tokenConverterAddress = '0xf48A59434609b6e934c2cF091848FA2D28b34bfc';
     await createAndInitStrategy(
         zunamiPool,
-        'ZunUsdCrvUsdApsStakeDaoCurveStrat',
+        'ZunUsdFxUsdApsStakingConvexCurveStrat',
         genericOracleAddress,
         tokenConverterAddress
     );
