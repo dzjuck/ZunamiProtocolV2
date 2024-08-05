@@ -4,19 +4,16 @@ pragma solidity ^0.8.23;
 import '../../../../utils/Constants.sol';
 import '../../../../interfaces/ITokenConverter.sol';
 import '../../../../interfaces/ICurvePool2Native.sol';
-import '../../../../interfaces/IWETH.sol';
-import '../ConvexCurveStratBase.sol';
+import "../StakeDaoCurveNStratBase.sol";
 
-contract EthConvexCurveStratBase is ConvexCurveStratBase {
+contract WethStakeDaoCurveNStratBase is StakeDaoCurveNStratBase {
     using SafeERC20 for IERC20;
 
     uint256 public constant ZUNAMI_WETH_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_FRXETH_TOKEN_ID = 1;
 
-    uint128 public constant CURVE_POOL_ETH_ID = 0;
-    int128 public constant CURVE_POOL_ETH_ID_INT = int128(CURVE_POOL_ETH_ID);
-
-    IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
+    uint128 public constant CURVE_POOL_WETH_ID = 0;
+    int128 public constant CURVE_POOL_WETH_ID_INT = int128(CURVE_POOL_WETH_ID);
 
     ITokenConverter public converter;
 
@@ -25,26 +22,18 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
+        address _vaultAddr,
         address _poolAddr,
-        address _poolLpAddr,
-        address _cvxBooster,
-        address _cvxRewardsAddr,
-        uint256 _cvxPID
+        address _poolLpAddr
     )
-        ConvexCurveStratBase(
+        StakeDaoCurveNStratBase(
             _tokens,
             _tokenDecimalsMultipliers,
+            _vaultAddr,
             _poolAddr,
-            _poolLpAddr,
-            _cvxBooster,
-            _cvxRewardsAddr,
-            _cvxPID
+            _poolLpAddr
         )
     {}
-
-    receive() external payable {
-        // receive ETH on conversion
-    }
 
     function setTokenConverter(address tokenConverterAddr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(tokenConverterAddr) == address(0)) revert ZeroAddress();
@@ -61,25 +50,30 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
 
     function convertCurvePoolTokenAmounts(
         uint256[POOL_ASSETS] memory amounts
-    ) internal view override returns (uint256[2] memory amounts2) {
-        if (amounts[ZUNAMI_WETH_TOKEN_ID] == 0 && amounts[ZUNAMI_FRXETH_TOKEN_ID] == 0)
-            return [uint256(0), 0];
+    ) internal view override returns (uint256[] memory) {
 
-        return [
-            amounts[ZUNAMI_WETH_TOKEN_ID] +
-                converter.valuate(
-                    address(tokens[ZUNAMI_FRXETH_TOKEN_ID]),
-                    address(tokens[ZUNAMI_WETH_TOKEN_ID]),
-                    amounts[ZUNAMI_FRXETH_TOKEN_ID]
-                ),
-            0
-        ];
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
+
+        if (amounts[ZUNAMI_WETH_TOKEN_ID] == 0 && amounts[ZUNAMI_FRXETH_TOKEN_ID] == 0)
+            return amountsN;
+
+        amountsN[CURVE_POOL_WETH_ID] = amounts[ZUNAMI_WETH_TOKEN_ID] +
+                            converter.valuate(
+                address(tokens[ZUNAMI_FRXETH_TOKEN_ID]),
+                address(tokens[ZUNAMI_WETH_TOKEN_ID]),
+                amounts[ZUNAMI_FRXETH_TOKEN_ID]
+            );
+
+        return amountsN;
     }
 
     function convertAndApproveTokens(
-        address,
+        address pool,
         uint256[POOL_ASSETS] memory amounts
-    ) internal override returns (uint256[2] memory amounts2) {
+    ) internal override returns (uint256[] memory) {
+
+        uint256[] memory amountsN = new uint256[](CURVENG_MAX_COINS);
+
         if (amounts[ZUNAMI_FRXETH_TOKEN_ID] > 0) {
             IERC20(tokens[ZUNAMI_FRXETH_TOKEN_ID]).safeTransfer(
                 address(converter),
@@ -93,32 +87,17 @@ contract EthConvexCurveStratBase is ConvexCurveStratBase {
             );
         }
 
-        if (amounts[ZUNAMI_WETH_TOKEN_ID] > 0) {
-            weth.withdraw(amounts[ZUNAMI_WETH_TOKEN_ID]);
-        }
+        amountsN[CURVE_POOL_WETH_ID] = amounts[ZUNAMI_WETH_TOKEN_ID];
+        IERC20(Constants.WETH_ADDRESS).safeIncreaseAllowance(pool, amountsN[CURVE_POOL_WETH_ID]);
 
-        amounts2[CURVE_POOL_ETH_ID] = address(this).balance;
-    }
-
-    function depositCurve(
-        uint256[2] memory amounts2
-    ) internal override returns (uint256 deposited) {
-        return
-            ICurvePool2Native(address(pool)).add_liquidity{ value: amounts2[CURVE_POOL_ETH_ID] }(
-                amounts2,
-                0
-            );
+        return amountsN;
     }
 
     function getCurveRemovingTokenIndex() internal pure override returns (int128) {
-        return CURVE_POOL_ETH_ID_INT;
+        return CURVE_POOL_WETH_ID_INT;
     }
 
     function getZunamiRemovingTokenIndex() internal pure override returns (uint256) {
         return ZUNAMI_WETH_TOKEN_ID;
-    }
-
-    function convertRemovedAmount(uint256 receivedAmount) internal override {
-        weth.deposit{ value: receivedAmount }();
     }
 }

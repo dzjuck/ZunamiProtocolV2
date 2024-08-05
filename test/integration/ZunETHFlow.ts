@@ -19,7 +19,7 @@ import { setupTokenConverterETHs } from '../utils/SetupTokenConverter';
 const ETH_stETH_pool_addr = '0x21E27a5E5513D6e65C4f830167390997aA84843a';
 
 describe('ZunETH flow tests', () => {
-    const strategyNames = ['ZunETHVaultStrat', 'pxETHwETHStakeDaoCurveNStrat', 'stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat'];
+    const strategyNames = ['ZunETHVaultStrat', 'EthxEthStakeDaoCurveStrat', 'pxETHwETHStakeDaoCurveNStrat', 'stEthEthConvexCurveStrat', 'sfrxETHERC4626Strat'];
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -56,6 +56,19 @@ describe('ZunETH flow tests', () => {
         await staticCurveLPOracle.deployed();
 
         await genericOracle.setCustomOracle(pxETH_wETH_pool_addr, staticCurveLPOracle.address);
+
+        const ETHAddr = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+        const ETHxAddr = '0xA35b1B31Ce002FBF2058D22F30f95D405200A15b';
+        const ETH_ETHx_pool_addr = '0x59Ab5a5b5d617E478a2479B0cAD80DA7e2831492';
+        const staticCurveLPOracleETHX = await StaticCurveLPOracleFactory.deploy(
+          genericOracle.address,
+          [ETHAddr, ETHxAddr],
+          [18, 18],
+          ETH_ETHx_pool_addr
+        );
+        await staticCurveLPOracleETHX.deployed();
+
+        await genericOracle.setCustomOracle(ETH_ETHx_pool_addr, staticCurveLPOracleETHX.address);
 
         const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunETH();
 

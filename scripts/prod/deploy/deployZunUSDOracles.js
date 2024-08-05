@@ -12,39 +12,61 @@ async function main() {
     const genericOracle = await GenericOracleFactory.attach(genericOracleAddress);
     console.log('GenericOracle attached to:', genericOracle.address);
 
-    const crvUsdAddress = '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E';
-
-    const CrvUsdOracleFactory = await ethers.getContractFactory('CrvUsdOracle');
-    const crvUsdOracle = await CrvUsdOracleFactory.deploy(genericOracleAddress);
-    await crvUsdOracle.deployed();
-    console.log('CrvUsdOracle deployed to:', crvUsdOracle.address);
-
-    await genericOracle.setCustomOracle(crvUsdAddress, crvUsdOracle.address);
-    console.log('CrvUsd oracle set: ', crvUsdAddress, crvUsdOracle.address);
+    // const crvUsdAddress = '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E';
+    //
+    // const CrvUsdOracleFactory = await ethers.getContractFactory('CrvUsdOracle');
+    // const crvUsdOracle = await CrvUsdOracleFactory.deploy(genericOracleAddress);
+    // await crvUsdOracle.deployed();
+    // console.log('CrvUsdOracle deployed to:', crvUsdOracle.address);
+    //
+    // await genericOracle.setCustomOracle(crvUsdAddress, crvUsdOracle.address);
+    // console.log('CrvUsd oracle set: ', crvUsdAddress, crvUsdOracle.address);
 
     const zunUSDAddress = '0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6';
-
-    const ZunUsdOracleFactory = await ethers.getContractFactory('ZunUsdOracle');
-    const zunUsdOracle = await ZunUsdOracleFactory.deploy(genericOracleAddress);
-    await zunUsdOracle.deployed();
-    console.log('ZunUsdOracle deployed to:', zunUsdOracle.address);
-
-    await genericOracle.setCustomOracle(zunUSDAddress, zunUsdOracle.address);
-    console.log('ZunUsd oracle set: ', zunUSDAddress, zunUsdOracle.address);
-
-    const CRVZUNUSDPoolAddress = '0x8c24b3213fd851db80245fccc42c40b94ac9a745';
-
+    //
+    // const ZunUsdOracleFactory = await ethers.getContractFactory('ZunUsdOracle');
+    // const zunUsdOracle = await ZunUsdOracleFactory.deploy(genericOracleAddress);
+    // await zunUsdOracle.deployed();
+    // console.log('ZunUsdOracle deployed to:', zunUsdOracle.address);
+    //
+    // await genericOracle.setCustomOracle(zunUSDAddress, zunUsdOracle.address);
+    // console.log('ZunUsd oracle set: ', zunUSDAddress, zunUsdOracle.address);
+    //
+    // const CRVZUNUSDPoolAddress = '0x8c24b3213fd851db80245fccc42c40b94ac9a745';
+    //
     const StaticCurveLPOracleFactory = await ethers.getContractFactory('StaticCurveLPOracle');
+    // const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+    //     genericOracleAddress,
+    //     [crvUsdAddress, zunUSDAddress],
+    //     [18, 18],
+    //     CRVZUNUSDPoolAddress
+    // );
+    // await staticCurveLPOracle.deployed();
+    //
+    // await genericOracle.setCustomOracle(CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
+    // console.log('Static oracle set: ', CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
+
+    const fxUSDAddress = '0x085780639CC2cACd35E474e71f4d000e2405d8f6';
+    // const FxUsdOracleFactory = await ethers.getContractFactory('FxUsdOracle');
+    // const fxUsdOracle = await FxUsdOracleFactory.deploy(genericOracleAddress);
+    // await fxUsdOracle.deployed();
+    //
+    // await genericOracle.setCustomOracle(fxUSDAddress, fxUsdOracle.address);
+    // console.log('Static oracle set: ', fxUSDAddress, fxUsdOracle.address);
+
+
+    const ZUNUSDFXUSDPoolAddress = '0x13eA95Ce68185e334d3747539845A3b7643a8cab';
+
     const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
         genericOracleAddress,
-        [crvUsdAddress, zunUSDAddress],
+        [zunUSDAddress, fxUSDAddress],
         [18, 18],
-        CRVZUNUSDPoolAddress
+        ZUNUSDFXUSDPoolAddress
     );
     await staticCurveLPOracle.deployed();
 
-    await genericOracle.setCustomOracle(CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
-    console.log('Static oracle set: ', CRVZUNUSDPoolAddress, staticCurveLPOracle.address);
+    await genericOracle.setCustomOracle(ZUNUSDFXUSDPoolAddress, staticCurveLPOracle.address);
+    console.log('Static oracle set: ', ZUNUSDFXUSDPoolAddress, staticCurveLPOracle.address);
 }
 
 main()

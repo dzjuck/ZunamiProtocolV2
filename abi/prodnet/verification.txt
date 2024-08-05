@@ -173,3 +173,15 @@ npx hardhat verify --network mainnet 0x2160ad71208F966948389eFC76a4Cc4930696382 
 
 // ZunUsdFxUsdApsStakingConvexCurveStrat
 npx hardhat verify --network mainnet --contract contracts/strategies/curve/convex/aps/stakingFxUSD/ZunUsdFxUsdApsStakingConvexCurveStrat.sol:ZunUsdFxUsdApsStakingConvexCurveStrat 0x6167085202ce2B53cB1DE9422fe5248D9D90E8b6
+
+
+
+npx hardhat verify --network mainnet 0xcc798827741e5e83477b601bbc3cc4eb92f94327 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+
+npx hardhat verify --network mainnet 0x7A66637Fe6bEb26e68504B25A9577033E3f75bf8 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+
+// EthxEthStakeDaoCurveStrat
+npx hardhat verify --network mainnet --contract  contracts/strategies/curve/stakeDao/eth/EthxEthStakeDaoCurveStrat.sol:EthxEthStakeDaoCurveStrat 0xCEefF1B0b1863465ff11B62080AC40B544954062
+
+// Oracle ETH_ETHx pool StaticCurveLPOracle
+npx hardhat verify --network mainnet --constructor-args ./abi/StaticCurveLPOracle_ETHxETH_arguments.js  0xE8EC19Dd3f895598Ed4594885774Be3667B51c7C

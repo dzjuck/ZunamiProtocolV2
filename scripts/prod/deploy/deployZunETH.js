@@ -85,6 +85,12 @@ async function main() {
     //     genericOracleAddr,
     //     tokenConverter
     // );
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'EthxEthStakeDaoCurveStrat',
+    //     genericOracleAddr,
+    //     tokenConverter
+    // );
 }
 
 main()

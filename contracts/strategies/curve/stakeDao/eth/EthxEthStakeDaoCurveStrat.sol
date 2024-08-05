@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 import '../../../../utils/Constants.sol';
-import './WethStakeDaoCurveNStratBase.sol';
+import './EthStakeDaoCurveStratBase.sol';
 
-contract pxETHwETHStakeDaoCurveNStrat is WethStakeDaoCurveNStratBase {
+contract EthxEthStakeDaoCurveStrat is EthStakeDaoCurveStratBase {
     constructor()
-        WethStakeDaoCurveNStratBase(
+        EthStakeDaoCurveStratBase(
             [
                 IERC20(Constants.WETH_ADDRESS),
                 IERC20(Constants.FRX_ETH_ADDRESS),
@@ -15,9 +15,9 @@ contract pxETHwETHStakeDaoCurveNStrat is WethStakeDaoCurveNStratBase {
                 IERC20(address(0))
             ],
             [uint256(1), 1, 0, 0, 0],
-            Constants.SDT_PXETH_WETH_VAULT_ADDRESS,
-            Constants.CRV_PXETH_WETH_ADDRESS,
-            Constants.CRV_PXETH_WETH_LP_ADDRESS
+            Constants.SDT_ETH_ETHX_VAULT_ADDRESS,
+            Constants.CRV_ETH_ETHX_ADDRESS,
+            Constants.CRV_ETH_ETHX_LP_ADDRESS
         )
     {}
 }

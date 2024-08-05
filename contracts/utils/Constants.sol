@@ -106,6 +106,9 @@ library Constants {
     address internal constant CRV_PXETH_WETH_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;
     address internal constant CRV_PXETH_WETH_LP_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;
 
+    address internal constant SDT_ETH_ETHX_VAULT_ADDRESS = 0xFab07E6758Db5281CF9CEa8Ff82Ffff68177A7CD;
+    address internal constant CRV_ETH_ETHX_ADDRESS = 0x59Ab5a5b5d617E478a2479B0cAD80DA7e2831492;
+    address internal constant CRV_ETH_ETHX_LP_ADDRESS = 0x59Ab5a5b5d617E478a2479B0cAD80DA7e2831492;
 
     address internal constant CRV_zunUSD_fxUSD_ADDRESS = 0x13eA95Ce68185e334d3747539845A3b7643a8cab;
     address internal constant CRV_zunUSD_fxUSD_LP_ADDRESS = 0x13eA95Ce68185e334d3747539845A3b7643a8cab;

@@ -26,7 +26,8 @@ async function main() {
     const receiverAddr = '0xb056B9A45f09b006eC7a69770A65339586231a34';
     console.log('Receiver address:', receiverAddr);
 
-    await deployTransferGauge(zunAddr, receiverAddr);
+    // await deployTransferGauge(zunAddr, receiverAddr);
+    // await deployTransferGauge(zunAddr, receiverAddr);
     await deployTransferGauge(zunAddr, receiverAddr);
 }
 
