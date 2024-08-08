@@ -98,19 +98,19 @@ async function main() {
     );
     console.log('TokenConverter:', tokenConverter.address);
 
-    // await createAndInitStrategy(
-    //     zunamiPool,
-    //     'LlamalendCrvStakeDaoERC4626Strat',
-    //     genericOracleAddr,
-    //     tokenConverter
-    // );
-
     await createAndInitStrategy(
         zunamiPool,
-        'LlamalendWethStakeDaoERC4626Strat',
+        'LlamalendCrvStakeDaoERC4626Strat',
         genericOracleAddr,
         tokenConverter
     );
+
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'LlamalendWethStakeDaoERC4626Strat',
+    //     genericOracleAddr,
+    //     tokenConverter
+    // );
 }
 
 main()
