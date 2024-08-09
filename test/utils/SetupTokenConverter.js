@@ -388,15 +388,39 @@ async function setupTokenConverterCrvUsdToZunEth(tokenConverter) {
         tokenInAddr,
         tokenOutAddr,
         [
-            '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E',
+            addresses.stablecoins.crvUSD,
             '0x954313005c56b555bdc41b84d6c63b69049d7847',
-            '0x5e8422345238f34275888049021821e8e08caa1f',
+            addresses.crypto.frxETH,
             '0x3a65cbaebbfecbea5d0cb523ab56fdbda7ff9aaa',
-            '0xc2e660c62f72c2ad35ace6db78a616215e2f2222',
+            addresses.crypto.zunETH,
         ],
         [
             [0, 1, 1, 3, 3],
             [1, 0, 1, 1, 2],
+        ]
+    );
+}
+
+async function setupTokenConverterFxnToZunUsd(tokenConverter) {
+    const tokenInAddr = addresses.crypto.fxn;
+    const tokenOutAddr = addresses.stablecoins.zunUSD;
+
+    await tokenConverter.setRoute(
+        tokenInAddr,
+        tokenOutAddr,
+        [
+            addresses.crypto.fxn,
+            '0xc15f285679a1ef2d25f53d4cbd0265e1d02f2a92',
+            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+            '0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14',
+            addresses.stablecoins.crvUSD,
+            '0x8c24b3213fd851db80245fccc42c40b94ac9a745',
+            addresses.stablecoins.zunUSD,
+        ],
+        [
+            [1, 0, 1, 3, 2],
+            [1, 0, 1, 3, 3],
+            [0, 1, 1, 1, 2],
         ]
     );
 }
@@ -406,4 +430,5 @@ module.exports = {
     setupTokenConverterStables,
     setupTokenConverterRewards,
     setupTokenConverterCrvUsdToZunEth,
+    setupTokenConverterFxnToZunUsd,
 };

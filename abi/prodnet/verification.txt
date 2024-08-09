@@ -188,3 +188,6 @@ npx hardhat verify --network mainnet --constructor-args ./abi/StaticCurveLPOracl
 
 // ZunUSD strategy LlamalendCrvStakeDaoERC4626Strat
 npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/stakeDao/llamalend/LlamalendCrvStakeDaoERC4626Strat.sol:LlamalendCrvStakeDaoERC4626Strat 0xF3558b523235fE9bb78A02CA6F18292F4796ab73
+
+// FxnOracle
+npx hardhat verify --network mainnet 0x1E08f5C21817B5F8f3629471FCc2387e5b8fD11e

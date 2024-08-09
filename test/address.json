@@ -17,7 +17,8 @@
     "spell": "0x090185f2135308BaD17527004364eBcC2D37e5F6",
     "zunETH": "0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222",
     "frxETH": "0x5e8422345238f34275888049021821e8e08caa1f",
-    "WETH": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    "WETH": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    "fxn": "0x365accfca291e7d3914637abf1f7635db165bb09"
   },
   "fraxStaking": {
     "vaultEarnedViewer": "0x9Ce7c648244F111CCd338Cc5e269C5961ad9B308"

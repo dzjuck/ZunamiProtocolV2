@@ -10,12 +10,14 @@ import {
     setupTokenConverterETHs,
     setupTokenConverterRewards,
     setupTokenConverterCrvUsdToZunEth,
+    setupTokenConverterFxnToZunUsd
 } from '../utils/SetupTokenConverter.js';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 import * as addresses from '../address.json';
 import { Address } from 'hardhat-deploy/dist/types';
+import {ChainlinkOracle, CurveLPOracle, CurveRegistryCache, GenericOracle} from "../../typechain-types";
 
 chai.should(); // if you like should syntax
 chai.use(smock.matchers);
@@ -65,6 +67,7 @@ describe('Token Converter', () => {
         await setupTokenConverterETHs(tokenConverter);
         await setupTokenConverterRewards(tokenConverter);
         await setupTokenConverterCrvUsdToZunEth(tokenConverter);
+        await setupTokenConverterFxnToZunUsd(tokenConverter);
     });
 
     describe('USDT', () => {
@@ -711,4 +714,49 @@ describe('Token Converter', () => {
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
     });
+
+  describe('FXN', () => {
+    it('should swap FXN to zunUSD', async () => {
+      const tokenInAddr = addresses.crypto.fxn;
+      const tokenOutAddr = addresses.stablecoins.zunUSD;
+      const impersonate = '0xb84dfdd51d18b1613432bfae91dfcc48899d4151';
+      const amount = tokenify('100');
+      const minAmountOut = tokenify('0');
+
+      const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+      const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+      await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('100'), admin);
+
+      const balanceBefore = await tokenOut.balanceOf(alice.address);
+      await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+      await tokenConverter.connect(alice).handle(tokenInAddr, tokenOutAddr, amount, 0);
+
+      expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+
+      // const CurveRegistryCacheFactory = await ethers.getContractFactory('CurveRegistryCache');
+      // const curveRegistryCache = (await CurveRegistryCacheFactory.deploy()) as CurveRegistryCache;
+      //
+      // const ChainlinkOracleFactory = await ethers.getContractFactory('ChainlinkOracle');
+      // const chainlinkOracle = (await ChainlinkOracleFactory.deploy()) as ChainlinkOracle;
+      //
+      // const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
+      // const genericOracle = (await GenericOracleFactory.deploy()) as GenericOracle;
+      //
+      // const CurveLPOracleFactory = await ethers.getContractFactory('CurveLPOracle');
+      // const curveLPOracle = (await CurveLPOracleFactory.deploy(
+      //   genericOracle.address,
+      //   curveRegistryCache.address
+      // )) as CurveLPOracle;
+      //
+      // await genericOracle.initialize(curveLPOracle.address, chainlinkOracle.address);
+      //
+      // const FxnOracleFactory = await ethers.getContractFactory('FxnOracle');
+      // const fxnOracle = await FxnOracleFactory.deploy(genericOracle.address);
+      //
+      // await genericOracle.setCustomOracle(addresses.crypto.fxn, fxnOracle.address);
+      //
+      // console.log('FXN to USD', (await genericOracle.getUSDPrice(addresses.crypto.fxn)).toString());
+      // console.log('FXN to USD Token Converter', (await tokenOut.balanceOf(alice.address)).toString());
+    });
+  });
 });
