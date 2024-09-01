@@ -205,7 +205,6 @@ abstract contract BaseStakingRewardDistributor is
 
     function _updateDistribution(uint256 _tid) internal returns (uint256 distribution) {
         RewardTokenInfo storage rewardInfo = rewardTokenInfo[_tid];
-        address token_ = address(rewardInfo.token);
         uint256 dI = 0;
         uint256 totalSupply_ = totalSupply();
 

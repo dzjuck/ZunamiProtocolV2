@@ -77,9 +77,8 @@ abstract contract RewardTokenManager {
     ) private returns (uint256) {
         uint256 feeTokenBalanceBefore = feeToken.balanceOf(address(this));
 
-        uint256 rewardsLength_ = rewardTokens.length;
         IERC20 rewardToken_;
-        for (uint256 i = 0; i < rewardsLength_; ++i) {
+        for (uint256 i = 0; i < rewardsLength; ++i) {
             if (rewardAmounts[i] == 0) continue;
             rewardToken_ = rewardTokens[i];
             //don't sell fee token itself as reward

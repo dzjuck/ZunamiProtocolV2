@@ -564,7 +564,7 @@ describe('ZunDistributor tests', () => {
         ).to.be.revertedWithCustomError(distributor, 'ExpiredSignature');
     });
 
-    it.only('should distribute all', async () => {
+    it('should distribute all', async () => {
         const {
             voter,
             approveGauge,

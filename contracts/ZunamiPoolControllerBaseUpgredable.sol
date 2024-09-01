@@ -3,17 +3,20 @@ pragma solidity ^0.8.23;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
 import './interfaces/IPool.sol';
 import './RewardTokenManager.sol';
 
-abstract contract ZunamiPoolControllerBase is
-    Pausable,
-    AccessControl,
-    ReentrancyGuard,
+abstract contract ZunamiPoolControllerBaseUpgradeable is
+    UUPSUpgradeable,
+    PausableUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
     RewardTokenManager
 {
     using SafeERC20 for IERC20;
@@ -28,9 +31,9 @@ abstract contract ZunamiPoolControllerBase is
     uint256 public defaultDepositSid;
     uint256 public defaultWithdrawSid;
 
-    bool public onlyIssuerMode = false;
+    bool public onlyIssuerMode;
 
-    IPool public immutable pool;
+    IPool public pool;
 
     event SetDefaultDepositSid(uint256 sid);
     event SetDefaultWithdrawSid(uint256 sid);
@@ -42,11 +45,29 @@ abstract contract ZunamiPoolControllerBase is
         _;
     }
 
-    constructor(address pool_) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function __ZunamiPoolControllerBase_init(
+        address pool_
+    ) internal onlyInitializing {
         if (pool_ == address(0)) revert ZeroAddress();
         pool = IPool(pool_);
 
+        __UUPSUpgradeable_init();
+        __Pausable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    function version() public pure returns (uint256) {
+        return 1;
     }
 
     function setOnlyIssuerMode(bool _onlyIssuerMode) external onlyRole(DEFAULT_ADMIN_ROLE) {

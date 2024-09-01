@@ -1,0 +1,12 @@
+Start deploy
+
+Deploy zunUSD Base APS omnipool:
+ZunamiPoolBaseApsZunUSD: 0x7eae19161869Adc5F99d3987dA881Fb972B6eED5
+Deploy zunUSD Base APS pool controller:
+Zunami Pool Compound Controller for zunUSD: 0x65363f1A6cb67fE045bbD2fb3c5cb81bFBEe7902
+Zunami Pool Compound Controller implementation deployed to: 0x6330de7136f7Fb5248dD838A842DbFD44eFbEf75
+ZunamiPoolController granted CONTROLLER_ROLE: true
+ZunUSDBaseApsVaultStrat strategy deployed to: 0x89e0Bce60dF0b9708748c080D5838dA78507253F
+Added ZunUSDBaseApsVaultStrat pool to ZunamiPool
+Set zunami pool address 0x7eae19161869Adc5F99d3987dA881Fb972B6eED5 in ZunUSDBaseApsVaultStrat strategy
+
