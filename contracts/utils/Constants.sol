@@ -14,12 +14,11 @@ library Constants {
     address internal constant SPELL_ADDRESS = 0x090185f2135308BaD17527004364eBcC2D37e5F6;
     address internal constant SDT_ADDRESS = 0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F;
     address internal constant SFRXETH_ADDRESS = 0xac3E018457B222d93114458476f3E3416Abbe38F;
-    // Will be added after deployment of zunUSD v2 pool
+    address internal constant PXETH_ADDRESS = 0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6;
+
     address internal constant ZUNUSD_ADDRESS = 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6;
-    // Will be added after deployment of zunUSD v2 pool controller
     address internal constant zunUSD_CONTROLLER_ADDRESS =
         0x618eee502CDF6b46A2199C21D1411f3F6065c940;
-    // Will be added after deployment of zunETH v2 pool
     address internal constant zunETH_ADDRESS = 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222;
     address internal constant zunETH_CONTROLLER_ADDRESS =
         0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF;
@@ -101,6 +100,14 @@ library Constants {
 
     address internal constant SDT_zunETH_frxETH_VAULT_ADDRESS =
         0xAaE1Ae12d4C8b811DDa1188b01be23b4ab7C62D2;
+
+    address internal constant SDT_zunETH_pxETH_VAULT_ADDRESS =
+        0x15Fd70a094f7594CCBac1d0092EFF8904b0797d1;
+    address internal constant CRV_zunETH_pxETH_ADDRESS =
+        0x17D964DA2bD337CfEaEd30a27c9Ab6580676E730;
+    address internal constant CRV_zunETH_pxETH_LP_ADDRESS =
+        0x17D964DA2bD337CfEaEd30a27c9Ab6580676E730;
+
 
     address internal constant SDT_PXETH_WETH_VAULT_ADDRESS = 0x062AdE4F4583fF6b21f6f2c2Ed04eD7037E8B282;
     address internal constant CRV_PXETH_WETH_ADDRESS = 0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D;

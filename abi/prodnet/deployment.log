@@ -380,3 +380,18 @@ Token сonverter configured for FXN to zunUSD
 GenericOracle attached to: 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
 FxnOracle deployed to: 0x1E08f5C21817B5F8f3629471FCc2387e5b8fD11e
 Fxn oracle set:  0x365accfca291e7d3914637abf1f7635db165bb09 0x1E08f5C21817B5F8f3629471FCc2387e5b8fD11e
+
+TokenConverter deployed to: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+Starting setup token converter wETH to pxETH and reverse
+Token сonverter configured for  wETH to pxETH and reverse
+
+GenericOracle attached to: 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+ZUNPXETHPool StaticCurveLPOracle deployed to: 0xd1C5B89b0B0583352aC8fAc60F44b264E93000d3
+Static oracle set:  0x17D964DA2bD337CfEaEd30a27c9Ab6580676E730 0xd1C5B89b0B0583352aC8fAc60F44b264E93000d3
+
+Deploy zunETH APS omnipool:
+ZunamiPoolApsZunETH: 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
+ZunEthPxEthApsStakeDaoCurveStrat strategy deployed to: 0x950a509528Ae5fc5bca6b20141FB0df2C04A7BF2
+Set price oracle address 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 in ZunEthPxEthApsStakeDaoCurveStrat strategy
+Set token converter address 0xf48A59434609b6e934c2cF091848FA2D28b34bfc in ZunEthPxEthApsStakeDaoCurveStrat strategy
+Set zunami pool address 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2 in ZunEthPxEthApsStakeDaoCurveStrat strategy

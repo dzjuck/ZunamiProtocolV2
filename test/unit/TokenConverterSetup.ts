@@ -10,7 +10,8 @@ import {
     setupTokenConverterETHs,
     setupTokenConverterRewards,
     setupTokenConverterCrvUsdToZunEth,
-    setupTokenConverterFxnToZunUsd
+    setupTokenConverterFxnToZunUsd,
+    setupTokenConverterWEthPxEthAndReverse,
 } from '../utils/SetupTokenConverter.js';
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -68,6 +69,7 @@ describe('Token Converter', () => {
         await setupTokenConverterRewards(tokenConverter);
         await setupTokenConverterCrvUsdToZunEth(tokenConverter);
         await setupTokenConverterFxnToZunUsd(tokenConverter);
+        await setupTokenConverterWEthPxEthAndReverse(tokenConverter);
     });
 
     describe('USDT', () => {
@@ -739,8 +741,8 @@ describe('Token Converter', () => {
       // const ChainlinkOracleFactory = await ethers.getContractFactory('ChainlinkOracle');
       // const chainlinkOracle = (await ChainlinkOracleFactory.deploy()) as ChainlinkOracle;
       //
-      // const GenericOracleFactory = await ethers.getContractFactory('GenericOracle');
-      // const genericOracle = (await GenericOracleFactory.deploy()) as GenericOracle;
+      // const GenericOracleFactory = await ethers.getContractFactory('CurveGenericOracle');
+      // const genericOracle = (await GenericOracleFactory.deploy()) as CurveGenericOracle;
       //
       // const CurveLPOracleFactory = await ethers.getContractFactory('CurveLPOracle');
       // const curveLPOracle = (await CurveLPOracleFactory.deploy(
@@ -757,6 +759,48 @@ describe('Token Converter', () => {
       //
       // console.log('FXN to USD', (await genericOracle.getUSDPrice(addresses.crypto.fxn)).toString());
       // console.log('FXN to USD Token Converter', (await tokenOut.balanceOf(alice.address)).toString());
+    });
+  });
+
+  describe('PxETH', () => {
+    it('should swap PxETH to WETH', async () => {
+      const tokenInAddr = addresses.crypto.pxETH;
+      const tokenOutAddr = addresses.crypto.WETH;
+      const impersonate = '0xeE3d8fE52b93f31d666bbbd7E2776432f2738735';
+      const amount = tokenify('1');
+      const minAmountOut = tokenify('0.98');
+
+      const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+      const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+      await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+      const balanceBefore = await tokenOut.balanceOf(alice.address);
+      await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+      await tokenConverter
+        .connect(alice)
+        .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+      expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+    });
+
+    it('should swap WEth to PxETH', async () => {
+      const tokenInAddr = addresses.crypto.WETH;
+      const tokenOutAddr = addresses.crypto.pxETH;
+      const impersonate = '0x57757E3D981446D585Af0D9Ae4d7DF6D64647806';
+      const amount = tokenify('1');
+      const minAmountOut = tokenify('0.98');
+
+      const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+      const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+      await sendTokens(impersonate, alice.address, tokenIn.address, tokenify('1'), admin);
+
+      const balanceBefore = await tokenOut.balanceOf(alice.address);
+      await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+      await tokenConverter
+        .connect(alice)
+        .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+      expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
     });
   });
 });

@@ -32,7 +32,6 @@ const CRV_zunUSD_crvUSD_LP_ADDRESS = '0x8C24b3213FD851db80245FCCc42c40B94Ac9a745
 import * as addrs from '../address.json';
 import { attachPoolAndControllerZunUSD } from '../utils/AttachPoolAndControllerZunUSD';
 import { setupTokenConverterStables } from '../utils/SetupTokenConverter';
-import {getMinAmountZunETH} from "../utils/GetMinAmountZunETH";
 
 export async function createPoolAndCompoundController(token: string, rewardManager: string) {
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
@@ -119,7 +118,7 @@ async function setCustomOracle(
     await genericOracle.connect(impersonatedSigner).setCustomOracle(token, oracle);
 }
 
-describe('ZunUSD flow APS tests', () => {
+describe('ZunUSD APS flow tests', () => {
     const strategyApsNames = ['ZunUSDApsVaultStrat', 'ZunUsdCrvUsdApsStakeDaoCurveStrat', 'ZunUsdCrvUsdApsConvexCurveStrat', 'ZunUsdFxUsdApsStakingConvexCurveStrat'];
 
     async function deployFixture() {

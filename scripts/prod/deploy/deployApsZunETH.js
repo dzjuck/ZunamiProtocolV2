@@ -66,10 +66,17 @@ async function main() {
     //     genericOracleAddress,
     //     tokenConverterAddress
     // );
+    //
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'ZunEthFrxEthApsStakingConvexCurveStrat',
+    //     genericOracleAddress,
+    //     tokenConverterAddress
+    // );
 
     await createAndInitStrategy(
         zunamiPool,
-        'ZunEthFrxEthApsStakingConvexCurveStrat',
+        'ZunEthPxEthApsStakeDaoCurveStrat',
         genericOracleAddress,
         tokenConverterAddress
     );

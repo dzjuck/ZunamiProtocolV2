@@ -425,10 +425,38 @@ async function setupTokenConverterFxnToZunUsd(tokenConverter) {
     );
 }
 
+async function setupTokenConverterWEthPxEthAndReverse(tokenConverter) {
+
+    await tokenConverter.setRoutes(
+        [addresses.crypto.WETH, addresses.crypto.pxETH],
+        [addresses.crypto.pxETH, addresses.crypto.WETH],
+        [
+            [
+                addresses.crypto.WETH,
+                '0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D',
+                addresses.crypto.pxETH,
+            ],
+            [
+                addresses.crypto.pxETH,
+                '0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D',
+                addresses.crypto.WETH,
+            ]
+        ],[
+            [
+                [0, 1, 1, 1, 2]
+            ],
+            [
+                [1, 0, 1, 1, 2]
+            ]
+        ]
+    );
+}
+
 module.exports = {
     setupTokenConverterETHs,
     setupTokenConverterStables,
     setupTokenConverterRewards,
     setupTokenConverterCrvUsdToZunEth,
     setupTokenConverterFxnToZunUsd,
+    setupTokenConverterWEthPxEthAndReverse,
 };

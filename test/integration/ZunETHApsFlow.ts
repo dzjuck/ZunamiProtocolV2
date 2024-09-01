@@ -10,7 +10,7 @@ import { expect } from 'chai';
 
 import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 
-import { setupTokenConverterRewards, setupTokenConverterETHs } from '../utils/SetupTokenConverter';
+import { setupTokenConverterRewards, setupTokenConverterETHs, setupTokenConverterWEthPxEthAndReverse } from '../utils/SetupTokenConverter';
 import { attachTokens } from '../utils/AttachTokens';
 import { createStrategies } from '../utils/CreateStrategies';
 import { mintEthCoins } from '../utils/MintEthCoins';
@@ -106,16 +106,41 @@ async function setCustomOracle(
     await genericOracle.connect(impersonatedSigner).setCustomOracle(token, oracle);
 }
 
-describe('ZunETH flow APS tests', () => {
+async function setPoolWithdrawSid(admin: SignerWithAddress, zunamiPoolController: ZunamiPoolThroughController, withdrawSid: number) {
+
+  const zunamiAdmin = "0xb056B9A45f09b006eC7a69770A65339586231a34";
+
+  //fund vault with eth
+  await admin.sendTransaction({
+    to: zunamiAdmin,
+    value: ethers.utils.parseEther('1'),
+  });
+
+  await network.provider.request({
+    method: 'hardhat_impersonateAccount',
+    params: [zunamiAdmin],
+  });
+  const zunamiAdminSigner: Signer = ethers.provider.getSigner(zunamiAdmin);
+
+  await zunamiPoolController.connect(zunamiAdminSigner).setDefaultWithdrawSid(withdrawSid);
+
+  await network.provider.request({
+    method: 'hardhat_stopImpersonatingAccount',
+    params: [zunamiAdmin],
+  });
+}
+
+describe('ZunETH APS flow tests', () => {
     const strategyApsNames = [
         'ZunETHApsVaultStrat',
+        'ZunEthPxEthApsStakeDaoCurveStrat',
         'ZunEthFrxEthApsStakingConvexCurveStrat',
         'ZunEthFrxEthApsConvexCurveStrat',
         'ZunEthFrxEthApsStakeDaoCurveStrat',
     ];
 
     async function deployFixture() {
-        await reset(PROVIDER_URL, 20047000);
+        await reset(PROVIDER_URL, 20655000);
 
         // Contracts are deployed using the first signer/account by default
         const [admin, alice, bob, carol, feeCollector] = await ethers.getSigners();
@@ -138,6 +163,7 @@ describe('ZunETH flow APS tests', () => {
 
         await setupTokenConverterETHs(tokenConverter);
         await setupTokenConverterRewards(tokenConverter);
+        await setupTokenConverterWEthPxEthAndReverse(tokenConverter);
 
         const rewardManager = await deployRewardManager(
             tokenConverter.address,
@@ -177,10 +203,10 @@ describe('ZunETH flow APS tests', () => {
             zunEthOracle.address
         );
 
-        const ZUNFRXETHPoolAddress = '0x3A65cbaebBFecbeA5D0CB523ab56fDbda7fF9aAA';
-
         const StaticCurveLPOracleFactory = await ethers.getContractFactory('StaticCurveLPOracle');
-        const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+
+        const ZUNFRXETHPoolAddress = '0x3A65cbaebBFecbeA5D0CB523ab56fDbda7fF9aAA';
+        let staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
             genericOracleAddress,
             [zunETHPoolAddress, addresses.crypto.frxETH],
             [18, 18],
@@ -194,6 +220,24 @@ describe('ZunETH flow APS tests', () => {
             ZUNFRXETHPoolAddress,
             staticCurveLPOracle.address
         );
+
+
+        const ZUNPXETHPoolAddress = '0x17D964DA2bD337CfEaEd30a27c9Ab6580676E730';
+        staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+          genericOracleAddress,
+          [zunETHPoolAddress, addresses.crypto.pxETH],
+          [18, 18],
+          ZUNPXETHPoolAddress
+        );
+        await staticCurveLPOracle.deployed();
+
+        await setCustomOracle(
+          genericOracle,
+          zunamiAdminAddress,
+          ZUNPXETHPoolAddress,
+          staticCurveLPOracle.address
+        );
+
 
         const { zunamiPool: zunamiPoolAps, zunamiPoolController: zunamiPoolControllerAps } =
             await createPoolAndCompoundController(zunamiPool.address, rewardManager.address);
@@ -412,6 +456,9 @@ describe('ZunETH flow APS tests', () => {
             strategiesAps,
         } = await loadFixture(deployFixture);
 
+        const withdrawSid = 4;
+        await setPoolWithdrawSid(admin, zunamiPoolController, withdrawSid);
+
         await expect(
             zunamiPoolController
                 .connect(admin)
@@ -583,6 +630,8 @@ describe('ZunETH flow APS tests', () => {
       wEth,
       frxEth,
     } = await loadFixture(deployFixture);
+
+    await setPoolWithdrawSid(admin, zunamiPoolController, 0);
 
     const dailyMintDuration = 24 * 60 * 60; // 1 day in seconds
     const dailyMintLimit = ethers.utils.parseUnits('275', "ether"); // 1100000 / 4000
