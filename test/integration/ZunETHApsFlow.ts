@@ -22,13 +22,14 @@ import {
   ZunamiPoolCompoundController,
   ZunamiDepositZap,
   GenericOracle,
-  ITokenConverter, StakingRewardDistributor, ZunamiStableZap,
+  ITokenConverter, StakingRewardDistributor, ZunamiStableZap, ZunamiStableZap2,
 } from '../../typechain-types';
 
 import * as addresses from '../address.json';
 import { deployRewardManager } from '../utils/DeployRewardManager';
 
 import {FORK_BLOCK_NUMBER, PROVIDER_URL} from "../../hardhat.config";
+import {oracle} from "../../typechain-types/contracts/lib";
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
@@ -621,7 +622,7 @@ describe('ZunETH APS flow tests', () => {
     expect(await stakingRewardDistributor.balanceOf(admin.getAddress())).to.closeTo(parseUnits("30", 'ether'), parseUnits("0.3", 'ether'));
   });
 
-  it('should mint zunETH using stable zap', async () => {
+  it('should mint zunETH using stable zap 2', async () => {
     const {
       admin,
       carol,
@@ -629,6 +630,7 @@ describe('ZunETH APS flow tests', () => {
       zunamiPoolController,
       wEth,
       frxEth,
+      genericOracle,
     } = await loadFixture(deployFixture);
 
     await setPoolWithdrawSid(admin, zunamiPoolController, 0);
@@ -639,14 +641,16 @@ describe('ZunETH APS flow tests', () => {
     const dailyRedeemLimit = ethers.utils.parseUnits('25', "ether"); // 100000 / 4000
 
     //deploy zap
-    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap');
+    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap2');
     const zunamiStableZap = (await ZunamiStableZapFactory.deploy(
       zunamiPoolController.address,
+      genericOracle.address,
       dailyMintDuration,
       dailyMintLimit,
       dailyRedeemDuration,
-      dailyRedeemLimit
-    )) as ZunamiStableZap;
+      dailyRedeemLimit,
+      '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+    )) as ZunamiStableZap2;
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(0);
 
@@ -660,15 +664,25 @@ describe('ZunETH APS flow tests', () => {
 
     await expect(zunamiStableZap
       .connect(admin)
-      .mint(getMinAmountZunETH('150'), admin.getAddress())
+      .mint(getMinAmountZunETH('150'), admin.getAddress(), 0)
     ).to.be.revertedWithCustomError(
       zunamiStableZap,
       `DailyMintLimitOverflow`
     );
 
+    const mintAmountStable = await zunamiStableZap.estimateMint(getMinAmountZunETH('100'));
+
+    await expect(zunamiStableZap
+      .connect(admin)
+      .mint(getMinAmountZunETH('100'), admin.getAddress(), parseUnits("201", 'ether'))
+    ).to.be.revertedWithCustomError(
+      zunamiStableZap,
+      `BrokenMinimumAmount`
+    );
+
     await zunamiStableZap
       .connect(admin)
-      .mint(getMinAmountZunETH("100"), admin.getAddress());
+      .mint(getMinAmountZunETH("100"), admin.getAddress(), mintAmountStable);
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("200", 'ether'));
     expect(await wEth.balanceOf(zunamiStableZap.address)).to.eq(0);
@@ -682,15 +696,23 @@ describe('ZunETH APS flow tests', () => {
 
     await expect(zunamiStableZap
       .connect(admin)
-      .redeem(parseUnits("50", 'ether'),  admin.getAddress(), [0,0,0,0,0])
+      .redeem(parseUnits("50", 'ether'),  admin.getAddress(), 0)
     ).to.be.revertedWithCustomError(
       zunamiStableZap,
       `DailyRedeemLimitOverflow`
     );
 
+    await expect(zunamiStableZap
+      .connect(admin)
+      .redeem(parseUnits("25", 'ether'),  carol.getAddress(), parseUnits("25.1", 'ether'))
+    ).to.be.revertedWithCustomError(
+      zunamiStableZap,
+      `BrokenMinimumAmount`
+    );
+
     await zunamiStableZap
       .connect(admin)
-      .redeem(parseUnits("25", 'ether'),  carol.getAddress(), [0,0,0,0,0])
+      .redeem(parseUnits("25", 'ether'),  carol.getAddress(), parseUnits("24.982", 'ether'))
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("175", 'ether'));
     expect(await wEth.balanceOf(zunamiStableZap.address)).to.eq(0);
@@ -702,7 +724,7 @@ describe('ZunETH APS flow tests', () => {
 
     await zunamiStableZap
       .connect(admin)
-      .mint(getMinAmountZunETH("100"), admin.getAddress());
+      .mint(getMinAmountZunETH("100"), admin.getAddress(), 0);
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("375", 'ether'));
   });

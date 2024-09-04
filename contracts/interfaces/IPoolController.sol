@@ -14,4 +14,8 @@ interface IPoolController is IERC20 {
         uint256[5] memory minTokenAmounts,
         address receiver
     ) external;
+
+    function defaultDepositSid() external view returns (uint256);
+
+    function defaultWithdrawSid() external view returns (uint256);
 }
