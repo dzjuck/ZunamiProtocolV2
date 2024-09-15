@@ -4,14 +4,10 @@ pragma solidity ^0.8.23;
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 
 import './BaseStakingRewardDistributor.sol';
-import './IRecapitalizedStakingRewardDistributor.sol';
 
-contract ZUNStakingRewardDistributor is
-    IRecapitalizedStakingRewardDistributor,
-    ERC20VotesUpgradeable,
+contract LockedStakingRewardDistributor is
     BaseStakingRewardDistributor
 {
     using SafeERC20 for IERC20;
@@ -20,34 +16,16 @@ contract ZUNStakingRewardDistributor is
     error Unlocked();
     error NotTransferable();
 
-    bytes32 public constant RECAPITALIZATION_ROLE = keccak256('RECAPITALIZATION_ROLE');
-
     uint16 public constant EXIT_PERCENT = 150; // 15%
     uint16 public constant PERCENT_DENOMINATOR = 1e3;
-
-    uint256 public constant RATIO_DENOMINATOR = 1e18;
-
-    uint32 public constant SECS_IN_4_MONTHS = 4 * 30 * 24 * 60 * 60;
 
     struct LockInfo {
         uint128 amount;
         uint128 untilTimestamp;
     }
 
-    function initialize(
-        address _token,
-        string memory _name,
-        string memory _symbol,
-        address _defaultAdmin
-    ) public override initializer {
-        super.initialize(_token, _name, _symbol, _defaultAdmin);
-        __ERC20Votes_init();
-    }
-
     mapping(address => LockInfo[]) public userLocks;
-
-    uint256 public recapitalizedAmount;
-
+    uint256 public lockPeriod;
     address public earlyExitReceiver;
 
     event Deposited(address indexed user, uint256 lockIndex, uint256 amount, uint256 untilTimestamp);
@@ -55,15 +33,16 @@ contract ZUNStakingRewardDistributor is
         address indexed user,
         uint256 lockIndex,
         uint256 amount,
-        uint256 amountReduced,
         uint256 transferedAmount
     );
     event EarlyExitReceiverChanged(address receiver);
+    event LockPeriodChanged(uint256 lockPeriodSec);
     event WithdrawnToken(uint256 amount);
     event ReturnedToken(uint256 amount);
 
     function initializeExtension() internal override {
         setEarlyExitReceiver(msg.sender);
+        setLockedPeriod(7 * 24 * 60 * 60); // 7 days
     }
 
     function setEarlyExitReceiver(address _receiver) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -72,36 +51,15 @@ contract ZUNStakingRewardDistributor is
         emit EarlyExitReceiverChanged(_receiver);
     }
 
-    function getRecapitalizationRatio() public view returns (uint256) {
-        if (recapitalizedAmount == 0) {
-            return RATIO_DENOMINATOR;
-        }
-        return ((totalAmount - recapitalizedAmount) * RATIO_DENOMINATOR) / totalAmount;
+    function setLockedPeriod(uint256 _lockPeriod) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_lockPeriod == 0) revert ZeroAmount();
+        lockPeriod = _lockPeriod;
+        emit LockPeriodChanged(_lockPeriod);
     }
 
     // Returns the number of locks for a user.
     function userLockCount(address _user) public view returns (uint256) {
         return userLocks[_user].length;
-    }
-
-    function withdrawToken(uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
-        if (amount == 0) revert ZeroAmount();
-
-        if (amount >= totalAmount - recapitalizedAmount) revert WrongAmount();
-        recapitalizedAmount += amount;
-        token.safeTransfer(msg.sender, amount);
-
-        emit WithdrawnToken(amount);
-    }
-
-    function returnToken(uint256 amount) external onlyRole(RECAPITALIZATION_ROLE) {
-        if (amount == 0) revert ZeroAmount();
-
-        if (amount > recapitalizedAmount) revert WrongAmount();
-        recapitalizedAmount -= amount;
-        token.safeTransferFrom(msg.sender, address(this), amount);
-
-        emit ReturnedToken(amount);
     }
 
     // Deposit tokens to staking for reward token allocation.
@@ -137,16 +95,11 @@ contract ZUNStakingRewardDistributor is
 
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
-        uint256 ratio = getRecapitalizationRatio();
-        if (ratio < RATIO_DENOMINATOR) {
-            uint256 amountReduced = (_amount * ratio) / RATIO_DENOMINATOR;
-            recapitalizedAmount += _amount - amountReduced;
-        }
         totalAmount += _amount;
 
         _mint(_receiver, _amount);
 
-        uint128 untilTimestamp = uint128(block.timestamp + SECS_IN_4_MONTHS);
+        uint128 untilTimestamp = uint128(block.timestamp + lockPeriod);
         uint256 lockIndex = userLocks[_receiver].length;
         userLocks[_receiver].push(LockInfo(uint128(_amount), untilTimestamp));
         emit Deposited(_receiver, lockIndex, _amount, untilTimestamp);
@@ -169,30 +122,19 @@ contract ZUNStakingRewardDistributor is
         uint256[] memory distributions = _updateDistributions();
         _checkpointRewards(msg.sender, distributions, _claimRewards, _tokenReceiver);
 
-        uint256 ratio = getRecapitalizationRatio();
         _burn(msg.sender, amount);
         totalAmount -= amount;
-
-        uint256 amountReduced = amount;
-        if (ratio < RATIO_DENOMINATOR) {
-            amountReduced = (amount * ratio) / RATIO_DENOMINATOR;
-            if (amount - amountReduced > recapitalizedAmount) {
-                recapitalizedAmount = 0;
-            } else {
-                recapitalizedAmount -= (amount - amountReduced);
-            }
-        }
 
         // Set untilTimestamp to 0 to mark the lock as withdrawn.
         lock.untilTimestamp = 0;
 
-        uint256 transferredAmount = amountReduced;
+        uint256 transferredAmount = amount;
         if (block.timestamp < untilTimestamp) {
             transferredAmount =
-                (amountReduced * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
+                (amount * (PERCENT_DENOMINATOR - EXIT_PERCENT)) /
                 PERCENT_DENOMINATOR;
 
-            token.safeTransfer(earlyExitReceiver, amountReduced - transferredAmount);
+            token.safeTransfer(earlyExitReceiver, amount - transferredAmount);
         }
 
         if (_tokenReceiver == address(0)) {
@@ -200,35 +142,6 @@ contract ZUNStakingRewardDistributor is
         }
         token.safeTransfer(address(_tokenReceiver), transferredAmount);
 
-        emit Withdrawn(msg.sender, _lockIndex, amount, amountReduced, transferredAmount);
-    }
-
-    function transfer(
-        address,
-        uint256
-    ) public override(BaseStakingRewardDistributor, ERC20Upgradeable) returns (bool) {
-        revert NotTransferable();
-    }
-
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) public override(BaseStakingRewardDistributor, ERC20Upgradeable) returns (bool) {
-        revert NotTransferable();
-    }
-
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    ) internal override(BaseStakingRewardDistributor, ERC20VotesUpgradeable) {
-        super._update(from, to, value);
-    }
-
-    function nonces(
-        address owner
-    ) public view override(BaseStakingRewardDistributor, NoncesUpgradeable) returns (uint256) {
-        return super.nonces(owner);
+        emit Withdrawn(msg.sender, _lockIndex, amount, transferredAmount);
     }
 }

@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '../../interfaces/IPool.sol';
-import './IZUNStakingRewardDistributor.sol';
+import './IRecapitalizedStakingRewardDistributor.sol';
 import '../../RewardTokenManager.sol';
 import { stEthEthConvexCurveStrat } from '../../strategies/curve/convex/eth/stEthEthConvexCurveStrat.sol';
 
@@ -22,7 +22,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     IERC20 public immutable zunToken;
 
     uint256 public rewardDistributionTimestamp;
-    IZUNStakingRewardDistributor public stakingRewardDistributor;
+    IRecapitalizedStakingRewardDistributor public stakingRewardDistributor;
     uint256 public accumulationPeriod;
 
     event SetRewardDistributor(address rewardDistributorAddr);
@@ -70,7 +70,7 @@ contract RecapitalizationManager is AccessControl, RewardTokenManager {
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (rewardDistributorAddr == address(0)) revert ZeroAddress();
 
-        stakingRewardDistributor = IZUNStakingRewardDistributor(rewardDistributorAddr);
+        stakingRewardDistributor = IRecapitalizedStakingRewardDistributor(rewardDistributorAddr);
         emit SetRewardDistributor(rewardDistributorAddr);
     }
 

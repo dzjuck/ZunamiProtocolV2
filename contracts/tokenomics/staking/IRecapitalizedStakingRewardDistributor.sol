@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import './IDistributor.sol';
 
-interface IZUNStakingRewardDistributor is IDistributor {
+interface IRecapitalizedStakingRewardDistributor is IDistributor {
     function withdrawToken(uint256 amount) external;
 
     function returnToken(uint256 amount) external;

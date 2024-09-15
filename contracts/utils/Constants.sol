@@ -27,8 +27,8 @@ library Constants {
     address internal constant zunETH_CONTROLLER_ADDRESS =
         0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF;
 
-    address internal constant ZUNBTC_ADDRESS = address(0);
-    address internal constant ZUNBTC_CONTROLLER_ADDRESS = address(0);
+    address internal constant ZUNBTC_ADDRESS = 0x390FF6Bff315aC514F1De8480ed6666a3B5095A7;
+    address internal constant ZUNBTC_CONTROLLER_ADDRESS = 0x8cA9f8A82F3561915f0A7f16c16e3F08fB71588d;
 
     address public constant CHAINLINK_FEED_REGISTRY_ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;

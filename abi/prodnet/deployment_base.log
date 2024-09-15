@@ -10,3 +10,8 @@ ZunUSDBaseApsVaultStrat strategy deployed to: 0x89e0Bce60dF0b9708748c080D5838dA7
 Added ZunUSDBaseApsVaultStrat pool to ZunamiPool
 Set zunami pool address 0x7eae19161869Adc5F99d3987dA881Fb972B6eED5 in ZunUSDBaseApsVaultStrat strategy
 
+Admin: 0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
+Deploy Base Locked Zunami USD APS LP Staking:
+Locked Staking Reward Distributor LP: 0x6088d4E45B4490d56d2C850816F2cCE9c20D5CCe
+Reward token added:  0x1db0Fc8933f545648b54A9eE4326209a9A259643
+
