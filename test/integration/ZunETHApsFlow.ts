@@ -1,35 +1,36 @@
 import {ethers, network, upgrades} from 'hardhat';
-import {
-  impersonateAccount,
-  loadFixture, reset,
-  setBalance, time,
-} from '@nomicfoundation/hardhat-network-helpers';
-import { BigNumber, Signer } from 'ethers';
-import { parseUnits } from 'ethers/lib/utils';
-import { expect } from 'chai';
-
-import { abi as erc20ABI } from '../../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
-
-import { setupTokenConverterRewards, setupTokenConverterETHs, setupTokenConverterWEthPxEthAndReverse } from '../utils/SetupTokenConverter';
-import { attachTokens } from '../utils/AttachTokens';
-import { createStrategies } from '../utils/CreateStrategies';
-import { mintEthCoins } from '../utils/MintEthCoins';
-import { attachPoolAndControllerZunETH } from '../utils/AttachPoolAndControllerZunETH';
-import { getMinAmountZunETH } from '../utils/GetMinAmountZunETH';
+import {impersonateAccount, loadFixture, reset, setBalance, time,} from '@nomicfoundation/hardhat-network-helpers';
+import {BigNumber, Signer} from 'ethers';
+import {parseUnits} from 'ethers/lib/utils';
+import {expect} from 'chai';
 
 import {
+  setupTokenConverterETHs,
+  setupTokenConverterRewards,
+  setupTokenConverterWEthPxEthAndReverse
+} from '../utils/SetupTokenConverter';
+import {attachTokens} from '../utils/AttachTokens';
+import {createStrategies} from '../utils/CreateStrategies';
+import {mintEthCoins} from '../utils/MintEthCoins';
+import {attachPoolAndControllerZunETH} from '../utils/AttachPoolAndControllerZunETH';
+import {getMinAmountZunETH} from '../utils/GetMinAmountZunETH';
+
+import {
+  GenericOracle,
+  ITokenConverter,
+  StakingRewardDistributor,
+  ZunamiDepositZap,
   ZunamiPool,
   ZunamiPoolCompoundController,
-  ZunamiDepositZap,
-  GenericOracle,
-  ITokenConverter, StakingRewardDistributor, ZunamiStableZap, ZunamiStableZap2,
+  ZunamiStableZap2,
 } from '../../typechain-types';
 
 import * as addresses from '../address.json';
-import { deployRewardManager } from '../utils/DeployRewardManager';
+import {deployRewardManager} from '../utils/DeployRewardManager';
 
 import {FORK_BLOCK_NUMBER, PROVIDER_URL} from "../../hardhat.config";
-import {oracle} from "../../typechain-types/contracts/lib";
+import {mintTokenTo} from "../utils/MintTokenTo";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const MINIMUM_LIQUIDITY = 1e3;
@@ -65,31 +66,6 @@ export async function createPoolAndCompoundController(token: string, rewardManag
     ]);
     await zunamiPool.grantRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address);
     return { zunamiPool, zunamiPoolController };
-}
-
-async function mintTokenTo(
-    receiverAddr: string,
-    ethVault: Signer,
-    tokenAddr: string,
-    tokenVaultAddr: string,
-    tokenAmount: BigNumber
-) {
-    const token = new ethers.Contract(tokenAddr, erc20ABI, ethVault);
-    //fund vault with eth
-    await ethVault.sendTransaction({
-        to: tokenVaultAddr,
-        value: ethers.utils.parseEther('1'),
-    });
-    await network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [tokenVaultAddr],
-    });
-    const tokenVaultSigner: Signer = ethers.provider.getSigner(tokenVaultAddr);
-    await token.connect(tokenVaultSigner).transfer(receiverAddr, tokenAmount);
-    await network.provider.request({
-        method: 'hardhat_stopImpersonatingAccount',
-        params: [tokenVaultAddr],
-    });
 }
 
 async function setCustomOracle(

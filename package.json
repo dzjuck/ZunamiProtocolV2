@@ -11,7 +11,7 @@
     "test": "hardhat test",
     "test:coverage": "hardhat coverage  --testfiles 'test/*.ts'",
     "test:verbose": "hardhat test --verbose test/*.ts",
-    "deploy:zunUSD:mainnet": "hardhat run --network mainnet scripts/prod/deploy/deployZunUSD.js",
+    "deploy:zunUSD:mainnet": "hardhat run --network mainnet scripts/prod/deploy/zunUsd/deployZunUSD.js",
     "deploy:zunUSD:testnet": "hardhat run --network sepolia scripts/test/protocol/deployZunUSDTest.js"
   },
   "repository": {
@@ -41,7 +41,7 @@
     "bignumber.js": "^9.1.2",
     "chai": "^4.4.1",
     "dotenv": "^16.0.3",
-    "hardhat": "^2.22.9",
+    "hardhat": "^2.22.10",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-deploy": "^0.11.42",
     "prettier": "2.8.3",

@@ -15,16 +15,26 @@ library Constants {
     address internal constant SDT_ADDRESS = 0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F;
     address internal constant SFRXETH_ADDRESS = 0xac3E018457B222d93114458476f3E3416Abbe38F;
     address internal constant PXETH_ADDRESS = 0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6;
+    address internal constant WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address internal constant TBTC_ADDRESS = 0x18084fbA666a33d37592fA2633fD49a74DD93a88; // tBTC v2
+
 
     address internal constant ZUNUSD_ADDRESS = 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6;
     address internal constant zunUSD_CONTROLLER_ADDRESS =
         0x618eee502CDF6b46A2199C21D1411f3F6065c940;
+
     address internal constant zunETH_ADDRESS = 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222;
     address internal constant zunETH_CONTROLLER_ADDRESS =
         0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF;
 
+    address internal constant ZUNBTC_ADDRESS = address(0);
+    address internal constant ZUNBTC_CONTROLLER_ADDRESS = address(0);
+
     address public constant CHAINLINK_FEED_REGISTRY_ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    address public constant CHAINLINK_FEED_REGISTRY_BTC_ADDRESS =
+        0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
 
     address internal constant CRV_3POOL_ADDRESS = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
     address internal constant CRV_3POOL_LP_ADDRESS = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;
@@ -120,6 +130,11 @@ library Constants {
     address internal constant CRV_zunUSD_fxUSD_ADDRESS = 0x13eA95Ce68185e334d3747539845A3b7643a8cab;
     address internal constant CRV_zunUSD_fxUSD_LP_ADDRESS = 0x13eA95Ce68185e334d3747539845A3b7643a8cab;
     uint256 internal constant CVX_zunUSD_fxUSD_PID = 31;
+
+    address internal constant CRV_WBTC_TBTC_ADDRESS = 0xB7ECB2AA52AA64a717180E030241bC75Cd946726;
+    address internal constant CRV_WBTC_TBTC_LP_ADDRESS = 0xB7ECB2AA52AA64a717180E030241bC75Cd946726;
+    address internal constant CVX_WBTC_TBTC_REWARDS_ADDRESS = 0x5793691B4ba69665213614d7ac722Db2d3f41927;
+    uint256 internal constant CVX_WBTC_TBTC_PID = 220;
 
     // Will be added after deployment of zunUSD v2 pool and curve pool for zunUSD
     address internal constant CRV_zunUSD_crvFRAX_ADDRESS = address(0);

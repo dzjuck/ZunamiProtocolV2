@@ -452,6 +452,10 @@ async function setupTokenConverterWEthPxEthAndReverse(tokenConverter) {
     );
 }
 
+async function setupTokenConverterBTCs(tokenConverter) {
+
+}
+
 module.exports = {
     setupTokenConverterETHs,
     setupTokenConverterStables,
@@ -459,4 +463,5 @@ module.exports = {
     setupTokenConverterCrvUsdToZunEth,
     setupTokenConverterFxnToZunUsd,
     setupTokenConverterWEthPxEthAndReverse,
+    setupTokenConverterBTCs
 };
