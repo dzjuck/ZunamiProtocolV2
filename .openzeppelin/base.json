@@ -2,13 +2,13 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
-      "address": "0x65363f1A6cb67fE045bbD2fb3c5cb81bFBEe7902",
-      "txHash": "0x549187a5b912834a4beb7511d7928167130aa3afcfa852ead95da52341a172eb",
+      "address": "0x83ed27966584d24a788D2331B4824f490d3DD071",
+      "txHash": "0xd999ae6c5ceb3b88da70626e82f7e0b407ba78ffa5600d31d965d6b95dba8d3f",
       "kind": "uups"
     },
     {
-      "address": "0x6088d4E45B4490d56d2C850816F2cCE9c20D5CCe",
-      "txHash": "0x995a05f09495fb0423dfde5bef61deeae9c5f297f94819bbe41262d093021f4d",
+      "address": "0x0030b9c15bC3575ffd1dc96eD3a6548Ee5Ab280F",
+      "txHash": "0x8586194640ba62d56b85c3f8bb052ba9c3c08cd038954391a387955070a9bdd0",
       "kind": "uups"
     }
   ],
@@ -282,7 +282,7 @@
             "label": "token",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(IERC20)2900",
+            "type": "t_contract(IERC20)4787",
             "contract": "BaseStakingRewardDistributor",
             "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:48"
           },
@@ -290,7 +290,7 @@
             "label": "rewardTokenInfo",
             "offset": 0,
             "slot": "1",
-            "type": "t_array(t_struct(RewardTokenInfo)5527_storage)dyn_storage",
+            "type": "t_array(t_struct(RewardTokenInfo)27809_storage)dyn_storage",
             "contract": "BaseStakingRewardDistributor",
             "src": "contracts/tokenomics/staking/BaseStakingRewardDistributor.sol:51"
           },
@@ -346,7 +346,7 @@
             "label": "userLocks",
             "offset": 0,
             "slot": "8",
-            "type": "t_mapping(t_address,t_array(t_struct(LockInfo)6752_storage)dyn_storage)",
+            "type": "t_mapping(t_address,t_array(t_struct(LockInfo)29108_storage)dyn_storage)",
             "contract": "LockedStakingRewardDistributor",
             "src": "contracts/tokenomics/staking/LockedStakingRewardDistributor.sol:27"
           },
@@ -372,15 +372,15 @@
             "label": "address",
             "numberOfBytes": "20"
           },
-          "t_array(t_struct(LockInfo)6752_storage)dyn_storage": {
+          "t_array(t_struct(LockInfo)29108_storage)dyn_storage": {
             "label": "struct LockedStakingRewardDistributor.LockInfo[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(RewardTokenInfo)5527_storage)dyn_storage": {
+          "t_array(t_struct(RewardTokenInfo)27809_storage)dyn_storage": {
             "label": "struct BaseStakingRewardDistributor.RewardTokenInfo[]",
             "numberOfBytes": "32"
           },
-          "t_contract(IERC20)2900": {
+          "t_contract(IERC20)4787": {
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
@@ -388,7 +388,7 @@
             "label": "mapping(address => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_array(t_struct(LockInfo)6752_storage)dyn_storage)": {
+          "t_mapping(t_address,t_array(t_struct(LockInfo)29108_storage)dyn_storage)": {
             "label": "mapping(address => struct LockedStakingRewardDistributor.LockInfo[])",
             "numberOfBytes": "32"
           },
@@ -408,7 +408,7 @@
             "label": "mapping(uint256 => uint256)",
             "numberOfBytes": "32"
           },
-          "t_struct(LockInfo)6752_storage": {
+          "t_struct(LockInfo)29108_storage": {
             "label": "struct LockedStakingRewardDistributor.LockInfo",
             "members": [
               {
@@ -426,12 +426,12 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(RewardTokenInfo)5527_storage": {
+          "t_struct(RewardTokenInfo)27809_storage": {
             "label": "struct BaseStakingRewardDistributor.RewardTokenInfo",
             "members": [
               {
                 "label": "token",
-                "type": "t_contract(IERC20)2900",
+                "type": "t_contract(IERC20)4787",
                 "offset": 0,
                 "slot": "0"
               },

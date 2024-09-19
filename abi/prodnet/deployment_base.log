@@ -1,19 +1,16 @@
-Start deploy
-
 Deploy zunUSD Base APS omnipool:
-ZunamiPoolBaseApsZunUSD: 0x7eae19161869Adc5F99d3987dA881Fb972B6eED5
+ZunamiPoolBaseApsZunUSD: 0x4F1ed6687c6C70B9Fb717c496D1d869d78e9B094
 Deploy zunUSD Base APS pool controller:
-Zunami Pool Compound Controller for zunUSD: 0x65363f1A6cb67fE045bbD2fb3c5cb81bFBEe7902
+Zunami Pool Compound Controller for zunUSD: 0x83ed27966584d24a788D2331B4824f490d3DD071
 Zunami Pool Compound Controller implementation deployed to: 0x6330de7136f7Fb5248dD838A842DbFD44eFbEf75
 ZunamiPoolController granted CONTROLLER_ROLE: true
-ZunUSDBaseApsVaultStrat strategy deployed to: 0x89e0Bce60dF0b9708748c080D5838dA78507253F
+ZunUSDBaseApsVaultStrat strategy deployed to: 0xeDD04c680f9751Db7aF9f5082328Bc9D954316B2
 Added ZunUSDBaseApsVaultStrat pool to ZunamiPool
-Set zunami pool address 0x7eae19161869Adc5F99d3987dA881Fb972B6eED5 in ZunUSDBaseApsVaultStrat strategy
+Set zunami pool address 0x4F1ed6687c6C70B9Fb717c496D1d869d78e9B094 in ZunUSDBaseApsVaultStrat strategy
 
 Admin: 0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
 Deploy Base Locked Zunami USD APS LP Staking:
-Locked Staking Reward Distributor LP: 0x6088d4E45B4490d56d2C850816F2cCE9c20D5CCe
+Staking Reward Distributor LP: 0x0030b9c15bC3575ffd1dc96eD3a6548Ee5Ab280F
 Reward token added:  0x1db0Fc8933f545648b54A9eE4326209a9A259643
 
-ZunamiDepositStakedApsZap deployed to: 0xD69D8808E95edD3556Ba4E3862f6e14789A2B68b with args: 0x65363f1A6cb67fE045bbD2fb3c5cb81bFBEe7902 0x6088d4E45B4490d56d2C850816F2cCE9c20D5CCe
-
+ZunamiDepositStakedApsZap deployed to: 0x5FD842f1dEB0372dc9Ee18e65b83EB5CE0EA9A24 with args: 0x83ed27966584d24a788D2331B4824f490d3DD071 0x0030b9c15bC3575ffd1dc96eD3a6548Ee5Ab280F

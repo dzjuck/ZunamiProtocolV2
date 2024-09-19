@@ -11,7 +11,7 @@ async function main() {
 
     // Zunami USD APS LP Staking
 
-    const apsZunUSDControllerLP = '0x65363f1A6cb67fE045bbD2fb3c5cb81bFBEe7902';
+    const apsZunUSDControllerLP = '0x83ed27966584d24a788D2331B4824f490d3DD071';
 
     console.log('Deploy Base Locked Zunami USD APS LP Staking:');
     const StakingRewardDistributorFactory = await ethers.getContractFactory(

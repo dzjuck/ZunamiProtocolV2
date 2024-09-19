@@ -2,8 +2,8 @@ const { ethers } = require('hardhat');
 
 async function main() {
     // zunUSD Base
-    const apsControllerAddr = '0x65363f1A6cb67fE045bbD2fb3c5cb81bFBEe7902';
-    const stakingAddr = '0x6088d4E45B4490d56d2C850816F2cCE9c20D5CCe';
+    const apsControllerAddr = '0x83ed27966584d24a788D2331B4824f490d3DD071';
+    const stakingAddr = '0x0030b9c15bC3575ffd1dc96eD3a6548Ee5Ab280F';
 
     const ZapFactory = await ethers.getContractFactory('ZunamiDepositStakedApsZap');
     const zap = await ZapFactory.deploy(

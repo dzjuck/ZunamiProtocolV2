@@ -35,40 +35,40 @@ async function main() {
 
     console.log('Deploy zunUSD Base APS omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolBaseApsZunUSD');
-    // const zunamiPool = await ZunamiPool.attach('');
-    const zunamiPool = await ZunamiPool.deploy();
-    await zunamiPool.deployed();
+    const zunamiPool = await ZunamiPool.attach('0x4F1ed6687c6C70B9Fb717c496D1d869d78e9B094');
+    // const zunamiPool = await ZunamiPool.deploy();
+    // await zunamiPool.deployed();
     console.log('ZunamiPoolBaseApsZunUSD:', zunamiPool.address);
 
-    console.log('Deploy zunUSD Base APS pool controller:');
-
-    const ZunamiPoolControllerFactory = await ethers.getContractFactory('ZunamiPoolCompoundControllerUpgradeable');
-    const zunamiPoolController = await upgrades.deployProxy(
-        ZunamiPoolControllerFactory,
-        [
-            zunamiPool.address,
-            'Zunami Staked USD APS LP',
-            'stakedUSD'
-        ],
-        {
-            kind: 'uups',
-        }
-    );
-    await zunamiPoolController.deployed();
-
-    console.log('Zunami Pool Compound Controller for zunUSD:', zunamiPoolController.address);
-    console.log('Zunami Pool Compound Controller implementation deployed to:', await getImplementationAddress(ethers.provider, zunamiPoolController.address));
-
-    let result = await zunamiPool.grantRole(
-        await zunamiPool.CONTROLLER_ROLE(),
-        zunamiPoolController.address
-    );
-    await result.wait();
-    console.log(
-        'ZunamiPoolController granted CONTROLLER_ROLE:',
-        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
-    );
-    await createAndInitStrategy(zunamiPool, 'ZunUSDBaseApsVaultStrat', null, null);
+    // console.log('Deploy zunUSD Base APS pool controller:');
+    //
+    // const ZunamiPoolControllerFactory = await ethers.getContractFactory('ZunamiPoolCompoundControllerUpgradeable');
+    // const zunamiPoolController = await upgrades.deployProxy(
+    //     ZunamiPoolControllerFactory,
+    //     [
+    //         zunamiPool.address,
+    //         'Zunami Staked USD APS LP',
+    //         'stakedUSD'
+    //     ],
+    //     {
+    //         kind: 'uups',
+    //     }
+    // );
+    // await zunamiPoolController.deployed();
+    //
+    // console.log('Zunami Pool Compound Controller for zunUSD:', zunamiPoolController.address);
+    // console.log('Zunami Pool Compound Controller implementation deployed to:', await getImplementationAddress(ethers.provider, zunamiPoolController.address));
+    //
+    // let result = await zunamiPool.grantRole(
+    //     await zunamiPool.CONTROLLER_ROLE(),
+    //     zunamiPoolController.address
+    // );
+    // await result.wait();
+    // console.log(
+    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
+    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    // );
+    // await createAndInitStrategy(zunamiPool, 'ZunUSDBaseApsVaultStrat', null, null);
 }
 
 main()
