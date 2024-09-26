@@ -166,6 +166,7 @@ contract FraxApsConvexCurveStratBase is EmergencyAdminConvexCurveStratBase {
 
     function convertStable(IERC20 fromToken, IERC20 toToken, uint256 fromAmount) internal {
         if (address(fromToken) == address(toToken)) return;
+        if (fromAmount == 0) return;
 
         fromToken.safeTransfer(address(stableConverter), fromAmount);
         stableConverter.handle(address(fromToken), address(toToken), fromAmount, 0);
