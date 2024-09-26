@@ -5,7 +5,8 @@ const {
     setupTokenConverterRewards,
     setupTokenConverterCrvUsdToZunEth,
     setupTokenConverterFxnToZunUsd,
-    setupTokenConverterWEthPxEthAndReverse
+    setupTokenConverterWEthPxEthAndReverse,
+    setupTokenConverterStablesFrax,
 } = require('../../../test/utils/SetupTokenConverter.js');
 
 async function main() {
@@ -38,9 +39,13 @@ async function main() {
     // await setupTokenConverterFxnToZunUsd(tokenConverter);
     // console.log('Token сonverter configured for FXN to zunUSD');
 
-    console.log('Starting setup token converter wETH to pxETH and reverse');
-    await setupTokenConverterWEthPxEthAndReverse(tokenConverter);
-    console.log('Token сonverter configured for  wETH to pxETH and reverse');
+    // console.log('Starting setup token converter wETH to pxETH and reverse');
+    // await setupTokenConverterWEthPxEthAndReverse(tokenConverter);
+    // console.log('Token сonverter configured for  wETH to pxETH and reverse');
+
+    console.log('Starting setup token converter stables to frax and reverse');
+    await setupTokenConverterStablesFrax(tokenConverter);
+    console.log('Token сonverter configured for  stables to frax and reverse');
 
 }
 

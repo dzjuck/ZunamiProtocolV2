@@ -14,16 +14,17 @@ import { attachTokens } from '../utils/AttachTokens';
 import { createStrategies } from '../utils/CreateStrategies';
 import { createPoolAndControllerZunUSD } from '../utils/CreatePoolAndControllerZunUSD';
 import { getMinAmountZunUSD } from '../utils/GetMinAmountZunUSD';
-import { setupTokenConverterStables } from '../utils/SetupTokenConverter';
+import { setupTokenConverterStables, setupTokenConverterStablesFrax } from '../utils/SetupTokenConverter';
+import * as addrs from "../address.json";
 
 const crvUSD_USDT_pool_addr = '0x390f3595bca2df7d23783dfd126427cceb997bf4';
 const crvUSD_USDC_pool_addr = '0x4dece678ceceb27446b35c672dc7d61f30bad69e';
 
 describe('ZunUSD flow tests', () => {
     const strategyNames = [
-        'LlamalendWethStakeDaoERC4626Strat',
+        'FraxCrvUsdStakeDaoCurve',
+        'LlamalendWeth2StakeDaoERC4626Strat',
         'LlamalendCrvStakeDaoERC4626Strat',
-        // 'LlamalendCrvConvexERC4626Strat',
         'UsdtCrvUsdStakeDaoCurve',
         'UsdcCrvUsdStakeDaoCurve',
         'ZunUSDVaultStrat',
@@ -51,6 +52,20 @@ describe('ZunUSD flow tests', () => {
             );
 
         await setupTokenConverterStables(tokenConverter);
+        await setupTokenConverterStablesFrax(tokenConverter);
+
+        // extra oracles
+        const frax_crvUSD_pool_addr = '0x0CD6f267b2086bea681E922E19D40512511BE538';
+        const StaticCurveLPOracleFactory = await ethers.getContractFactory('StaticCurveLPOracle');
+        const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+          genericOracle.address,
+          [addrs.stablecoins.frax, addrs.stablecoins.crvUSD],
+          [18, 18],
+          frax_crvUSD_pool_addr
+        );
+        await staticCurveLPOracle.deployed();
+
+        await genericOracle.setCustomOracle(frax_crvUSD_pool_addr, staticCurveLPOracle.address);
 
         const strategies = await createStrategies(
             strategyNames,
@@ -61,10 +76,10 @@ describe('ZunUSD flow tests', () => {
             undefined
         );
 
-        await strategies[0].setSlippage(100);
-        await strategies[1].setSlippage(100);
+        // await strategies[0].setSlippage(100);
+        // await strategies[1].setSlippage(100);
 
-        const tokenApprovedAmount = '1000000';
+        const tokenApprovedAmount = '100000000';
 
         for (const user of [admin, alice, bob]) {
             await dai
@@ -78,7 +93,7 @@ describe('ZunUSD flow tests', () => {
                 .approve(zunamiPoolController.address, parseUnits(tokenApprovedAmount, 'mwei'));
         }
 
-        const tokenAmount = '10000';
+        const tokenAmount = '100000';
 
         for (const user of [alice, bob]) {
             await dai.transfer(user.getAddress(), ethers.utils.parseUnits(tokenAmount, 'ether'));
@@ -251,11 +266,11 @@ describe('ZunUSD flow tests', () => {
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
 
         console.log(
-            '(await zunamiPool.strategyInfo(poolSrc)).minted',
+            '(await zunamiPool.strategyInfo(poolSrc)).minted before',
             (await zunamiPool.strategyInfo(poolSrc)).minted
         );
         console.log(
-            '(await zunamiPool.strategyInfo(poolDst)).minted',
+            '(await zunamiPool.strategyInfo(poolDst)).minted before',
             (await zunamiPool.strategyInfo(poolDst)).minted
         );
         await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
@@ -263,17 +278,18 @@ describe('ZunUSD flow tests', () => {
         await expect(
             zunamiPool.moveFundsBatch([poolSrc], [percentage], poolDst, [[0, 0, 0, 0, 0]])
         );
-        await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
-        await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
 
         console.log(
-            '(await zunamiPool.strategyInfo(poolSrc)).minted',
-            (await zunamiPool.strategyInfo(poolSrc)).minted
+          '(await zunamiPool.strategyInfo(poolSrc)).minted after',
+          (await zunamiPool.strategyInfo(poolSrc)).minted
         );
         console.log(
-            '(await zunamiPool.strategyInfo(poolDst)).minted',
-            (await zunamiPool.strategyInfo(poolDst)).minted
+          '(await zunamiPool.strategyInfo(poolDst)).minted after',
+          (await zunamiPool.strategyInfo(poolDst)).minted
         );
+
+        await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.eq(0);
+        await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.gt(0);
 
         await expect(
             zunamiPool.moveFundsBatch([poolDst], [percentage], poolSrc, [[0, 0, 0, 0, 0]])

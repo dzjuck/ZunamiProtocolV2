@@ -1,8 +1,6 @@
 const { ethers } = require('hardhat');
-const { GenericOracle } = require('../../../typechain-types');
-const {
-    attachPoolAndControllerZunUSD,
-} = require('../../../test/utils/AttachPoolAndControllerZunUSD');
+
+const addrs = require("../../../../test/address.json");
 
 async function main() {
     console.log('Start deploy');
@@ -68,13 +66,28 @@ async function main() {
     // await genericOracle.setCustomOracle(ZUNUSDFXUSDPoolAddress, staticCurveLPOracle.address);
     // console.log('Static oracle set: ', ZUNUSDFXUSDPoolAddress, staticCurveLPOracle.address);
 
-    const FXN_ADDR = '0x365accfca291e7d3914637abf1f7635db165bb09';
-    const FxnOracleFactory = await ethers.getContractFactory('FxnOracle');
-    const fxnOracle = await FxnOracleFactory.deploy(genericOracle.address);
-    console.log('FxnOracle deployed to: ', fxnOracle.address);
+    // const FXN_ADDR = '0x365accfca291e7d3914637abf1f7635db165bb09';
+    // const FxnOracleFactory = await ethers.getContractFactory('FxnOracle');
+    // const fxnOracle = await FxnOracleFactory.deploy(genericOracle.address);
+    // console.log('FxnOracle deployed to: ', fxnOracle.address);
+    //
+    // await genericOracle.setCustomOracle(FXN_ADDR, fxnOracle.address);
+    // console.log('Fxn oracle set: ', FXN_ADDR, fxnOracle.address);
 
-    await genericOracle.setCustomOracle(FXN_ADDR, fxnOracle.address);
-    console.log('Fxn oracle set: ', FXN_ADDR, fxnOracle.address);
+    // extra oracles
+    const frax_crvUSD_pool_addr = '0x0CD6f267b2086bea681E922E19D40512511BE538';
+
+    const staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+        genericOracle.address,
+        [addrs.stablecoins.frax, addrs.stablecoins.crvUSD],
+        [18, 18],
+        frax_crvUSD_pool_addr
+    );
+    await staticCurveLPOracle.deployed();
+    console.log('frax/crvUSD pool oracle deployed to: ', staticCurveLPOracle.address);
+
+    await genericOracle.setCustomOracle(frax_crvUSD_pool_addr, staticCurveLPOracle.address);
+    console.log('frax/crvUSD pool oracle set: ', frax_crvUSD_pool_addr, staticCurveLPOracle.address);
 }
 
 main()

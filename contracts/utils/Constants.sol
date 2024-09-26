@@ -17,6 +17,7 @@ library Constants {
     address internal constant PXETH_ADDRESS = 0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6;
     address internal constant WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address internal constant TBTC_ADDRESS = 0x18084fbA666a33d37592fA2633fD49a74DD93a88; // tBTC v2
+    address internal constant FRAX_ADDRESS = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
 
     address internal constant ZUNUSD_ADDRESS = 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6;
@@ -64,6 +65,12 @@ library Constants {
         0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E;
     address internal constant CRV_CRVUSD_USDC_ADDRESS = 0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E;
 
+    address internal constant SDT_FRAX_CRVUSD_VAULT_ADDRESS =
+        0x27da51e2d9E5FD70Fb6a27Dd2976377827E52884;
+    address internal constant CRV_FRAX_CRVUSD_LP_ADDRESS =
+        0x0CD6f267b2086bea681E922E19D40512511BE538;
+    address internal constant CRV_FRAX_CRVUSD_ADDRESS = 0x0CD6f267b2086bea681E922E19D40512511BE538;
+
     address internal constant CRV_BOOSTER_ADDRESS = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
     address internal constant CRV_STAKING_BOOSTER_ADDRESS = 0xD8Bd5Cdd145ed2197CB16ddB172DF954e3F28659;
     address internal constant CRV_FX_BOOSTER_ADDRESS = 0xAffe966B27ba3E4Ebb8A0eC124C7b7019CC762f8;
@@ -96,6 +103,10 @@ library Constants {
     address internal constant LLAMALEND_WETH_ADDRESS = 0x5AE28c9197a4a6570216fC7e53E7e0221D7A0FEF;
     address internal constant SDT_LLAMALEND_WETH_CRVUSD_VAULT_ADDRESS =
         0xADde9073d897743E7004115Fa2452cC959FBF28a;
+
+    address internal constant LLAMALEND_WETH_2_ADDRESS = 0x8fb1c7AEDcbBc1222325C39dd5c1D2d23420CAe3;
+    address internal constant SDT_LLAMALEND_WETH_CRVUSD_VAULT_2_ADDRESS =
+        0x09f139184d04789B963205c163C73F4beA468b95;
 
     address internal constant CRV_zunETH_frxETH_ADDRESS =
         0x3A65cbaebBFecbeA5D0CB523ab56fDbda7fF9aAA;

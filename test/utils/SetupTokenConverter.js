@@ -184,19 +184,19 @@ async function setupTokenConverterStables(tokenConverter) {
 async function setupTokenConverterETHs(tokenConverter) {
     const tokenIns = [
         addresses.crypto.frxETH,
-        addresses.crypto.WETH,
+        addresses.crypto.wEth,
         addresses.crypto.frxETH,
-        addresses.crypto.WETH,
+        addresses.crypto.wEth,
         addresses.crypto.zunETH,
         addresses.crypto.zunETH,
     ];
     const tokenOuts = [
-        addresses.crypto.WETH,
+        addresses.crypto.wEth,
         addresses.crypto.frxETH,
         addresses.crypto.zunETH,
         addresses.crypto.zunETH,
         addresses.crypto.frxETH,
-        addresses.crypto.WETH,
+        addresses.crypto.wEth,
     ];
     const routes = [
         [
@@ -428,18 +428,18 @@ async function setupTokenConverterFxnToZunUsd(tokenConverter) {
 async function setupTokenConverterWEthPxEthAndReverse(tokenConverter) {
 
     await tokenConverter.setRoutes(
-        [addresses.crypto.WETH, addresses.crypto.pxETH],
-        [addresses.crypto.pxETH, addresses.crypto.WETH],
+        [addresses.crypto.wEth, addresses.crypto.pxETH],
+        [addresses.crypto.pxETH, addresses.crypto.wEth],
         [
             [
-                addresses.crypto.WETH,
+                addresses.crypto.wEth,
                 '0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D',
                 addresses.crypto.pxETH,
             ],
             [
                 addresses.crypto.pxETH,
                 '0xC8Eb2Cf2f792F77AF0Cd9e203305a585E588179D',
-                addresses.crypto.WETH,
+                addresses.crypto.wEth,
             ]
         ],[
             [
@@ -453,7 +453,86 @@ async function setupTokenConverterWEthPxEthAndReverse(tokenConverter) {
 }
 
 async function setupTokenConverterBTCs(tokenConverter) {
+}
 
+async function setupTokenConverterStablesFrax(tokenConverter) {
+    const tokenIns = [
+        addresses.stablecoins.usdt,
+        addresses.stablecoins.usdc,
+        addresses.stablecoins.dai,
+        addresses.stablecoins.frax,
+        addresses.stablecoins.frax,
+        addresses.stablecoins.frax
+    ];
+    const tokenOuts = [
+        addresses.stablecoins.frax,
+        addresses.stablecoins.frax,
+        addresses.stablecoins.frax,
+        addresses.stablecoins.usdt,
+        addresses.stablecoins.usdc,
+        addresses.stablecoins.dai
+    ];
+    const routes = [
+        [
+            addresses.stablecoins.usdt,
+            '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+            addresses.stablecoins.usdc,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            addresses.stablecoins.frax,
+        ],
+        [
+            addresses.stablecoins.usdc,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            addresses.stablecoins.frax,
+        ],
+        [
+            addresses.stablecoins.dai,
+            '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+            addresses.stablecoins.usdc,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            addresses.stablecoins.frax,
+        ],
+        [
+            addresses.stablecoins.frax,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            addresses.stablecoins.usdc,
+            '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+            addresses.stablecoins.usdt,
+        ],
+        [
+            addresses.stablecoins.frax,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            addresses.stablecoins.usdc,
+        ],
+        [
+            addresses.stablecoins.frax,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            addresses.stablecoins.usdc,
+            '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+            addresses.stablecoins.dai,
+        ],
+    ];
+    const swapParams = [
+        [
+            [2, 1, 1, 1, 3],
+            [1, 0, 1, 1, 2],
+        ],
+        [[1, 0, 1, 1, 2]],
+        [
+            [0, 1, 1, 1, 3],
+            [1, 0, 1, 1, 2],
+        ],
+        [
+            [0, 1, 1, 1, 2],
+            [1, 2, 1, 1, 3],
+        ],
+        [[0, 1, 1, 1, 2]],
+        [
+            [0, 1, 1, 1, 2],
+            [1, 0, 1, 1, 3],
+        ],
+    ];
+    await tokenConverter.setRoutes(tokenIns, tokenOuts, routes, swapParams);
 }
 
 module.exports = {
@@ -463,5 +542,6 @@ module.exports = {
     setupTokenConverterCrvUsdToZunEth,
     setupTokenConverterFxnToZunUsd,
     setupTokenConverterWEthPxEthAndReverse,
-    setupTokenConverterBTCs
+    setupTokenConverterBTCs,
+    setupTokenConverterStablesFrax
 };

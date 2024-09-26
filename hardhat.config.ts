@@ -13,7 +13,7 @@ const REPORT_GAS = !!process.env.REPORT_GAS;
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 export const PROVIDER_URL = process.env.PROVIDER_URL;
-export const FORK_BLOCK_NUMBER = 20372000;
+export const FORK_BLOCK_NUMBER = 20827007;
 
 // import * as tdly from "@tenderly/hardhat-tenderly";
 // tdly.setup({automaticVerifications: false});
@@ -91,7 +91,7 @@ const config: HardhatUserConfig = {
             chainId: 1,
             gas: 'auto',
             gasMultiplier: 1.2,
-            gasPrice: 2000000000,
+            gasPrice: 12000000000,
             accounts: [`${PRIVATE_KEY}`],
             loggingEnabled: true,
         },

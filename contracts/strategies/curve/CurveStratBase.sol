@@ -73,9 +73,13 @@ abstract contract CurveStratBase is ZunamiStratBase {
         uint256 removedAmount = pool.remove_liquidity_one_coin(
             amount,
             curveTokenIndex,
-            minTokenAmounts[getZunamiRemovingTokenIndex()]
+            getRemovingLiquidityMinAmount(minTokenAmounts)
         );
         convertRemovedAmount(removedAmount);
+    }
+
+    function getRemovingLiquidityMinAmount(uint256[POOL_ASSETS] memory minTokenAmounts) internal view virtual returns (uint256) {
+        return minTokenAmounts[getZunamiRemovingTokenIndex()];
     }
 
     function convertRemovedAmount(uint256 receivedAmount) internal virtual {}

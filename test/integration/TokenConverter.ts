@@ -4,15 +4,11 @@ import { expect } from 'chai';
 import chai from 'chai';
 import { Contract } from '@ethersproject/contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { FakeContract, smock } from '@defi-wonderland/smock';
-
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 import * as addresses from '../address.json';
 import { Address } from 'hardhat-deploy/dist/types';
 
 chai.should(); // if you like should syntax
-chai.use(smock.matchers);
 
 export const tokenify = (value: any) => ethers.utils.parseUnits(value, 18);
 export const stablify = (value: any) => ethers.utils.parseUnits(value, 6);
@@ -481,7 +477,7 @@ describe('Token Converter', () => {
         it('should swap DAI to USDT', async () => {
             const tokenInAddr = addresses.stablecoins.dai;
             const tokenOutAddr = addresses.stablecoins.usdt;
-            const impersonate = '0xBF293D5138a2a1BA407B43672643434C43827179';
+            const impersonate = '0xD1668fB5F690C59Ab4B0CAbAd0f8C1617895052B';
             const amount = tokenify('100');
             const minAmountOut = stablify('99');
 
@@ -508,7 +504,7 @@ describe('Token Converter', () => {
         it('should swap DAI to USDC', async () => {
             const tokenInAddr = addresses.stablecoins.dai;
             const tokenOutAddr = addresses.stablecoins.usdc;
-            const impersonate = '0xBF293D5138a2a1BA407B43672643434C43827179';
+            const impersonate = '0xD1668fB5F690C59Ab4B0CAbAd0f8C1617895052B';
             const amount = tokenify('100');
             const minAmountOut = stablify('99');
 
@@ -535,7 +531,7 @@ describe('Token Converter', () => {
         it('should swap DAI to crvUSD', async () => {
             const tokenInAddr = addresses.stablecoins.dai;
             const tokenOutAddr = addresses.stablecoins.crvUSD;
-            const impersonate = '0xBF293D5138a2a1BA407B43672643434C43827179';
+            const impersonate = '0xD1668fB5F690C59Ab4B0CAbAd0f8C1617895052B';
             const amount = tokenify('100');
             const minAmountOut = tokenify('99');
 
@@ -571,7 +567,7 @@ describe('Token Converter', () => {
         it('should swap DAI to zunUSD', async () => {
             const tokenInAddr = addresses.stablecoins.dai;
             const tokenOutAddr = addresses.stablecoins.zunUSD;
-            const impersonate = '0xBF293D5138a2a1BA407B43672643434C43827179';
+            const impersonate = '0xD1668fB5F690C59Ab4B0CAbAd0f8C1617895052B';
             const amount = tokenify('100');
             const minAmountOut = tokenify('99');
 
@@ -880,7 +876,7 @@ describe('Token Converter', () => {
     describe('FrxETH', () => {
         it('should swap FrxETH to WETH', async () => {
             const tokenInAddr = addresses.crypto.frxETH;
-            const tokenOutAddr = addresses.crypto.WETH;
+            const tokenOutAddr = addresses.crypto.wEth;
             const impersonate = '0x12FaE9F7841766798C8Edd8363673B0b79D4712B';
             const amount = tokenify('1');
             const minAmountOut = tokenify('0.98');
@@ -943,7 +939,7 @@ describe('Token Converter', () => {
 
     describe('WETH', () => {
         it('should swap WETH to FrxETH', async () => {
-            const tokenInAddr = addresses.crypto.WETH;
+            const tokenInAddr = addresses.crypto.wEth;
             const tokenOutAddr = addresses.crypto.frxETH;
             const impersonate = '0x57757E3D981446D585Af0D9Ae4d7DF6D64647806';
             const amount = tokenify('1');
@@ -974,7 +970,7 @@ describe('Token Converter', () => {
         });
 
         it('should swap WETH to zunETH', async () => {
-            const tokenInAddr = addresses.crypto.WETH;
+            const tokenInAddr = addresses.crypto.wEth;
             const tokenOutAddr = addresses.crypto.zunETH;
             const impersonate = '0x57757E3D981446D585Af0D9Ae4d7DF6D64647806';
             const amount = tokenify('1');
@@ -1044,7 +1040,7 @@ describe('Token Converter', () => {
 
         it('should swap zunETH to WETH', async () => {
             const tokenInAddr = addresses.crypto.zunETH;
-            const tokenOutAddr = addresses.crypto.WETH;
+            const tokenOutAddr = addresses.crypto.wEth;
             const impersonate = '0x57757E3D981446D585Af0D9Ae4d7DF6D64647806';
             const amount = tokenify('1');
             const minAmountOut = tokenify('0.98');
@@ -1078,4 +1074,68 @@ describe('Token Converter', () => {
             expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
         });
     });
+
+    describe('frax', () => {
+      it('should swap USDC to FRAX', async () => {
+        const tokenInAddr = addresses.stablecoins.usdc;
+        const tokenOutAddr = addresses.stablecoins.frax;
+        const impersonate = '0x28C6c06298d514Db089934071355E5743bf21d60';
+        const amount = stablify('100');
+        const minAmountOut = stablify('99');
+
+        await tokenConverter.setRoute(
+          tokenInAddr,
+          tokenOutAddr,
+          [
+            tokenInAddr,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            tokenOutAddr,
+          ],
+          [[1, 0, 1, 1, 2]],
+        );
+
+        const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+        const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+        await sendTokens(impersonate, alice.address, tokenIn.address, amount, admin);
+
+        const balanceBefore = await tokenOut.balanceOf(alice.address);
+        await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+        await tokenConverter
+          .connect(alice)
+          .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+        expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+      });
+
+      it('should swap FRAX to USDC', async () => {
+        const tokenInAddr = addresses.stablecoins.frax;
+        const tokenOutAddr = addresses.stablecoins.usdc;
+        const impersonate = '0x5E583B6a1686f7Bc09A6bBa66E852A7C80d36F00';
+        const amount = tokenify('100');
+        const minAmountOut = stablify('99');
+
+        await tokenConverter.setRoute(
+          tokenInAddr,
+          tokenOutAddr,
+          [
+            tokenInAddr,
+            '0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2',
+            tokenOutAddr,
+          ],
+          [[0, 1, 1, 1, 2]],
+        );
+
+        const tokenIn = await ethers.getContractAt('ERC20Token', tokenInAddr);
+        const tokenOut = await ethers.getContractAt('ERC20Token', tokenOutAddr);
+        await sendTokens(impersonate, alice.address, tokenIn.address, amount, admin);
+
+        const balanceBefore = await tokenOut.balanceOf(alice.address);
+        await tokenIn.connect(alice).transfer(tokenConverter.address, amount);
+        await tokenConverter
+          .connect(alice)
+          .handle(tokenInAddr, tokenOutAddr, amount, minAmountOut);
+
+        expect(await tokenOut.balanceOf(alice.address)).to.be.gt(balanceBefore);
+      });
+    })
 });

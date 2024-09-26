@@ -266,8 +266,6 @@ CurveGaugeGauge  deployed to: 0xD7c689822cE9C99798C43426c9Fe53A2d8892fA3
 
 ZunDistributor deployed to: 0xEEA950a509d822CF65edcEED53d161fBaa967B3a
 
-
-
 ZunamiPoolApsZunETH: 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2
 ZunEthFrxEthApsStakingConvexCurveStrat strategy deployed to: 0xE527082401705c5b395E3e7a91B0be6e78357159
 Set price oracle address 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 in ZunEthFrxEthApsStakingConvexCurveStrat strategy
@@ -410,3 +408,27 @@ Set zunami pool address 0x390FF6Bff315aC514F1De8480ed6666a3B5095A7 in ZunBTCVaul
 Added ZunBTCVaultStrat pool to ZunamiPool
 
 
+Attach zunUSD omnipool:
+ZunamiPoolZunUSD: 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6
+Attach zunUSD pool controller:
+ZunamiPoolControllerZunUSD: 0x618eee502CDF6b46A2199C21D1411f3F6065c940
+Attach TokenConverter:
+TokenConverter: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+
+LlamalendWeth2StakeDaoERC4626Strat strategy deployed to: 0x531BbA64373A1B8E5a94BB51ba32CCe1cB42633D
+Set price oracle address 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 in LlamalendWeth2StakeDaoERC4626Strat strategy
+Set token converter address 0xf48A59434609b6e934c2cF091848FA2D28b34bfc in LlamalendWeth2StakeDaoERC4626Strat strategy
+Set zunami pool address 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6 in LlamalendWeth2StakeDaoERC4626Strat strategy
+
+FraxCrvUsdStakeDaoCurve strategy deployed to: 0xEe58Bf056579786cf11A68c901664A5BA8BDACcf
+Set price oracle address 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 in FraxCrvUsdStakeDaoCurve strategy
+Set token converter address 0xf48A59434609b6e934c2cF091848FA2D28b34bfc in FraxCrvUsdStakeDaoCurve strategy
+Set zunami pool address 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6 in FraxCrvUsdStakeDaoCurve strategy
+
+GenericOracle attached to: 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+frax/crvUSD pool oracle deployed to:  0x3b3939d3c796C35e2fE1735E31fCb0edf72b9C95
+frax/crvUSD pool oracle set:  0x0CD6f267b2086bea681E922E19D40512511BE538 0x3b3939d3c796C35e2fE1735E31fCb0edf72b9C95
+
+TokenConverter deployed to: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+Starting setup token converter stables to frax and reverse
+Token сonverter configured for  stables to frax and reverse
