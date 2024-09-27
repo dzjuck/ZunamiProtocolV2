@@ -11,6 +11,7 @@ Set zunami pool address 0x4F1ed6687c6C70B9Fb717c496D1d869d78e9B094 in ZunUSDBase
 Admin: 0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
 Deploy Base Locked Zunami USD APS LP Staking:
 Staking Reward Distributor LP: 0x0030b9c15bC3575ffd1dc96eD3a6548Ee5Ab280F
+Staking Reward Distributor LP implementation: 0x979207C927081bC0aeDfc920fD60f11dcB7f2d2f
 Reward token added:  0x1db0Fc8933f545648b54A9eE4326209a9A259643
 
 ZunamiDepositStakedApsZap deployed to: 0x5FD842f1dEB0372dc9Ee18e65b83EB5CE0EA9A24 with args: 0x83ed27966584d24a788D2331B4824f490d3DD071 0x0030b9c15bC3575ffd1dc96eD3a6548Ee5Ab280F
