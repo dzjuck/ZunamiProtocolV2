@@ -538,7 +538,7 @@ describe('ZunETH APS flow tests', () => {
         expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.gt(0);
     });
 
-  it('should deposit to aps using zap 3', async () => {
+  it('should deposit and withdraw using zap', async () => {
     const {
       admin,
       zunamiPool,
@@ -571,14 +571,16 @@ describe('ZunETH APS flow tests', () => {
 
     const stakingRewardDistributor = instance as StakingRewardDistributor;
 
+    const zunAddress = '0x6b5204b0be36771253cc38e88012e02b752f0f36';
     //deploy zap
-    const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiDepositEthZap3');
+    const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiEthZap');
     const zunamiDepositZap = (await ZunamiDepositZapFactory.deploy(
       zunamiPool.address,
       zunamiPoolControllerAps.address,
       stakingRewardDistributor.address,
       tokenConverter.address,
-      genericOracle.address
+      genericOracle.address,
+      zunAddress
     )) as ZunamiDepositZap;
 
     expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);

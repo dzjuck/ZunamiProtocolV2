@@ -600,6 +600,71 @@ describe('ZunUSD APS flow tests', () => {
     expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.closeTo(0, 1);
   });
 
+  it('should deposit and withdraw using zap', async () => {
+    const {
+      admin,
+      tokenConverter,
+      zunamiPool,
+      zunamiPoolAps,
+      zunamiPoolControllerAps,
+      dai,
+      usdc,
+      usdt,
+      strategiesAps,
+      genericOracle
+    } = await loadFixture(deployFixture);
+
+    // Add strategies to omnipool and aps pool
+    const sid = 0;
+    await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
+
+    const StakingRewardDistributorFactory = await ethers.getContractFactory(
+      'StakingRewardDistributor'
+    );
+
+    const instance = await upgrades.deployProxy(
+      StakingRewardDistributorFactory,
+      [zunamiPoolControllerAps.address, 'LP', 'LP', admin.address],
+      {
+        kind: 'uups',
+      }
+    );
+    await instance.deployed();
+
+    const stakingRewardDistributor = instance as StakingRewardDistributor;
+
+    const zunAddress = '0x6b5204b0be36771253cc38e88012e02b752f0f36';
+    //deploy zap
+    const ZunamiDepositZapFactory = await ethers.getContractFactory('ZunamiZap');
+    const zunamiDepositZap = (await ZunamiDepositZapFactory.deploy(
+      zunamiPool.address,
+      zunamiPoolControllerAps.address,
+      stakingRewardDistributor.address,
+      tokenConverter.address,
+      genericOracle.address,
+      zunAddress
+    )) as ZunamiDepositZap;
+
+    expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);
+
+    const tokenAmount = '10000';
+    await dai
+      .connect(admin)
+      .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'ether'));
+    await usdc
+      .connect(admin)
+      .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'mwei'));
+    await usdt
+      .connect(admin)
+      .approve(zunamiDepositZap.address, parseUnits(tokenAmount, 'mwei'));
+
+    await zunamiDepositZap
+      .connect(admin)
+      .deposit(getMinAmountZunUSD(tokenAmount), admin.getAddress());
+
+    expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.closeTo(0, 1);
+  });
+
   it('should mint zunUSD using stable zap 2', async () => {
     const {
       admin,
