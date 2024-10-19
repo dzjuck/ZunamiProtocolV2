@@ -36,8 +36,6 @@ async function main() {
 
     // console.log('Deploy TokenConverter:');
     const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    // const tokenConverter = await TokenConverterFactory.deploy();
-    // await tokenConverter.deployed();
     const tokenConverter = await TokenConverterFactory.attach(
         '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
     );
@@ -45,32 +43,30 @@ async function main() {
 
     console.log('Deploy zunBTC omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunBTC');
-    // const zunamiPool = await ZunamiPool.deploy();
-    // await zunamiPool.deployed();
-    const zunamiPool = await ZunamiPool.attach('0x390FF6Bff315aC514F1De8480ed6666a3B5095A7');
+    const zunamiPool = await ZunamiPool.deploy();
+    await zunamiPool.deployed();
+    // const zunamiPool = await ZunamiPool.attach('');
     console.log('ZunamiPoolZunBTC:', zunamiPool.address);
 
     console.log('Deploy zunBTC pool controller:');
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunBTC');
-    // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
-    // await zunamiPoolController.deployed();
-    const zunamiPoolController = await ZunamiPool.attach('0x8cA9f8A82F3561915f0A7f16c16e3F08fB71588d');
+    const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
+    await zunamiPoolController.deployed();
+    // const zunamiPoolController = await ZunamiPool.attach('');
     console.log('ZunamiPoolControllerZunBTC:', zunamiPoolController.address);
 
-    // let result = await zunamiPool.grantRole(
-    //     await zunamiPool.CONTROLLER_ROLE(),
-    //     zunamiPoolController.address
-    // );
-    // await result.wait();
-    // console.log(
-    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
-    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
-    // );
-
-    // await createAndInitStrategy(zunamiPool, 'ZunBTCVaultStrat', null, null);
-    result = await zunamiPool.addStrategy('0x43beaC29c2F9Cd10F936068925cf69FF273453b5');
+    let result = await zunamiPool.grantRole(
+        await zunamiPool.CONTROLLER_ROLE(),
+        zunamiPoolController.address
+    );
     await result.wait();
-    console.log(`Added ZunBTCVaultStrat pool to ZunamiPool`);
+    console.log(
+        'ZunamiPoolController granted CONTROLLER_ROLE:',
+        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    );
+
+    await createAndInitStrategy(zunamiPool, 'ZunBTCVaultStrat', null, null);
+
     // await createAndInitStrategy(
     //     zunamiPool,
     //     '',

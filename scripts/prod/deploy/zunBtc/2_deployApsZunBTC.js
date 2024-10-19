@@ -32,7 +32,7 @@ async function createAndInitStrategy(zunamiPool, stratName, oracleAddress, token
 async function main() {
     console.log('Start deploy');
 
-    console.log('Deploy zunETH APS omnipool:');
+    console.log('Deploy zunBTC APS omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolApsZunBTC');
     // const zunamiPool = await ZunamiPool.attach('');
     const zunamiPool = await ZunamiPool.deploy();

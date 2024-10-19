@@ -8,7 +8,7 @@ contract ZunamiPoolZunBTC is ZunamiPool {
     uint256 public constant ZUNAMI_WBTC_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_TBTC_TOKEN_ID = 1;
 
-    constructor() ZunamiPool('Zunami ETH', 'zunETH') {
+    constructor() ZunamiPool('Zunami BTC', 'zunBTC') {
         address[POOL_ASSETS] memory tokens;
         tokens[ZUNAMI_WBTC_TOKEN_ID] = Constants.WBTC_ADDRESS;
         tokens[ZUNAMI_TBTC_TOKEN_ID] = Constants.TBTC_ADDRESS;

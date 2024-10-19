@@ -191,3 +191,13 @@ npx hardhat verify --network mainnet --contract contracts/strategies/erc4626/sta
 
 // FxnOracle
 npx hardhat verify --network mainnet 0x1E08f5C21817B5F8f3629471FCc2387e5b8fD11e
+
+
+//zunBTC OMNIPOOL
+npx hardhat verify --network mainnet 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB
+
+//zunBTC Controller
+npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunamiPoolControllerZunBTC.sol:ZunamiPoolControllerZunBTC 0x8d6C5C61E815A53b1D24AC94DEEC62f31911EeB4 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB
+
+//zunBTC OMNIPOOL VaultStrategy
+npx hardhat verify --network mainnet 0x1315cD2aa195eaAcFE9cD83135AeFa19Bf07d449

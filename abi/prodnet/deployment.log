@@ -397,17 +397,6 @@ Set zunami pool address 0x5Ab3aa11a40eB34f1d2733f08596532871bd28e2 in ZunEthPxEt
 ZunamiStableZap2 ZunETH deployed to: 0xB9120f35b64b632c1E6b658b60195783Fb1427C3 with args: 0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 86400 BigNumber { value: "275000000000000000000" } 86400 BigNumber { value: "25000000000000000000" } 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
 ZunamiStableZap2 ZunUSD deployed to: 0x191f0b1976d17695979AF7E5768D5A257905d461 with args: 0x618eee502CDF6b46A2199C21D1411f3F6065c940 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 86400 BigNumber { value: "1100000000000000000000000" } 86400 BigNumber { value: "100000000000000000000000" } 0x0000000000000000000000000000000000000000
 
-
-Deploy zunBTC omnipool:
-ZunamiPoolZunBTC: 0x390FF6Bff315aC514F1De8480ed6666a3B5095A7
-Deploy zunBTC pool controller:
-ZunamiPoolControllerZunBTC: 0x8cA9f8A82F3561915f0A7f16c16e3F08fB71588d
-ZunamiPoolController granted CONTROLLER_ROLE: true
-ZunBTCVaultStrat strategy deployed to: 0x43beaC29c2F9Cd10F936068925cf69FF273453b5
-Set zunami pool address 0x390FF6Bff315aC514F1De8480ed6666a3B5095A7 in ZunBTCVaultStrat strategy
-Added ZunBTCVaultStrat pool to ZunamiPool
-
-
 Attach zunUSD omnipool:
 ZunamiPoolZunUSD: 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6
 Attach zunUSD pool controller:
@@ -432,3 +421,31 @@ frax/crvUSD pool oracle set:  0x0CD6f267b2086bea681E922E19D40512511BE538 0x3b393
 TokenConverter deployed to: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
 Starting setup token converter stables to frax and reverse
 Token сonverter configured for  stables to frax and reverse
+
+
+TokenConverter: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+Deploy zunBTC omnipool:
+ZunamiPoolZunBTC: 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB
+Deploy zunBTC pool controller:
+ZunamiPoolControllerZunBTC: 0x8d6C5C61E815A53b1D24AC94DEEC62f31911EeB4
+ZunamiPoolController granted CONTROLLER_ROLE: true
+ZunBTCVaultStrat strategy deployed to: 0x1315cD2aa195eaAcFE9cD83135AeFa19Bf07d449
+Added ZunBTCVaultStrat pool to ZunamiPool
+Set zunami pool address 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB in ZunBTCVaultStrat strategy
+
+Deploy zunBTC APS omnipool:
+ZunamiPoolApsZunBTC: 0x3c6e1ffffc293e93bb383b375ba348b85e828D82
+Deploy zunBTC APS pool controller:
+ZunamiPoolControllerApsZunBTC: 0xAEa5f929bC26Dea0c3f5d6dcb0e00ce83751Fc41
+ZunamiPoolController granted CONTROLLER_ROLE: true
+ZunBTCApsVaultStrat strategy deployed to: 0x46ACb3e0c0954DB538cF7EF9e475BCeA83c3eD65
+Added ZunBTCApsVaultStrat pool to ZunamiPool
+Set zunami pool address 0x3c6e1ffffc293e93bb383b375ba348b85e828D82 in ZunBTCApsVaultStrat strategy
+
+Admin: 0xe9b2B067eE106A6E518fB0552F3296d22b82b32B
+Deploy Zunami BTC APS LP Staking:
+Staking Reward Distributor LP proxy: 0xe03D3429b958E73eDF4Cf985a823c70B01B48280
+Staking Reward Distributor LP implementation: 0xA3DEB7F7d181D7B42E0100E7118eDD57e20835c4
+Reward token added:  0x6b5204B0Be36771253Cc38e88012E02B752f0f36
+
+ZunamiZap zunBTC deployed to: 0x533977DACc1D3C6D7c5276c4c0e25E962013a113 with args: 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB 0xAEa5f929bC26Dea0c3f5d6dcb0e00ce83751Fc41 0xe03D3429b958E73eDF4Cf985a823c70B01B48280 0xf48A59434609b6e934c2cF091848FA2D28b34bfc 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 0x6b5204B0Be36771253Cc38e88012E02B752f0f36

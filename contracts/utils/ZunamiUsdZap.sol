@@ -9,13 +9,15 @@ import '../utils/Constants.sol';
 import "../tokenomics/staking/IStaking.sol";
 import '../lib/Oracle/interfaces/IOracle.sol';
 
-contract ZunamiZap {
+contract ZunamiUsdZap {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
     error SameAddress();
 
     uint8 public constant POOL_ASSETS = 5;
+
+    uint256 constant ZUNAMI_CRVUSD_TOKEN_ID = 3;
 
     uint256 public constant MIN_AMOUNT_DENOMINATOR = 10000;
     uint256 public constant MIN_AMOUNT = 9980; // 99.80%
@@ -66,6 +68,10 @@ contract ZunamiZap {
             uint256 amount = amounts[i];
             IERC20 token = tokens[i];
             uint256 tokenDecimalsMultiplier = tokenDecimalsMultipliers[i];
+            if (i == ZUNAMI_CRVUSD_TOKEN_ID) {
+                token = IERC20(Constants.CRVUSD_ADDRESS);
+                tokenDecimalsMultiplier = 1;
+            }
             if (address(token) != address(0) && amount > 0) {
                 token.safeTransferFrom(msg.sender, address(this), amount);
                 token.safeTransfer(address(converter), amount);
