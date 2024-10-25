@@ -32,7 +32,6 @@ const CRV_zunUSD_crvUSD_LP_ADDRESS = '0x8C24b3213FD851db80245FCCc42c40B94Ac9a745
 import * as addrs from '../address.json';
 import { attachPoolAndControllerZunUSD } from '../utils/AttachPoolAndControllerZunUSD';
 import { setupTokenConverterStables } from '../utils/SetupTokenConverter';
-import {getMinAmountZunETH} from "../utils/GetMinAmountZunETH";
 
 export async function createPoolAndCompoundController(token: string, rewardManager: string) {
     const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
@@ -665,9 +664,10 @@ describe('ZunUSD APS flow tests', () => {
     expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.closeTo(0, 1);
   });
 
-  it('should mint zunUSD using stable zap 2', async () => {
+  it('should mint zunUSD using stable zap 3', async () => {
     const {
       admin,
+      bob,
       carol,
       zunamiPool,
       zunamiPoolController,
@@ -683,7 +683,7 @@ describe('ZunUSD APS flow tests', () => {
     const dailyRedeemLimit = ethers.utils.parseUnits('100000', "ether");
 
     //deploy zap
-    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap2');
+    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap3');
     const zunamiStableZap = (await ZunamiStableZapFactory.deploy(
       zunamiPoolController.address,
       genericOracle.address,
@@ -691,7 +691,9 @@ describe('ZunUSD APS flow tests', () => {
       dailyMintLimit,
       dailyRedeemDuration,
       dailyRedeemLimit,
-      '0x0000000000000000000000000000000000000000'
+      '0x0000000000000000000000000000000000000000',
+      5000,
+      bob.address
     )) as ZunamiStableZap2;
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(0);
@@ -763,6 +765,7 @@ describe('ZunUSD APS flow tests', () => {
     expect(await dai.balanceOf(zunamiStableZap.address)).to.eq(0);
     expect(await usdc.balanceOf(zunamiStableZap.address)).to.eq(0);
     expect(await usdt.balanceOf(zunamiStableZap.address)).to.eq(0);
+    expect(await zunamiPool.balanceOf(bob.getAddress())).to.eq(parseUnits("810000", 'ether'));
     expect(await dai.balanceOf(carol.getAddress())).to.eq(parseUnits('30000', 'ether'));
     expect(await usdc.balanceOf(carol.getAddress())).to.eq(parseUnits('30000', 'mwei'));
     expect(await usdt.balanceOf(carol.getAddress())).to.eq(parseUnits('30000', 'mwei'));

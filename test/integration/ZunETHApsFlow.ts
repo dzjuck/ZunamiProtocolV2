@@ -600,9 +600,10 @@ describe('ZunETH APS flow tests', () => {
     expect(await stakingRewardDistributor.balanceOf(admin.getAddress())).to.closeTo(parseUnits("30", 'ether'), parseUnits("0.3", 'ether'));
   });
 
-  it('should mint zunETH using stable zap 2', async () => {
+  it('should mint zunETH using stable zap 3', async () => {
     const {
       admin,
+      bob,
       carol,
       zunamiPool,
       zunamiPoolController,
@@ -619,7 +620,7 @@ describe('ZunETH APS flow tests', () => {
     const dailyRedeemLimit = ethers.utils.parseUnits('25', "ether"); // 100000 / 4000
 
     //deploy zap
-    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap2');
+    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap3');
     const zunamiStableZap = (await ZunamiStableZapFactory.deploy(
       zunamiPoolController.address,
       genericOracle.address,
@@ -627,7 +628,9 @@ describe('ZunETH APS flow tests', () => {
       dailyMintLimit,
       dailyRedeemDuration,
       dailyRedeemLimit,
-      '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+      '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+      5000,
+      bob.address
     )) as ZunamiStableZap2;
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(0);
@@ -690,13 +693,14 @@ describe('ZunETH APS flow tests', () => {
 
     await zunamiStableZap
       .connect(admin)
-      .redeem(parseUnits("25", 'ether'),  carol.getAddress(), parseUnits("24.982", 'ether'))
+      .redeem(parseUnits("25", 'ether'),  carol.getAddress(), parseUnits("24.85", 'ether')) // minus 0.005% fee
 
     expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("175", 'ether'));
     expect(await wEth.balanceOf(zunamiStableZap.address)).to.eq(0);
     expect(await frxEth.balanceOf(zunamiStableZap.address)).to.eq(0);
-    expect(await wEth.balanceOf(carol.getAddress())).to.eq(parseUnits("12.5", 'ether'));
-    expect(await frxEth.balanceOf(carol.getAddress())).to.eq(parseUnits("12.5", 'ether'));
+    expect(await zunamiPool.balanceOf(bob.getAddress())).to.eq(parseUnits("0.125", 'ether'));
+    expect(await wEth.balanceOf(carol.getAddress())).to.eq(parseUnits("12.4375", 'ether'));
+    expect(await frxEth.balanceOf(carol.getAddress())).to.eq(parseUnits("12.4375", 'ether'));
 
     await time.increase(dailyRedeemDuration);
 
