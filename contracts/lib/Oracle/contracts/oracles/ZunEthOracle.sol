@@ -37,8 +37,8 @@ contract ZunEthOracle is IOracle {
         address token_
     ) internal view returns (uint256) {
         uint256 tokenPrice_ = _genericOracle.getUSDPrice(token_);
-        uint256 tokenPerZunETH_ = ICurvePriceOracleNG(curvePool_).price_oracle(0);
+        uint256 zunETHPerToken_ = ICurvePriceOracleNG(curvePool_).price_oracle(0);
 
-        return tokenPrice_.mulDown(tokenPerZunETH_);
+        return tokenPrice_.divDown(zunETHPerToken_);
     }
 }

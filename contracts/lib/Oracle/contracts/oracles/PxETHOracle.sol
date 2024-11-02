@@ -40,8 +40,8 @@ contract PxETHOracle is IOracle {
         address token_
     ) internal view returns (uint256) {
         uint256 tokenPrice_ = _genericOracle.getUSDPrice(token_);
-        uint256 tokenPerPxETH_ = ICurvePriceOracleNG(curvePool_).price_oracle(0);
-        return tokenPrice_.mulDown(tokenPerPxETH_);
+        uint256 pxETHPerToken_ = ICurvePriceOracleNG(curvePool_).price_oracle(0);
+        return tokenPrice_.divDown(pxETHPerToken_);
     }
 
     function _median(uint256 a, uint256 b) internal pure returns (uint256) {

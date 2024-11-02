@@ -203,3 +203,9 @@ npx hardhat verify --network mainnet 0x1315cD2aa195eaAcFE9cD83135AeFa19Bf07d449
 
 // RecapitalizationManager
 npx hardhat verify --network mainnet 0xd5D1ACC9c7EbAf8bBF85C45AEe2b8b3f3b1bd062 0x6b5204b0be36771253cc38e88012e02b752f0f36
+
+// pxETHOracle
+npx hardhat verify --network mainnet 0x1e276d4a186792CAFE5C1854bE78D47DdC454666 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+
+// ZunEthOracle
+npx hardhat verify --network mainnet 0x772226Eb94013Cac9bcc13C036B748A9703FF826 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
