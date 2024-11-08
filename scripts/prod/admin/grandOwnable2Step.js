@@ -11,7 +11,7 @@ async function main() {
         // '0x7ba745D6ee5c19d4284ee6dF5cE3c3Ccf147C283',
         // '0x25488a987CFBe173DAa980B43b6696DC5f8428d4',
         // '0x7bc2c885916a074955E9550F8b25995811a88853',
-        '0x51f4594024327fD2E3d4E7BDdD7174237f038F7C'
+        // '0x51f4594024327fD2E3d4E7BDdD7174237f038F7C'
     ];
 
     const Ownable2StepFactory = await ethers.getContractFactory('ZunVestingDistributor');

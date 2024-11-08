@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
@@ -15,8 +15,51 @@ import { mintBtcCoins } from "../utils/MintBtcCoins";
 import { createRewardManager } from "../utils/CreateRewardManager";
 import { setupTokenConverterBTCs } from "../utils/SetupTokenConverter";
 import { getMinAmountZunBTC } from "../utils/GetMinAmountZunBTC";
+import {
+  StakingRewardDistributor,
+  ZunamiLaunchZap,
+  ZunamiPool,
+  ZunamiPoolCompoundController
+} from "../../typechain-types";
+import * as addresses from "../address.json";
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const wBtc_tBtc_pool_addr = "0xB7ECB2AA52AA64a717180E030241bC75Cd946726";
+
+export async function createPoolAndCompoundController(token: string, rewardManager: string) {
+  const ZunamiPoolFactory = await ethers.getContractFactory('ZunamiPool');
+  const zunamiPool = (await ZunamiPoolFactory.deploy('APS', 'APS')) as ZunamiPool;
+
+  await zunamiPool.setTokens(
+    [token, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
+    [1, 0, 0, 0, 0]
+  );
+
+  const ZunamiPooControllerFactory = await ethers.getContractFactory(
+    'ZunamiPoolCompoundController'
+  );
+  const zunamiPoolController = (await ZunamiPooControllerFactory.deploy(
+    zunamiPool.address,
+    'APS LP',
+    'APSLP'
+  )) as ZunamiPoolCompoundController;
+
+  if (rewardManager) {
+    await zunamiPoolController.setRewardManager(rewardManager);
+  }
+
+  await zunamiPoolController.setFeeTokenId(0);
+
+  await zunamiPoolController.setRewardTokens([
+    addresses.crypto.crv,
+    addresses.crypto.cvx,
+    addresses.crypto.fxs,
+    addresses.crypto.sdt,
+    addresses.crypto.zunETH,
+  ]);
+  await zunamiPool.grantRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address);
+  return { zunamiPool, zunamiPoolController };
+}
 
 describe("ZunBTC flow tests", () => {
   const strategyNames = ["ZunBTCVaultStrat", "WBtcTBtcConvexCurveStrat"];
@@ -32,9 +75,19 @@ describe("ZunBTC flow tests", () => {
     const { curveRegistryCache, chainlinkOracle, genericOracle, curveLPOracle } =
       await createAndInitConicOracles([wBtc_tBtc_pool_addr]);
 
-    const WBTCOracleFactory = await ethers.getContractFactory('WBTCOracle');
-    const wBTCOracle = await WBTCOracleFactory.deploy(genericOracle.address);
+    const LlammaOracleFactory = await ethers.getContractFactory('LlammaOracle');
+
+    const wBtcLlammaOracle = "0xBe83fD842DB4937C0C3d15B2aBA6AF7E854f8dcb";
+    const wBTCOracle = await LlammaOracleFactory.deploy(wBtcLlammaOracle, wBtc.address);
     await genericOracle.setCustomOracle(wBtc.address, wBTCOracle.address);
+
+    const tBtcLlammaOracle = "0xbeF434E2aCF0FBaD1f0579d2376fED0d1CfC4217";
+    const tBTCOracle = await LlammaOracleFactory.deploy(tBtcLlammaOracle, tBtc.address);
+    await genericOracle.setCustomOracle(tBtc.address, tBTCOracle.address);
+
+    console.log("wBTCOracle price", await genericOracle.getUSDPrice(wBtc.address));
+    console.log("tBTCOracle price", await genericOracle.getUSDPrice(tBtc.address));
+    console.log("wBtcTBtcPoolAddress price", await genericOracle.getUSDPrice(wBtc_tBtc_pool_addr));
 
     const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunBTC();
 
@@ -91,7 +144,7 @@ describe("ZunBTC flow tests", () => {
     };
   }
 
-  it.only("should deposit assets", async () => {
+  it("should deposit assets", async () => {
     const { admin, alice, bob, zunamiPool, zunamiPoolController, strategies, wBtc, tBtc } =
       await loadFixture(deployFixture);
 
@@ -105,8 +158,6 @@ describe("ZunBTC flow tests", () => {
           const wBtcBefore = await wBtc.balanceOf(user.getAddress());
           const tBtcBefore = await tBtc.balanceOf(user.getAddress());
           const zStableBefore = await zunamiPool.balanceOf(user.getAddress());
-
-          console.log("amounts: ", getMinAmountZunBTC("1"));
 
           await expect(
             zunamiPoolController
@@ -278,5 +329,86 @@ describe("ZunBTC flow tests", () => {
 
     await expect((await zunamiPool.strategyInfo(poolSrc)).minted).to.be.gt(0);
     await expect((await zunamiPool.strategyInfo(poolDst)).minted).to.be.eq(0);
+  });
+
+  it('should deposit and withdraw using launch zap', async () => {
+    const {
+      admin,
+      zunamiPool,
+      zunamiPoolController,
+      strategies,
+      wBtc,
+      tBtc,
+      genericOracle
+    } = await loadFixture(deployFixture);
+
+    // Add strategies to omnipool and aps pool
+    const sid = 0;
+    await zunamiPool.addStrategy(strategies[sid].address);
+
+
+    const { zunamiPool: zunamiPoolAps, zunamiPoolController: zunamiPoolControllerAps } =
+      await createPoolAndCompoundController(zunamiPool.address, null);
+
+    const strategiesAps = await createStrategies(
+      ["VaultStrat"],
+      genericOracle,
+      zunamiPoolAps,
+      null,
+      [zunamiPool.address, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO, ADDRESS_ZERO],
+      [1, 0, 0, 0, 0]
+    );
+    await zunamiPoolAps.addStrategy(strategiesAps[sid].address);
+
+    const StakingRewardDistributorFactory = await ethers.getContractFactory(
+      'StakingRewardDistributor'
+    );
+
+    const instance = await upgrades.deployProxy(
+      StakingRewardDistributorFactory,
+      [zunamiPoolControllerAps.address, 'LP', 'LP', admin.address],
+      {
+        kind: 'uups',
+      }
+    );
+    await instance.deployed();
+
+    const stakingRewardDistributor = instance as StakingRewardDistributor;
+
+    const zunAddress = '0x6b5204b0be36771253cc38e88012e02b752f0f36';
+    //deploy zap
+    const ZunamiLaunchZapZapFactory = await ethers.getContractFactory('ZunamiLaunchZap');
+
+    const zunamiLaunchZap = (await ZunamiLaunchZapZapFactory.deploy(
+      zunamiPoolController.address,
+      zunamiPoolControllerAps.address,
+      stakingRewardDistributor.address,
+      zunAddress
+    )) as ZunamiLaunchZap;
+
+    expect(await zunamiPoolControllerAps.balanceOf(admin.getAddress())).to.eq(0);
+
+    const tokenAmount = '10';
+
+    await wBtc
+      .connect(admin)
+      .approve(zunamiLaunchZap.address, parseUnits(tokenAmount, 8));
+    await tBtc
+      .connect(admin)
+      .approve(zunamiLaunchZap.address, parseUnits(tokenAmount, "ether"));
+
+    await zunamiLaunchZap
+      .connect(admin)
+      .deposit(getMinAmountZunBTC(tokenAmount), parseUnits("20", 'ether').sub(1000), admin.getAddress());
+
+    expect(await stakingRewardDistributor.balanceOf(admin.getAddress())).to.eq(parseUnits("20", 'ether').sub(3000));
+
+    await stakingRewardDistributor.connect(admin).approve(zunamiLaunchZap.address, parseUnits("20", 'ether').sub(3000));
+    await zunamiLaunchZap
+      .connect(admin)
+      .withdraw(parseUnits("20", 'ether').sub(3000), [ parseUnits(tokenAmount, 8), parseUnits(tokenAmount, "ether"),0,0,0], admin.getAddress());
+
+    expect(await stakingRewardDistributor.balanceOf(admin.getAddress())).to.eq(0);
+    expect(await zunamiPool.balanceOf(admin.getAddress())).to.eq(parseUnits("20", 'ether').sub(3000).sub(20));
   });
 });

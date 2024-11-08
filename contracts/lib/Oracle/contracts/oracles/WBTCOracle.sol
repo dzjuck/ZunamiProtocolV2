@@ -17,9 +17,6 @@ contract WBTCOracle is IOracle {
 
     address internal constant WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
 
-    address public constant CHAINLINK_FEED_REGISTRY_BTC_ADDRESS =
-        0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
-
     IOracle private immutable _genericOracle;
 
     constructor(address genericOracle) {

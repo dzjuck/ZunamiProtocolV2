@@ -1,18 +1,18 @@
 const { ethers } = require('hardhat');
 
 async function main() {
-    // zunETH
-    const zunStableControllerAddr = '0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF';
+    // zunUSD
+    const zunStableControllerAddr = '0x2F858e4d6a96c81E37a130314D6cECB64FDC6f4E';
     const generalOracleAddr = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
     const dailyMintDuration = 24 * 60 * 60; // 1 day in seconds
-    const dailyMintLimit = ethers.utils.parseUnits('275', "ether"); // 1100000 / 4000
+    const dailyMintLimit = ethers.utils.parseUnits('1100000', "ether");
     const dailyRedeemDuration = 24 * 60 * 60; // 1 day in seconds;
-    const dailyRedeemLimit = ethers.utils.parseUnits('25', "ether"); // 100000 / 4000
-    const basedTokenAddr = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-    const withdrawFee = 5000;
-    const feeDistributor = "0xb056B9A45f09b006eC7a69770A65339586231a34";
+    const dailyRedeemLimit = ethers.utils.parseUnits('100000', "ether");
+    const basedTokenAddr = '0x0000000000000000000000000000000000000000';
+    const withdrawFee = 7500;
+    const feeDistributor = "0xd5d1acc9c7ebaf8bbf85c45aee2b8b3f3b1bd062";
 
-    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap3');
+    const ZunamiStableZapFactory = await ethers.getContractFactory('ZunamiStableZap');
     const zunamiStableZap = await ZunamiStableZapFactory.deploy(
         zunStableControllerAddr,
         generalOracleAddr,
@@ -25,7 +25,7 @@ async function main() {
         feeDistributor
     );
     console.log(
-        'ZunamiStableZap3 deployed to:',
+        'ZunamiStableZap zunUSD deployed to:',
         zunamiStableZap.address,
         'with args:',
         zunStableControllerAddr,

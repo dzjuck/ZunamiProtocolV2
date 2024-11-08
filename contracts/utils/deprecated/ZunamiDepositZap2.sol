@@ -1,15 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '../interfaces/IPoolController.sol';
-import '../interfaces/ITokenConverter.sol';
-import '../utils/Constants.sol';
-import "../interfaces/IWETH.sol";
+import '../../interfaces/IPoolController.sol';
+import '../../interfaces/ITokenConverter.sol';
+import '../../utils/Constants.sol';
 
-contract ZunamiDepositEthZap2 is ReentrancyGuard {
+contract ZunamiDepositZap2 {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
@@ -17,12 +15,10 @@ contract ZunamiDepositEthZap2 is ReentrancyGuard {
 
     uint8 public constant POOL_ASSETS = 5;
 
-    uint256 constant ZUNAMI_WETH_TOKEN_ID = 0;
+    uint256 constant ZUNAMI_CRVUSD_TOKEN_ID = 3;
 
     uint256 public constant MIN_AMOUNT_DENOMINATOR = 10000;
     uint256 public constant MIN_AMOUNT = 9950; // 99.50%
-
-    IWETH public constant weth = IWETH(payable(Constants.WETH_ADDRESS));
 
     IPool public immutable zunamiPool;
     IPoolController public immutable apsController;
@@ -42,7 +38,7 @@ contract ZunamiDepositEthZap2 is ReentrancyGuard {
     function deposit(
         uint256[POOL_ASSETS] memory amounts,
         address receiver
-    ) external payable nonReentrant returns (uint256 shares) {
+    ) external returns (uint256 shares) {
         if (receiver == address(0)) {
             receiver = msg.sender;
         }
@@ -50,24 +46,16 @@ contract ZunamiDepositEthZap2 is ReentrancyGuard {
         IERC20[POOL_ASSETS] memory tokens = zunamiPool.tokens();
         uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = zunamiPool
             .tokenDecimalsMultipliers();
-
-        uint256 ethAmount = msg.value;
-        if(ethAmount > 0) {
-            weth.deposit{value: ethAmount}();
-            amounts[ZUNAMI_WETH_TOKEN_ID] += ethAmount;
-        }
-
-        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
+        for (uint256 i = 0; i < amounts.length; ++i) {
             uint256 amount = amounts[i];
-            if (amount == 0) continue;
-
             IERC20 token = tokens[i];
             uint256 tokenDecimalsMultiplier = tokenDecimalsMultipliers[i];
-            if (address(token) != address(0)) {
-                token.safeTransferFrom(
-                    msg.sender,
-                    address(this), i == ZUNAMI_WETH_TOKEN_ID ? amount - ethAmount : amount
-                );
+            if (i == ZUNAMI_CRVUSD_TOKEN_ID) {
+                token = IERC20(Constants.CRVUSD_ADDRESS);
+                tokenDecimalsMultiplier = 1;
+            }
+            if (address(token) != address(0) && amount > 0) {
+                token.safeTransferFrom(msg.sender, address(this), amount);
                 token.safeTransfer(address(converter), amount);
                 converter.handle(
                     address(token),

@@ -4,10 +4,10 @@ pragma solidity ^0.8.23;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import './Constants.sol';
-import '../interfaces/ICurvePool2.sol';
-import '../interfaces/INativeConverter.sol';
-import '../interfaces/IWETH.sol';
+import '../Constants.sol';
+import '../../interfaces/ICurvePool2.sol';
+import '../../interfaces/INativeConverter.sol';
+import '../../interfaces/IWETH.sol';
 
 contract FraxEthNativeConverter is INativeConverter {
     using SafeERC20 for IERC20;

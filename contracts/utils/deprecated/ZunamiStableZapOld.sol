@@ -3,29 +3,19 @@ pragma solidity ^0.8.23;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '../interfaces/IPoolController.sol';
-import "../lib/Oracle/interfaces/IOracle.sol";
+import '../../interfaces/IPoolController.sol';
 
-//import "hardhat/console.sol";
-
-contract ZunamiStableZap3 {
+contract ZunamiStableZapOld {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
     error SameAddress();
     error DailyMintLimitOverflow();
     error DailyRedeemLimitOverflow();
-    error BrokenMinimumAmount();
-    error FeeWronglyHigh();
 
     uint8 public constant POOL_ASSETS = 5;
 
-    uint256 public constant FEE_DENOMINATOR = 1000000; // 100.0000%
-    uint256 public constant MAX_FEE = 50000; // 5%
-
     IPoolController immutable public zunStableController;
-    IOracle immutable public oracle;
-    address immutable public basedToken;
 
     uint256 immutable public dailyMintDuration; // in secs
     uint256 immutable public dailyMintLimit; // in minimal value
@@ -39,29 +29,17 @@ contract ZunamiStableZap3 {
     uint256 public dailyRedeemTotal;
     uint256 public dailyRedeemCountingTimestamp; // start block timestamp of limit counting
 
-    uint256 immutable public withdrawFee;
-    address immutable public feeDistributor;
-
     constructor(
         address _zunStableController,
-        address _oracle,
         uint256 _dailyMintDuration,
         uint256 _dailyMintLimit,
         uint256 _dailyRedeemDuration,
-        uint256 _dailyRedeemLimit,
-        address _basedToken, // address(0) for USD, 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for ETH, 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB for BTC
-        uint256 _withdrawFee,
-        address _feeDistributor
+        uint256 _dailyRedeemLimit
     ) {
         if (_zunStableController == address(0))
             revert ZeroAddress();
 
         zunStableController = IPoolController(_zunStableController);
-
-        if (_oracle == address(0))
-            revert ZeroAddress();
-
-        oracle = IOracle(_oracle);
 
         dailyMintDuration = _dailyMintDuration;
         dailyMintLimit = _dailyMintLimit;
@@ -70,20 +48,11 @@ contract ZunamiStableZap3 {
         dailyRedeemDuration = _dailyRedeemDuration;
         dailyRedeemLimit = _dailyRedeemLimit;
         dailyRedeemCountingTimestamp = _dailyRedeemDuration > 0 ? block.timestamp : 0;
-
-        basedToken = _basedToken;
-
-        if (_withdrawFee > MAX_FEE) revert FeeWronglyHigh();
-        withdrawFee = _withdrawFee;
-
-        if (_feeDistributor == address(0)) revert ZeroAddress();
-        feeDistributor = _feeDistributor;
     }
 
     function mint(
         uint256[POOL_ASSETS] memory amounts,
-        address receiver,
-        uint256 minAmountStable
+        address receiver
     ) external returns (uint256) {
         if (receiver == address(0)) {
             receiver = msg.sender;
@@ -106,20 +75,7 @@ contract ZunamiStableZap3 {
 
         _verifyMintLimits(depositingAmount);
 
-        uint256 zunStableAmount = zunStableController.deposit(amounts, receiver);
-        if (zunStableAmount < minAmountStable) revert BrokenMinimumAmount();
-        return zunStableAmount;
-    }
-
-    function estimateMint(
-        uint256[POOL_ASSETS] memory amounts
-    ) external view returns (uint256) {
-
-        uint256 depositSid = zunStableController.defaultDepositSid();
-        IPool pool = zunStableController.pool();
-        IStrategy strategy = pool.strategyInfo(depositSid).strategy;
-
-        return strategy.calcTokenAmount(amounts, true);
+        return zunStableController.deposit(amounts, receiver);
     }
 
     function _verifyMintLimits(
@@ -140,43 +96,14 @@ contract ZunamiStableZap3 {
     function redeem(
         uint256 zunStableAmount,
         address receiver,
-        uint256 minAmountBased
+        uint256[5] memory minAmounts
     ) external {
         _verifyRedeemLimits(zunStableAmount);
 
         IERC20 zunStable = IERC20(zunStableController.pool());
         zunStable.safeTransferFrom(msg.sender, address(this), zunStableAmount);
-
-        uint256 nominalFee = _calcFee(zunStableAmount);
-        if (nominalFee > 0) {
-            zunStable.safeTransfer(feeDistributor, nominalFee);
-            zunStableAmount -= nominalFee;
-        }
-
         zunStable.safeIncreaseAllowance(address(zunStableController), zunStableAmount);
-        zunStableController.withdraw(zunStableAmount, [uint256(0),0,0,0,0], address(this));
-
-        uint256 usdAmount;
-        IPool pool = zunStableController.pool();
-        IERC20[POOL_ASSETS] memory tokens = pool.tokens();
-        uint256[POOL_ASSETS] memory tokenDecimalsMultipliers = pool.tokenDecimalsMultipliers();
-        for (uint256 i = 0; i < POOL_ASSETS; ++i) {
-            IERC20 token = tokens[i];
-            if (address(token) != address(0)) {
-                uint256 tokenBalance = token.balanceOf(address(this));
-                if (tokenBalance > 0) {
-                    token.safeTransfer(receiver, tokenBalance);
-                    usdAmount += oracle.getUSDPrice(address(token)) * tokenBalance * tokenDecimalsMultipliers[i] / 1e18;
-                }
-            }
-        }
-
-        uint256 basedAmount = usdAmount;
-        if (basedToken != address(0)) {
-            basedAmount = usdAmount * 1e18 / oracle.getUSDPrice(basedToken);
-        }
-
-        if ( basedAmount < minAmountBased) revert BrokenMinimumAmount();
+        zunStableController.withdraw(zunStableAmount, minAmounts, receiver);
     }
 
     function _verifyRedeemLimits(
@@ -191,13 +118,6 @@ contract ZunamiStableZap3 {
                 dailyRedeemTotal += value;
             }
             if(dailyRedeemTotal > dailyRedeemLimit) revert DailyRedeemLimitOverflow();
-        }
-    }
-
-    function _calcFee(uint256 value) internal view returns (uint256 nominalFee) {
-        uint256 withdrawFee_ = withdrawFee;
-        if (withdrawFee_ > 0 ) {
-            nominalFee = (value * withdrawFee_) / FEE_DENOMINATOR;
         }
     }
 }

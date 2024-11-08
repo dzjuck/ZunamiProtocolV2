@@ -3,11 +3,11 @@ pragma solidity ^0.8.23;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '../interfaces/IPoolController.sol';
-import '../interfaces/ITokenConverter.sol';
-import '../utils/Constants.sol';
-import "../tokenomics/staking/IStaking.sol";
-import '../lib/Oracle/interfaces/IOracle.sol';
+import '../../interfaces/IPoolController.sol';
+import '../../interfaces/ITokenConverter.sol';
+import '../../utils/Constants.sol';
+import "../../tokenomics/staking/IStaking.sol";
+import '../../lib/Oracle/interfaces/IOracle.sol';
 
 contract ZunamiDepositZap3 {
     using SafeERC20 for IERC20;

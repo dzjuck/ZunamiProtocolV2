@@ -27,31 +27,31 @@ async function main() {
     // await grantRoleTo(newAdmin, zunamiPool, 'DEFAULT_ADMIN_ROLE');
     // await grantRoleTo(newAdmin, zunamiPool, 'EMERGENCY_ADMIN_ROLE');
     //
-    // const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunETH');
-    // const zunamiPoolController = await ZunamiPoolController.attach(
-    //     '0x54A00DA65c79DDCe24E7fe4691737FD70F7797DF'
-    // );
-    // console.log('ZunamiPoolControllerZunETH:', zunamiPoolController.address);
-    //
-    // await grantRoleTo(newAdmin, zunamiPoolController, 'DEFAULT_ADMIN_ROLE');
-    //
+    const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunETH');
+    const zunamiPoolController = await ZunamiPoolController.attach(
+        '0x4BD57f97E35E7c3302Dc3A8d4d803826856F9f32'
+    );
+    console.log('ZunamiPoolControllerZunETH:', zunamiPoolController.address);
+
+    await grantRoleTo(newAdmin, zunamiPoolController, 'DEFAULT_ADMIN_ROLE');
+
     // await grandStrategyAdministrationTo(
     //     newAdmin,
     //     'ZunETHVaultStrat',
     //     '0x5F8Fc0976FFE5457cCf7651D5FF4cfcA2e86b000'
     // );
-
-    await grandStrategyAdministrationTo(
-        newAdmin,
-        'stEthEthConvexCurveStrat',
-        '0x948F65Ffb065AD5afd4c9A032D56fbDe6Ba647F1'
-    );
-
-    await grandStrategyAdministrationTo(
-        newAdmin,
-        'sfrxETHERC4626Strat',
-        '0x15370F2c446E41794A1b554946B826dB6eD04ceB'
-    );
+    //
+    // await grandStrategyAdministrationTo(
+    //     newAdmin,
+    //     'stEthEthConvexCurveStrat',
+    //     '0x948F65Ffb065AD5afd4c9A032D56fbDe6Ba647F1'
+    // );
+    //
+    // await grandStrategyAdministrationTo(
+    //     newAdmin,
+    //     'sfrxETHERC4626Strat',
+    //     '0x15370F2c446E41794A1b554946B826dB6eD04ceB'
+    // );
 }
 
 main()

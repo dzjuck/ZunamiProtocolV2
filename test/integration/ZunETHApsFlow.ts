@@ -53,7 +53,9 @@ export async function createPoolAndCompoundController(token: string, rewardManag
         'APSLP'
     )) as ZunamiPoolCompoundController;
 
-    await zunamiPoolController.setRewardManager(rewardManager);
+    if (rewardManager) {
+        await zunamiPoolController.setRewardManager(rewardManager);
+    }
 
     await zunamiPoolController.setFeeTokenId(0);
 

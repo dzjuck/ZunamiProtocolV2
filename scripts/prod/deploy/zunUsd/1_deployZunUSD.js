@@ -34,60 +34,77 @@ async function main() {
 
     const genericOracleAddr = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
 
-    // console.log('Deploy TokenConverter:');
-    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    // const tokenConverter = await TokenConverterFactory.deploy();
-    // await tokenConverter.deployed();
-    const tokenConverter = await TokenConverterFactory.attach(
-        '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
-    );
-    console.log('TokenConverter:', tokenConverter.address);
-
-    // console.log('Deploy zunETH omnipool:');
-    const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunETH');
+    console.log('Attach zunUSD omnipool:');
+    const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunUSD');
+    const zunamiPool = await ZunamiPool.attach('0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6');
     // const zunamiPool = await ZunamiPool.deploy();
     // await zunamiPool.deployed();
-    const zunamiPool = await ZunamiPool.attach('0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222');
-    console.log('ZunamiPoolZunETH:', zunamiPool.address);
+    console.log('ZunamiPoolZunUSD:', zunamiPool.address);
 
-    // console.log('Deploy zunETH pool controller:');
-    // const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunETH');
-    // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
-    // await zunamiPoolController.deployed();
-    // console.log('ZunamiPoolControllerZunETH:', zunamiPoolController.address);
-    //
-    // let result = await zunamiPool.grantRole(
-    //     await zunamiPool.CONTROLLER_ROLE(),
-    //     zunamiPoolController.address
+    console.log('Deploy zunUSD pool controller:');
+    const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunUSD');
+    // const zunamiPoolController = await ZunamiPoolController.attach(
+    //     '0x618eee502CDF6b46A2199C21D1411f3F6065c940'
     // );
-    // await result.wait();
-    // console.log(
-    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
-    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
+    await zunamiPoolController.deployed();
+    console.log('ZunamiPoolControllerZunUSD:', zunamiPoolController.address);
+
+    let result = await zunamiPool.grantRole(
+        await zunamiPool.CONTROLLER_ROLE(),
+        zunamiPoolController.address
+    );
+    await result.wait();
+    console.log(
+        'ZunamiPoolController granted CONTROLLER_ROLE:',
+        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    );
+
+    // await createAndInitStrategy(zunamiPool, 'ZunUSDVaultStrat', null, null);
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'UsdcCrvUsdStakeDaoCurve',
+    //     genericOracleAddr,
+    //     stableConverter
+    // );
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'UsdtCrvUsdStakeDaoCurve',
+    //     genericOracleAddr,
+    //     stableConverter
     // );
 
-    // await createAndInitStrategy(zunamiPool, 'ZunETHVaultStrat', null, null);
+    // console.log('Attach TokenConverter:');
+    // const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    // const tokenConverter = await TokenConverterFactory.attach(
+    //     '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
+    // );
+    // console.log('TokenConverter:', tokenConverter.address);
+
     // await createAndInitStrategy(
     //     zunamiPool,
-    //     'stEthEthConvexCurveStrat',
+    //     'LlamalendCrvStakeDaoERC4626Strat',
     //     genericOracleAddr,
     //     tokenConverter
     // );
+
     // await createAndInitStrategy(
     //     zunamiPool,
-    //     'sfrxETHERC4626Strat',
+    //     'LlamalendWethStakeDaoERC4626Strat',
     //     genericOracleAddr,
     //     tokenConverter
     // );
+
     // await createAndInitStrategy(
     //     zunamiPool,
-    //     'pxETHwETHStakeDaoCurveNStrat',
+    //     'LlamalendWeth2StakeDaoERC4626Strat',
     //     genericOracleAddr,
     //     tokenConverter
     // );
+
     // await createAndInitStrategy(
     //     zunamiPool,
-    //     'EthxEthStakeDaoCurveStrat',
+    //     'FraxCrvUsdStakeDaoCurve',
     //     genericOracleAddr,
     //     tokenConverter
     // );

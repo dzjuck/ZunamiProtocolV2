@@ -16,7 +16,7 @@ contract BtcConvexCurveStratBase is ConvexCurveStratBase {
     uint128 public constant CURVE_POOL_WBTC_ID = 0;
     int128 public constant CURVE_POOL_WBTC_ID_INT = int128(CURVE_POOL_WBTC_ID);
 
-    uint128 public constant CURVE_POOL_TBTC_ID = 0;
+    uint128 public constant CURVE_POOL_TBTC_ID = 1;
     int128 public constant CURVE_POOL_TBTC_ID_INT = int128(CURVE_POOL_TBTC_ID);
 
     IERC20 wBtc = IERC20(Constants.WBTC_ADDRESS);
@@ -73,8 +73,8 @@ contract BtcConvexCurveStratBase is ConvexCurveStratBase {
     ) internal override returns (uint256[2] memory amounts2) {
         amounts2[CURVE_POOL_WBTC_ID] = amounts[ZUNAMI_WBTC_TOKEN_ID];
         amounts2[CURVE_POOL_TBTC_ID] = amounts[ZUNAMI_TBTC_TOKEN_ID];
-        wBtc.safeIncreaseAllowance(address(pool), amounts2[CURVE_POOL_WBTC_ID]);
-        tBtc.safeIncreaseAllowance(address(pool), amounts2[CURVE_POOL_TBTC_ID]);
+        wBtc.safeIncreaseAllowance(address(pool), amounts[ZUNAMI_WBTC_TOKEN_ID]);
+        tBtc.safeIncreaseAllowance(address(pool), amounts[ZUNAMI_TBTC_TOKEN_ID]);
     }
 
     function depositCurve(

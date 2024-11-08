@@ -15,7 +15,7 @@ contract ZunamiEthZap is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
-    error SameAddress();
+    error BrokenMinimumAmount();
 
     uint8 public constant POOL_ASSETS = 5;
 
@@ -59,6 +59,7 @@ contract ZunamiEthZap is ReentrancyGuard {
 
     function deposit(
         uint256[POOL_ASSETS] memory amounts,
+        uint256 minAmount,
         address receiver
     ) external payable nonReentrant returns (uint256 shares) {
         if (receiver == address(0)) {
@@ -104,6 +105,8 @@ contract ZunamiEthZap is ReentrancyGuard {
         IERC20(address(apsController)).safeIncreaseAllowance(address(staking), apsLpBalance);
         staking.deposit(apsLpBalance, receiver);
 
+        if (apsLpBalance < minAmount) revert BrokenMinimumAmount();
+
         return apsLpBalance;
     }
 
@@ -122,7 +125,7 @@ contract ZunamiEthZap is ReentrancyGuard {
 
         uint256 apsLpBalance = apsController.balanceOf(address(this));
         IERC20(address(apsController)).safeIncreaseAllowance(address(staking), apsLpBalance);
-        apsController.withdraw(apsLpBalance, minTokenAmounts, msg.sender);
+        apsController.withdraw(apsLpBalance, minTokenAmounts, receiver);
     }
 
     function _calculateSlippage(address tokenIn, uint256 tokenInDecimalsMultiplier, address tokenOut, uint256 amountIn) internal view returns (uint256) {

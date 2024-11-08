@@ -13,7 +13,7 @@ contract ZunamiZap {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
-    error SameAddress();
+    error BrokenMinimumAmount();
 
     uint8 public constant POOL_ASSETS = 5;
 
@@ -53,6 +53,7 @@ contract ZunamiZap {
 
     function deposit(
         uint256[POOL_ASSETS] memory amounts,
+        uint256 minAmount,
         address receiver
     ) external returns (uint256 shares) {
         if (receiver == address(0)) {
@@ -86,6 +87,8 @@ contract ZunamiZap {
         IERC20(address(apsController)).safeIncreaseAllowance(address(staking), apsLpBalance);
         staking.deposit(apsLpBalance, receiver);
 
+        if (apsLpBalance < minAmount) revert BrokenMinimumAmount();
+
         return apsLpBalance;
     }
 
@@ -104,7 +107,7 @@ contract ZunamiZap {
 
         uint256 apsLpBalance = apsController.balanceOf(address(this));
         IERC20(address(apsController)).safeIncreaseAllowance(address(staking), apsLpBalance);
-        apsController.withdraw(apsLpBalance, minTokenAmounts, msg.sender);
+        apsController.withdraw(apsLpBalance, minTokenAmounts, receiver);
     }
 
     function _calculateSlippage(address tokenIn, uint256 tokenInDecimalsMultiplier, address tokenOut, uint256 amountIn) internal view returns (uint256) {
