@@ -41,24 +41,24 @@ async function main() {
     // await zunamiPool.deployed();
     console.log('ZunamiPoolZunUSD:', zunamiPool.address);
 
-    console.log('Deploy zunUSD pool controller:');
+    console.log('Attach zunUSD pool controller:');
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunUSD');
-    // const zunamiPoolController = await ZunamiPoolController.attach(
-    //     '0x618eee502CDF6b46A2199C21D1411f3F6065c940'
-    // );
-    const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
-    await zunamiPoolController.deployed();
+    const zunamiPoolController = await ZunamiPoolController.attach(
+        '0x2F858e4d6a96c81E37a130314D6cECB64FDC6f4E'
+    );
+    // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
+    // await zunamiPoolController.deployed();
     console.log('ZunamiPoolControllerZunUSD:', zunamiPoolController.address);
 
-    let result = await zunamiPool.grantRole(
-        await zunamiPool.CONTROLLER_ROLE(),
-        zunamiPoolController.address
-    );
-    await result.wait();
-    console.log(
-        'ZunamiPoolController granted CONTROLLER_ROLE:',
-        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
-    );
+    // let result = await zunamiPool.grantRole(
+    //     await zunamiPool.CONTROLLER_ROLE(),
+    //     zunamiPoolController.address
+    // );
+    // await result.wait();
+    // console.log(
+    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
+    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    // );
 
     // await createAndInitStrategy(zunamiPool, 'ZunUSDVaultStrat', null, null);
     // await createAndInitStrategy(
@@ -74,12 +74,12 @@ async function main() {
     //     stableConverter
     // );
 
-    // console.log('Attach TokenConverter:');
-    // const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    // const tokenConverter = await TokenConverterFactory.attach(
-    //     '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
-    // );
-    // console.log('TokenConverter:', tokenConverter.address);
+    console.log('Attach TokenConverter:');
+    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    const tokenConverter = await TokenConverterFactory.attach(
+        '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
+    );
+    console.log('TokenConverter:', tokenConverter.address);
 
     // await createAndInitStrategy(
     //     zunamiPool,
@@ -108,6 +108,13 @@ async function main() {
     //     genericOracleAddr,
     //     tokenConverter
     // );
+
+    await createAndInitStrategy(
+        zunamiPool,
+        'scrvUsdERC4626Strat',
+        genericOracleAddr,
+        tokenConverter
+    );
 }
 
 main()

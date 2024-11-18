@@ -34,14 +34,14 @@ async function main() {
 
     const genericOracleAddr = '0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410';
 
-    // // console.log('Deploy TokenConverter:');
-    // const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
-    // // const tokenConverter = await TokenConverterFactory.deploy();
-    // // await tokenConverter.deployed();
-    // const tokenConverter = await TokenConverterFactory.attach(
-    //     '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
-    // );
-    // console.log('TokenConverter:', tokenConverter.address);
+    console.log('Attach TokenConverter:');
+    const TokenConverterFactory = await ethers.getContractFactory('TokenConverter');
+    // const tokenConverter = await TokenConverterFactory.deploy();
+    // await tokenConverter.deployed();
+    const tokenConverter = await TokenConverterFactory.attach(
+        '0xf48A59434609b6e934c2cF091848FA2D28b34bfc'
+    );
+    console.log('TokenConverter:', tokenConverter.address);
 
     // console.log('Deploy zunETH omnipool:');
     const ZunamiPool = await ethers.getContractFactory('ZunamiPoolZunETH');
@@ -52,19 +52,20 @@ async function main() {
 
     console.log('Deploy zunETH pool controller:');
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunETH');
-    const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
-    await zunamiPoolController.deployed();
+    const zunamiPoolController = await ZunamiPoolController.attach('0x4BD57f97E35E7c3302Dc3A8d4d803826856F9f32');
+    // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
+    // await zunamiPoolController.deployed();
     console.log('ZunamiPoolControllerZunETH:', zunamiPoolController.address);
 
-    let result = await zunamiPool.grantRole(
-        await zunamiPool.CONTROLLER_ROLE(),
-        zunamiPoolController.address
-    );
-    await result.wait();
-    console.log(
-        'ZunamiPoolController granted CONTROLLER_ROLE:',
-        await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
-    );
+    // let result = await zunamiPool.grantRole(
+    //     await zunamiPool.CONTROLLER_ROLE(),
+    //     zunamiPoolController.address
+    // );
+    // await result.wait();
+    // console.log(
+    //     'ZunamiPoolController granted CONTROLLER_ROLE:',
+    //     await zunamiPool.hasRole(await zunamiPool.CONTROLLER_ROLE(), zunamiPoolController.address)
+    // );
 
     // await createAndInitStrategy(zunamiPool, 'ZunETHVaultStrat', null, null);
     // await createAndInitStrategy(

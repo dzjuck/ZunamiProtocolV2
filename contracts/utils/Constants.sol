@@ -19,6 +19,7 @@ library Constants {
     address internal constant TBTC_ADDRESS = 0x18084fbA666a33d37592fA2633fD49a74DD93a88; // tBTC v2
     address internal constant FRAX_ADDRESS = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
+    address internal constant scrvUsd_ADDRESS = 0x0655977FEb2f289A4aB78af67BAB0d17aAb84367;
 
     address internal constant ZUNUSD_ADDRESS = 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6;
     address internal constant zunUSD_CONTROLLER_ADDRESS =
@@ -146,6 +147,10 @@ library Constants {
     address internal constant CRV_WBTC_TBTC_LP_ADDRESS = 0xB7ECB2AA52AA64a717180E030241bC75Cd946726;
     address internal constant CVX_WBTC_TBTC_REWARDS_ADDRESS = 0x5793691B4ba69665213614d7ac722Db2d3f41927;
     uint256 internal constant CVX_WBTC_TBTC_PID = 220;
+
+    address internal constant CRV_CBBTC_WBTC_ADDRESS = 0x839d6bDeDFF886404A6d7a788ef241e4e28F4802;
+    address internal constant CRV_CBBTC_WBTC_LP_ADDRESS = 0x839d6bDeDFF886404A6d7a788ef241e4e28F4802;
+    address internal constant SDT_CBBTC_WBTC_VAULT_ADDRESS = 0x19812bb16Dc0B7cA3835A71372f91Db9eFF5dcd8;
 
     // Will be added after deployment of zunUSD v2 pool and curve pool for zunUSD
     address internal constant CRV_zunUSD_crvFRAX_ADDRESS = address(0);

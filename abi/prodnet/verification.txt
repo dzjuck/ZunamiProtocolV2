@@ -224,3 +224,12 @@ npx hardhat verify --network mainnet 0x6D5a96ba3E09efA54C9E514142126289001B591F 
 
 // ZunamiStableZap zunETH
 npx hardhat verify --network mainnet 0xfd1B30D0721D10B9Ea41de66c8E462d1EBbCE3AC 0x4BD57f97E35E7c3302Dc3A8d4d803826856F9f32 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 86400 275000000000000000000 86400 25000000000000000000 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE 7500 0xd5d1acc9c7ebaf8bbf85c45aee2b8b3f3b1bd062
+
+// ZunamiPoolControllerZunETH new
+npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunamiPoolControllerZunETH.sol:ZunamiPoolControllerZunETH 0x4BD57f97E35E7c3302Dc3A8d4d803826856F9f32 0xc2e660C62F72c2ad35AcE6DB78a616215E2F2222
+
+// ZunamiPoolControllerZunUSD new
+npx hardhat verify --network mainnet --contract contracts/configs/omnipool/ZunamiPoolControllerZunUSD.sol:ZunamiPoolControllerZunUSD 0x2F858e4d6a96c81E37a130314D6cECB64FDC6f4E 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6
+
+// scrvUsdERC4626Strat
+npx hardhat verify --network mainnet 0x6d2D702c24Fe116e4C859f058551719fB839236F

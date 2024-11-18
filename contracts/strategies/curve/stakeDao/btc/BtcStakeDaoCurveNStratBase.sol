@@ -5,19 +5,16 @@ import '../../../../utils/Constants.sol';
 import '../../../../interfaces/ITokenConverter.sol';
 import '../../../../interfaces/ICurvePool2Native.sol';
 import '../../../../interfaces/IWETH.sol';
-import '../ConvexCurveStratBase.sol';
+import '../StakeDaoCurveNStratBase.sol';
 
-contract BtcConvexCurveStratBase is ConvexCurveStratBase {
+contract BtcStakeDaoCurveNStratBase is StakeDaoCurveNStratBase {
     using SafeERC20 for IERC20;
 
     uint256 public constant ZUNAMI_WBTC_TOKEN_ID = 0;
     uint256 public constant ZUNAMI_TBTC_TOKEN_ID = 1;
 
-    uint128 public constant CURVE_POOL_WBTC_ID = 0;
+    uint128 public constant CURVE_POOL_WBTC_ID = 1;
     int128 public constant CURVE_POOL_WBTC_ID_INT = int128(CURVE_POOL_WBTC_ID);
-
-    uint128 public constant CURVE_POOL_TBTC_ID = 1;
-    int128 public constant CURVE_POOL_TBTC_ID_INT = int128(CURVE_POOL_TBTC_ID);
 
     IERC20 public constant wBtc = IERC20(Constants.WBTC_ADDRESS);
     IERC20 public constant tBtc = IERC20(Constants.TBTC_ADDRESS);
@@ -29,20 +26,16 @@ contract BtcConvexCurveStratBase is ConvexCurveStratBase {
     constructor(
         IERC20[POOL_ASSETS] memory _tokens,
         uint256[POOL_ASSETS] memory _tokenDecimalsMultipliers,
+        address _vaultAddr,
         address _poolAddr,
-        address _poolLpAddr,
-        address _cvxBooster,
-        address _cvxRewardsAddr,
-        uint256 _cvxPID
+        address _poolTokenAddr
     )
-        ConvexCurveStratBase(
+        StakeDaoCurveNStratBase(
             _tokens,
             _tokenDecimalsMultipliers,
+            _vaultAddr,
             _poolAddr,
-            _poolLpAddr,
-            _cvxBooster,
-            _cvxRewardsAddr,
-            _cvxPID
+            _poolTokenAddr
         )
     {}
 
@@ -60,31 +53,40 @@ contract BtcConvexCurveStratBase is ConvexCurveStratBase {
 
     function convertCurvePoolTokenAmounts(
         uint256[POOL_ASSETS] memory amounts
-    ) internal view override returns (uint256[2] memory amounts2) {
+    ) internal view override returns (uint256[] memory amounts8) {
         if (amounts[CURVE_POOL_WBTC_ID] == 0 && amounts[ZUNAMI_TBTC_TOKEN_ID] == 0)
-            return [uint256(0), 0];
+            return amounts8;
 
-        return [amounts[ZUNAMI_WBTC_TOKEN_ID], amounts[ZUNAMI_TBTC_TOKEN_ID]];
+        amounts8[CURVE_POOL_WBTC_ID] = amounts[ZUNAMI_WBTC_TOKEN_ID] +
+            converter.valuate(
+                Constants.TBTC_ADDRESS,
+                Constants.WBTC_ADDRESS,
+                amounts[ZUNAMI_TBTC_TOKEN_ID]
+            );
     }
 
     function convertAndApproveTokens(
         address,
         uint256[POOL_ASSETS] memory amounts
-    ) internal override returns (uint256[2] memory amounts2) {
-        amounts2[CURVE_POOL_WBTC_ID] = amounts[ZUNAMI_WBTC_TOKEN_ID];
-        amounts2[CURVE_POOL_TBTC_ID] = amounts[ZUNAMI_TBTC_TOKEN_ID];
-        wBtc.safeIncreaseAllowance(address(pool), amounts[ZUNAMI_WBTC_TOKEN_ID]);
-        tBtc.safeIncreaseAllowance(address(pool), amounts[ZUNAMI_TBTC_TOKEN_ID]);
-    }
+    ) internal override returns (uint256[] memory amounts8) {
+        amounts8[CURVE_POOL_WBTC_ID] = amounts[ZUNAMI_WBTC_TOKEN_ID];
 
-    function depositCurve(
-        uint256[2] memory amounts2
-    ) internal override returns (uint256 deposited) {
-        return
-            ICurvePool2(address(pool)).add_liquidity(
-                amounts2,
-                0
-            );
+        if (amounts[ZUNAMI_TBTC_TOKEN_ID] > 0) {
+            tBtc.safeTransfer(address(converter), amounts[ZUNAMI_TBTC_TOKEN_ID]);
+            amounts8[CURVE_POOL_WBTC_ID] +=
+                converter.handle(
+                    Constants.TBTC_ADDRESS,
+                    Constants.WBTC_ADDRESS,
+                    amounts[ZUNAMI_TBTC_TOKEN_ID],
+                    applySlippageDifferentPrice(
+                        amounts[ZUNAMI_TBTC_TOKEN_ID] * tokenDecimalsMultipliers[ZUNAMI_TBTC_TOKEN_ID],
+                        Constants.TBTC_ADDRESS,
+                        Constants.WBTC_ADDRESS
+                    )
+                );
+        }
+
+        wBtc.safeIncreaseAllowance(address(pool), amounts8[CURVE_POOL_WBTC_ID]);
     }
 
     function getCurveRemovingTokenIndex() internal pure override returns (int128) {
