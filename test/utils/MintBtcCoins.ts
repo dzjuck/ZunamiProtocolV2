@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { mintTokenTo } from "./MintTokenTo";
 
-const wBtcWalletOwnerAddr = "0x6daB3bCbFb336b29d06B9C793AEF7eaA57888922";
+const wBtcWalletOwnerAddr = "0x28C6c06298d514Db089934071355E5743bf21d60";
 const tBtcWalletOwnerAddr = "0xF8aaE8D5dd1d7697a4eC6F561737e68a2ab8539e";
 
 export async function mintBtcCoins(admin: SignerWithAddress, wBtc, tBtc) {

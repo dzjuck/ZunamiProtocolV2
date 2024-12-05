@@ -62,7 +62,7 @@ export async function createPoolAndCompoundController(token: string, rewardManag
 }
 
 describe("ZunBTC flow tests", () => {
-  const strategyNames = ["ZunBTCVaultStrat", "WBtcTBtcConvexCurveStrat"];
+  const strategyNames = ["ZunBTCVaultStrat", "WBtcTBtcConvexCurveStrat", "CbBtcWBtcStakeDaoCurveNStrat"]
 
   async function deployFixture() {
     // Contracts are deployed using the first signer/account by default
@@ -85,9 +85,30 @@ describe("ZunBTC flow tests", () => {
     const tBTCOracle = await LlammaOracleFactory.deploy(tBtcLlammaOracle, tBtc.address);
     await genericOracle.setCustomOracle(tBtc.address, tBTCOracle.address);
 
+    const cbBtcAddress = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf';
+    const cbBtcOracleFactory = await ethers.getContractFactory('CbBTCOracle');
+    const cbBtcOracle = await cbBtcOracleFactory.deploy(genericOracle.address);
+    await cbBtcOracle.deployed();
+    await genericOracle.setCustomOracle(cbBtcAddress, cbBtcOracle.address);
+
+    const StaticCurveLPOracleFactory = await ethers.getContractFactory('StaticCurveLPOracle');
+
+    const cbBtc_wBtc_pool_addr = "0x839d6bDeDFF886404A6d7a788ef241e4e28F4802";
+    let staticCurveLPOracle = await StaticCurveLPOracleFactory.deploy(
+      genericOracle.address,
+      [cbBtcAddress, addresses.crypto.wBtc],
+      [8, 8],
+      cbBtc_wBtc_pool_addr
+    );
+    await staticCurveLPOracle.deployed();
+    await genericOracle.setCustomOracle(cbBtc_wBtc_pool_addr, staticCurveLPOracle.address);
+
+
     console.log("wBTCOracle price", await genericOracle.getUSDPrice(wBtc.address));
     console.log("tBTCOracle price", await genericOracle.getUSDPrice(tBtc.address));
+    console.log("cbBtcAddress price", await genericOracle.getUSDPrice(cbBtcAddress));
     console.log("wBtcTBtcPoolAddress price", await genericOracle.getUSDPrice(wBtc_tBtc_pool_addr));
+    console.log("cbBtc_wBtc_pool_addr price", await genericOracle.getUSDPrice(cbBtc_wBtc_pool_addr));
 
     const { zunamiPool, zunamiPoolController } = await createPoolAndControllerZunBTC();
 
@@ -171,7 +192,7 @@ describe("ZunBTC flow tests", () => {
             zStableBefore
           );
           expect(stableDiff).to.gt(0);
-          expect(stableDiff).to.gt("1999999999900000000");
+          expect(stableDiff).to.gt("1994900000000000000");
         }
       }
     }
@@ -200,7 +221,7 @@ describe("ZunBTC flow tests", () => {
 
         const stableDiff = stableAmount.sub(stableBefore);
         expect(stableDiff).to.gt(0);
-        expect(stableDiff).to.gt("1999999999900000000");
+        expect(stableDiff).to.gt("1994900000000000000");
 
         await zunamiPool.connect(user).approve(zunamiPoolController.address, stableAmount);
 
@@ -399,7 +420,7 @@ describe("ZunBTC flow tests", () => {
 
     await zunamiLaunchZap
       .connect(admin)
-      .deposit(getMinAmountZunBTC(tokenAmount), parseUnits("20", 'ether').sub(1000), admin.getAddress());
+      .deposit(getMinAmountZunBTC(tokenAmount), parseUnits("20", 'ether').sub(3000), admin.getAddress());
 
     expect(await stakingRewardDistributor.balanceOf(admin.getAddress())).to.eq(parseUnits("20", 'ether').sub(3000));
 

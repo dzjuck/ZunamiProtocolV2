@@ -52,7 +52,7 @@ async function main() {
     const ZunamiPoolController = await ethers.getContractFactory('ZunamiPoolControllerZunBTC');
     // const zunamiPoolController = await ZunamiPoolController.deploy(zunamiPool.address);
     // await zunamiPoolController.deployed();
-    const zunamiPoolController = await ZunamiPool.attach('0x8d6C5C61E815A53b1D24AC94DEEC62f31911EeB4');
+    const zunamiPoolController = await ZunamiPoolController.attach('0x8d6C5C61E815A53b1D24AC94DEEC62f31911EeB4');
     console.log('ZunamiPoolControllerZunBTC:', zunamiPoolController.address);
 
     // let result = await zunamiPool.grantRole(
@@ -67,9 +67,16 @@ async function main() {
 
     // await createAndInitStrategy(zunamiPool, 'ZunBTCVaultStrat', null, null);
 
+    // await createAndInitStrategy(
+    //     zunamiPool,
+    //     'WBtcTBtcConvexCurveStrat',
+    //     genericOracleAddr,
+    //     tokenConverter
+    // );
+
     await createAndInitStrategy(
         zunamiPool,
-        'WBtcTBtcConvexCurveStrat',
+        'CbBtcWBtcStakeDaoCurveNStrat',
         genericOracleAddr,
         tokenConverter
     );

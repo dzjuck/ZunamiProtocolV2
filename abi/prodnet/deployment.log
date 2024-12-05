@@ -552,3 +552,27 @@ Set zunami pool address 0x8C0D76C9B18779665475F3E212D9Ca1Ed6A1A0e6 in scrvUsdERC
 TransferGauge for receiver:  0xb056B9A45f09b006eC7a69770A65339586231a34  deployed to: 0xd5Da6Ca144BcBFDDb3EC4A3236fB893Db9A5eC35
 
 ZunamiStableZap zunBtc deployed to: 0xBb3C52D7aA3cc1296Bd50Ba5aA8e46A82546B852 with args: 0x8d6C5C61E815A53b1D24AC94DEEC62f31911EeB4 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 86400 BigNumber { value: "12000000000000000000" } 86400 BigNumber { value: "1000000000000000000" } 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB 7500 0xd5d1acc9c7ebaf8bbf85c45aee2b8b3f3b1bd062
+
+TokenConverter: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+ZunamiPoolZunBTC: 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB
+ZunamiPoolControllerZunBTC: 0x8d6C5C61E815A53b1D24AC94DEEC62f31911EeB4
+CbBtcWBtcStakeDaoCurveNStrat strategy deployed to: 0xa55D60484FaC40DCd6A9CcdAd43E388Fb1F3E415
+Set price oracle address 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 in CbBtcWBtcStakeDaoCurveNStrat strategy
+Set token converter address 0xf48A59434609b6e934c2cF091848FA2D28b34bfc in CbBtcWBtcStakeDaoCurveNStrat strategy
+Set zunami pool address 0x0FA308AE0ddE633b6eDE22ba719E7E0Bc45FC6dB in CbBtcWBtcStakeDaoCurveNStrat strategy
+
+GenericOracle attached to: 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410
+CurveRegistryCache attached to: 0x2E68bE71687469280319BCf9E635a8783Db5d238
+CbBTC Oracle deployed to: 0xEA6e4fff607285e1Ea24f6cB2c7540BC7B975D69
+CbBTC Oracle set to GenericOracle
+
+StaticCurveLPOracle cbBtc wBtc pool deployed to: 0xd262833a5d2ddb2335359fC7821c66949a94159a 0x4142bB1ceeC0Dec4F7aaEB3D51D2Dc8E6Ee18410 [
+  '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
+  '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
+] [ 8, 8 ] 0x839d6bDeDFF886404A6d7a788ef241e4e28F4802
+StaticCurveLPOracle set to GenericOracle
+
+TokenConverter deployed to: 0xf48A59434609b6e934c2cF091848FA2D28b34bfc
+Starting setup token converter BTCs
+Token сonverter configured for BTCs
+

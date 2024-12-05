@@ -9,7 +9,7 @@ import '../../../@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.
 import '../../interfaces/IOracle.sol';
 import '../../interfaces/vendor/ICurvePoolOraclePrice.sol';
 
-contract WBTCOracle is IOracle {
+contract WBTCChainlinkOracle is IOracle {
     error WrongToken();
 
     FeedRegistryInterface internal constant _feedRegistry =

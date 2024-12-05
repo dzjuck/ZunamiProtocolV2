@@ -453,6 +453,29 @@ async function setupTokenConverterWEthPxEthAndReverse(tokenConverter) {
 }
 
 async function setupTokenConverterBTCs(tokenConverter) {
+    await tokenConverter.setRoutes(
+        [addresses.crypto.tBtc, addresses.crypto.wBtc],
+        [addresses.crypto.wBtc, addresses.crypto.tBtc],
+        [
+            [
+                addresses.crypto.tBtc,
+                '0xB7ECB2AA52AA64a717180E030241bC75Cd946726',
+                addresses.crypto.wBtc,
+            ],
+            [
+                addresses.crypto.wBtc,
+                '0xB7ECB2AA52AA64a717180E030241bC75Cd946726',
+                addresses.crypto.tBtc,
+            ]
+        ],[
+            [
+                [1, 0, 1, 1, 2]
+            ],
+            [
+                [0, 1, 1, 1, 2]
+            ]
+        ]
+    );
 }
 
 async function setupTokenConverterStablesFrax(tokenConverter) {
